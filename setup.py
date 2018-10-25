@@ -14,6 +14,8 @@ import drp_1dpipe
 NAME = 'drp_1dpipe' #PEP 508
 VERSION = '0.0.0'   #PEP 440
 
+# Add any necessary entry points
+entry_points = {}
 # Command-line scripts
 entry_points['console_scripts'] = [
     'split = drp_1dpipe.split.split:main',
