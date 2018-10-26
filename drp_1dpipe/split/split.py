@@ -9,6 +9,18 @@ import sys
 import argparse
 import logging
 
+
+def bunch(fits_list, bunch_size):
+    result = []
+    for source in iterable:
+        result.append(source)
+        if len(result) >= bunch_size:
+            yield result
+            result = []
+    if result:
+        yield result
+
+
 def main():
 
     logger = logging.getLogger()
@@ -31,7 +43,10 @@ def main():
     parser.add_argument('--spectra_sets_list', type=str, required=True,
                         help='Output bunch list')
 
-    print("hello")
+    bunch(fits_list, int(args.set_size))
+
+def foo(farg, sarg):
+    return farg + sarg
 
 if __name__ == '__main__':
     main()
