@@ -8,14 +8,7 @@ Author: CeSAM
 import pytest
 import random
 from tempfile import NamedTemporaryFile
-from drp_1dpipe.split.split import foo, bunch
-
-def test_foo():
-
-    a = 1
-    b = 1337
-    res = foo(farg=a, sarg=b)
-    assert  res == 1338
+from drp_1dpipe.split.split import bunch, split
 
 def test_bunch():
     """
@@ -28,15 +21,28 @@ def test_bunch():
     # set a random number of element in this list
     d = {}
     my_list = []
-    input_fits_number = random.randint(1, 10000)
+    input_fits_number = random.randint(1, 100)
+    bunch_size = random.randint(1, 100)
 
     for f in range(1, input_fits_number):
-        d[{0}.format(f)] = NamedTemporaryFile()
+        d["{0}".format(f)] = NamedTemporaryFile()
 
     for kv in d.values():
         my_list.append(kv)
 
     res = bunch(my_list, bunch_size)
     assert res is not None
-    if input_fits_number < bunch_size:
-        assert res is
+
+
+def test_split():
+    class Args():
+        workdir = 'my_workdir'
+        spectra_sets_list = 0
+        bunch_size = 3
+
+        def my_function(self):
+
+            my_args = Args()
+            split(self.spectra_sets_list, self.bunch_size)
+
+            assert self.spectra_sets_list == 1
