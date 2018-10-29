@@ -24,11 +24,11 @@ entry_points['console_scripts'] = [
 
 setup(name=NAME,
       version=VERSION,
-      description='PFS data-processing pipeline',
+      description='PFS data-reduction pipeline',
       long_description=open(os.path.join(os.path.dirname(__file__),
                             'README.md')).read(),
       url='https://pfs.ipmu.jp/',
-      author='CeSAM',
+      author='The LAM PFS-DRP1D developers',
       license='GPLv3', # QUESTION : what licence is used in PFS ?
       packages=['drp_1dpipe'],
       requires=['numpy'],
