@@ -26,6 +26,7 @@ class SplitLogger(object):
     split_logger.addHandler(stream_handler)
 
 class ProcessSpectraLogger(object):
+    # QUESTION: why is it imported despite "import SplitLogger" in split.py ?
 
     ps_logger = logging.getLogger("Process spectra logger")
     ps_logger.setLevel(logging.DEBUG)
