@@ -8,29 +8,16 @@ Author: CeSAM
 import sys
 import argparse
 import logging
-from drp_1dpipe.tools.logger import Logger
-from logging.handlers import RotatingFileHandler
+from drp_1dpipe.tools.logger import SplitLogger
 
 
 def main():
 
-    logger = logging.getLogger()
-    logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
-
-    # file handler
-    file_handler = RotatingFileHandler('DEBUG.log', 'a', 1000000, 1)
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-
-    # # stream handler
-    # stream_handler = logging.StreamHandler()
-    # stream_handler.setLevel(logging.DEBUG)
-    # logger.addHandler(stream_handler)
-
-    logger.info('Hello')
-    logger.warning('Testing %s', 'foo')
+    # Get the corresponding logger
+    logger = SplitLogger.split_logger
+    logger.info('###')
+    logger.info('### ENTERING SPLIT MAIN METHODE ###')
+    logger.info('###')
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--workdir', type=str, required=True,
