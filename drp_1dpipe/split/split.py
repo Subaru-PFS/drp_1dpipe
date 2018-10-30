@@ -73,5 +73,6 @@ def bunch(fits_list, bunch_size):
     if result:
         yield result
 
+# TODO: To remove
 if __name__ == '__main__':
     main()
