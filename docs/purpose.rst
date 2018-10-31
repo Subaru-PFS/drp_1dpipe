@@ -4,8 +4,9 @@ Purpose
 Purpose
 -------
 
-This document presents the architecture and design of every software component
-of the PFS Data Reduction Pipeline 1D in charge of redshift determination.
+This document presents the architecture and design of each software components
+of the PFS Data Reduction Pipeline 1D in charge of redshift determination and
+spectral feature measurement of observed source.
 
 
 Scope
