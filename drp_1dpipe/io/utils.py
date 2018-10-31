@@ -17,8 +17,7 @@ def init_logger(process_name):
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
     # file handler
-    # TODO: change append mode --> overwrite mode
-    file_handler = RotatingFileHandler(process_name + '.log', 'a', 1000000, 1)
+    file_handler = logging.FileHandler(process_name + '.log', 'w')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
