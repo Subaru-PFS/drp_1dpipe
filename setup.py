@@ -7,7 +7,7 @@ if sys.version_info < tuple((int(val) for val in __minimum_python_version__.spli
     sys.exit(1)
 
 import os
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import drp_1dpipe
 
@@ -30,7 +30,7 @@ setup(name=NAME,
       url='https://pfs.ipmu.jp/',
       author='The LAM PFS-DRP1D developers',
       license='GPLv3', # QUESTION : what licence is used in PFS ?
-      packages=['drp_1dpipe'],
+      packages=find_packages(),
       requires=['numpy'],
       setup_requires=[], # TODO
       install_requires=[], # TODO
@@ -43,6 +43,7 @@ setup(name=NAME,
           'Topic :: Scientific/Engineering :: Astronomy',
           'Topic :: Scientific/Engineering :: Physics'
       ],
+      include_package_data=True,
       entry_points=entry_points,
       python_requires='>=' + __minimum_python_version__,
       tests_require=['pytest']
