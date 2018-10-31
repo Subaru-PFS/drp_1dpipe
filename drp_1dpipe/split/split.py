@@ -13,8 +13,8 @@ from drp_1dpipe.tools.logger import SplitLogger
 
 def main():
 
-    # Get the corresponding logger
-    logger = SplitLogger.split_logger
+    splitLogObj = SplitLogger()
+    logger = logging.getLogger("Split logger")
     logger.info('###')
     logger.info('### ENTERING SPLIT MAIN METHODE ###')
     logger.info('###')

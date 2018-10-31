@@ -9,36 +9,41 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 class SplitLogger(object):
+    """Class for Split module logger"""
 
-    split_logger = logging.getLogger("Split logger")
-    split_logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
+    def __init__(self):
 
-    # file handler
-    file_handler = RotatingFileHandler('SPLIT_DEBUG.log', 'a', 1000000, 1)
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(formatter)
-    split_logger.addHandler(file_handler)
+        self.split_logger = logging.getLogger("Split logger")
+        self.split_logger.setLevel(logging.DEBUG)
+        self.formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
-    # stream handler
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
-    split_logger.addHandler(stream_handler)
+        # file handler
+        self.file_handler = RotatingFileHandler('split_debug.log', 'a', 1000000, 1)
+        self.file_handler.setLevel(logging.DEBUG)
+        self.file_handler.setFormatter(self.formatter)
+        self.split_logger.addHandler(self.file_handler)
+
+        # stream handler
+        self.stream_handler = logging.StreamHandler()
+        self.stream_handler.setLevel(logging.DEBUG)
+        self.split_logger.addHandler(self.stream_handler)
 
 class ProcessSpectraLogger(object):
-    # QUESTION: why is it imported despite "import SplitLogger" in split.py ?
+    """Class for Process spectra module logger"""
 
-    ps_logger = logging.getLogger("Process spectra logger")
-    ps_logger.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
+    def __init__(self):
 
-    # file handler
-    file_handler = RotatingFileHandler('PROCESSSPECTRA_DEBUG.log', 'a', 1000000, 1)
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(formatter)
-    ps_logger.addHandler(file_handler)
+        self.ps_logger = logging.getLogger("Process spectra logger")
+        self.ps_logger.setLevel(logging.DEBUG)
+        self.formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
-    # stream handler
-    stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
-    ps_logger.addHandler(stream_handler)
+        # file handler
+        self.file_handler = RotatingFileHandler('processSpectra_debug.log', 'a', 1000000, 1)
+        self.file_handler.setLevel(logging.DEBUG)
+        self.file_handler.setFormatter(self.formatter)
+        self.ps_logger.addHandler(self.file_handler)
+
+        # stream handler
+        self.stream_handler = logging.StreamHandler()
+        self.stream_handler.setLevel(logging.DEBUG)
+        self.ps_logger.addHandler(self.stream_handler)
