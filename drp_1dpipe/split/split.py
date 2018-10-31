@@ -5,16 +5,15 @@ Created on: 24/10/18
 Author: CeSAM
 """
 
-import sys
 import argparse
 import logging
-from drp_1dpipe.tools.logger import SplitLogger
-
+from drp_1dpipe.io.utils import get_split_logger
 
 def main():
 
-    splitLogObj = SplitLogger()
-    logger = logging.getLogger("Split logger")
+    get_split_logger()
+    logger = logging.getLogger("split")
+
     logger.info('###')
     logger.info('### ENTERING SPLIT MAIN METHODE ###')
     logger.info('###')
