@@ -7,11 +7,11 @@ Author: CeSAM
 
 import argparse
 import logging
-from drp_1dpipe.io.utils import get_split_logger
+from drp_1dpipe.io.utils import init_logger
 
 def main():
 
-    get_split_logger()
+    init_logger("split")
     logger = logging.getLogger("split")
 
     logger.info('###')
