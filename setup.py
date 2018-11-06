@@ -9,8 +9,6 @@ if sys.version_info < tuple((int(val) for val in __minimum_python_version__.spli
 import os
 from setuptools import setup, find_packages
 
-import drp_1dpipe
-
 NAME = 'drp_1dpipe' #PEP 508
 VERSION = '0.0.0'   #PEP 440
 
