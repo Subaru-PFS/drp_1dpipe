@@ -1,64 +1,98 @@
 """
-File: drp_1dpipe/split/split.py
+File: drp_1dpipe/pre_process/pre_process.py
 
 Created on: 24/10/18
 Author: CeSAM
 """
 
-import argparse
+import os
+import json
 import logging
+import argparse
 from drp_1dpipe.io.utils import init_logger
 
-def main():
+def define_program_options():
+    """
+    The "define_program_options" function.
+    """
 
-    init_logger("split")
-    logger = logging.getLogger("split")
-
-    logger.info('###')
-    logger.info('### ENTERING SPLIT MAIN METHODE ###')
-    logger.info('###')
+    init_logger("pre_process")
+    logger = logging.getLogger("pre_process")
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--workdir', type=str, required=True,
-                        help='The root working directory where the data is located')
+                        help='The root working directory where data is located')
     parser.add_argument('--logdir', type=str, required=False,
                         help='The logging directory')
-    parser.add_argument('--bunch_size', type=str, required=False,
+    parser.add_argument('--bunch_size', type=str, required=True,
                         help='Maximum number of spectra per bunch')
 
-    # input
-    parser.add_argument('--spectra', type=str, required=False, # TODO: repasser à True
-                        help='SIR combined spectra product')
+    # data input
+    parser.add_argument('--spectra_path', type=str, required=True,
+                        help='Path to spectra to process')
+    parser.add_argument('--templates_path', type=str, required=True,
+                        help='Path to templates')
 
     # outputs
-    parser.add_argument('--spectra_sets_list', type=str, required=False, # repasser à True
+    parser.add_argument('--bunch_list', type=str, required=True,
                         help='List of files of bunch of astronomical objects')
-
+    parser.add_argument('--template_list', type=str, required=True,
+                        help='List of templates used in process_spectra')
     args = parser.parse_args()
 
-    fits_list = args.spectra
+    # Start the main program
+    main(args)
+
+
+def main(args):
+    """
+    The "main" function.
+
+    This function creates two files. One .json containing a list of
+    templates
+
+    :param args: parsed arguments of the program.
+    """
+    logger = logging.getLogger("pre_process")
+
+    spectra_path = args.spectra_path
     bunch_size = args.bunch_size
 
-    # split(args, fits_list)
+    # bunch
+    bunch_list = []
+    for ao_list in bunch(bunch_size, os.path.join(args.workdir, args.spectra_path)):
+        bunch_list.append(ao_list)
 
+    # create json containing list of bunches
+    output = os.path.join(args.workdir, args.bunch_list)
+    with open(output, 'w') as f:
+        f.write(json.dumps(bunch_list))
 
-def split(fits_list, bunch_size):
+    # Generate the template list :
+    l = []
+    for file in os.listdir(os.path.join(args.workdir, args.templates_path)):
+        l.append(file)
+    template_list = os.path.join(args.workdir, args.template_list)
+    with open(template_list, 'w') as ff:
+        ff.write(json.dumps(l))
 
-    bunch(fits_list, bunch_size)
+def bunch(bunch_size, spectra_path):
+    """
+    The "bunch" function.
 
-    args.spectra_sets_list = 1
+    Split "args.spectra_path" (sources) in bunches of "args.bunch_size" elements.
 
+    :param args.bunch_size: The number of source per bunch.
+    :param args.spectra_path: List of sources in the workdir.
+    :return: a generator with the max number of sources.
+    """
+    logger = logging.getLogger("pre_process")
 
-def bunch(fits_list, bunch_size):
-    result = []
-    for source in iterable:
-        result.append(source)
-        if len(result) >= bunch_size:
-            yield result
-            result = []
-    if result:
-        yield result
-
-# TODO: To remove
-if __name__ == '__main__':
-    main()
+    list = []
+    for source in os.listdir(spectra_path):
+        list.append(source)
+        if len(list) >= int(bunch_size):
+            yield list
+            list = []
+    if list:
+        yield list
