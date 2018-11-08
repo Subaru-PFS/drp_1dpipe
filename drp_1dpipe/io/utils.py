@@ -30,6 +30,16 @@ def get_conf_path(file_name):
 
 
 def init_logger(process_name):
+    """initializes a logger depending on which module calls it.
+
+    :param process_name: name of the module calling it.
+
+    :Example:
+
+    In define_program_options() of process_spectra.py :
+
+    init_logger("pre_process")
+    """
     logger = logging.getLogger(process_name)
     logger.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')

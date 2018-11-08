@@ -12,9 +12,9 @@ from drp_1dpipe.io.utils import get_auxiliary_path, get_conf_path
 
 def test_auxdir():
     """
-    @brief The "test_auxdir" function.
-    @details
-        This function tests features concerning auxiliary directory.
+    The "test_auxdir" function.
+
+    This function tests features concerning auxiliary directory.
     """
     assert os.path.exists(get_auxiliary_path("."))
     assert not(os.path.exists(get_auxiliary_path("foo.txt")))
@@ -22,9 +22,9 @@ def test_auxdir():
 
 def test_confdir():
     """
-    @brief The "test_confdir" function.
-    @details
-        This function tests features concerning configuration directory.
+    The "test_confdir" function.
+
+    This function tests features concerning configuration directory.
     """
     assert os.path.exists(get_conf_path("."))
     assert not(os.path.exists(get_conf_path("foo.txt")))
@@ -32,10 +32,10 @@ def test_confdir():
 
 def test_args_from_file():
     """
-    @brief The "test_args_from_file" function.
-    @details
-        This function tests feature of retrieving argument value from
-        configuration file
+    The "test_args_from_file" function.
+
+    This function tests feature of retrieving argument value from
+    configuration file
     """
     from drp_1dpipe.io.utils import get_args_from_file
     import tempfile

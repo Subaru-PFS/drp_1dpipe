@@ -2,7 +2,7 @@
 File: drp_1dpipe/tests/test_pre_process.py
 
 Created on: 25/10/18
-Author: CeSAM
+Author: PSF DRP1D developers
 """
 
 import os
@@ -14,17 +14,17 @@ from drp_1dpipe.pre_process.pre_process import main, bunch
 
 def test_main():
     """
-    @brief The "test_main" function.
-    @details
-        This function test the "bunch" function of "pre_process.py" module.
+    The "test_main" function.
+
+    This function test the "bunch" function of "pre_process.py" module.
     """
     # TODO
 
 def test_bunch():
     """
-    @brief The "test_bunch" function.
-    @details
-        This function test the "bunch" function of "pre_process.py" module.
+    The "test_bunch" function.
+
+    This function test the "bunch" function of "pre_process.py" module.
     """
 
     d = {}

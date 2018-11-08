@@ -2,7 +2,7 @@
 File: drp_1dpipe/pre_process/pre_process.py
 
 Created on: 24/10/18
-Author: CeSAM
+Author: PSF DRP1D developers
 """
 
 import os
@@ -14,6 +14,9 @@ from drp_1dpipe.io.utils import init_logger
 def define_program_options():
     """
     The "define_program_options" function.
+
+    This function initializes a logger, parses all command line arguments,
+    and call the main() function.
     """
 
     init_logger("pre_process")
@@ -48,8 +51,8 @@ def main(args):
     """
     The "main" function.
 
-    This function creates two files. One .json containing a list of
-    templates
+    This function creates two files. A .json containing a list of
+    templates, and another one containing
 
     :param args: parsed arguments of the program.
     """
@@ -80,10 +83,10 @@ def bunch(bunch_size, spectra_path):
     """
     The "bunch" function.
 
-    Split "args.spectra_path" (sources) in bunches of "args.bunch_size" elements.
+    Split files located "spectra_path" directory in bunches of "bunch_size" lists.
 
-    :param args.bunch_size: The number of source per bunch.
-    :param args.spectra_path: List of sources in the workdir.
+    :param bunch_size: The number of source per bunch.
+    :param spectra_path: List of sources in the workdir.
     :return: a generator with the max number of sources.
     """
     logger = logging.getLogger("pre_process")
