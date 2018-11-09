@@ -8,7 +8,7 @@ Activate your virtualenv.
 
 #### pfs-datamodel
 
-	git clone -b develop git@gitlab.lam.fr:gpernot/pfs-datamodel.git
+	git clone -b develop git@gitlab.lam.fr:CPF/pfs-datamodel.git
 	cd pfs-datamodel/python
 	pip install -e .
 

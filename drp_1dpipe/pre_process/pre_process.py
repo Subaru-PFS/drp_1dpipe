@@ -32,14 +32,10 @@ def define_program_options():
     # data input
     parser.add_argument('--spectra_path', type=str, required=True,
                         help='Path to spectra to process')
-    parser.add_argument('--templates_path', type=str, required=True,
-                        help='Path to templates')
 
     # outputs
     parser.add_argument('--bunch_list', type=str, required=True,
                         help='List of files of bunch of astronomical objects')
-    parser.add_argument('--template_list', type=str, required=True,
-                        help='List of templates used in process_spectra')
     args = parser.parse_args()
     get_args_from_file("pre_process.conf", args)
 
@@ -51,10 +47,9 @@ def define_program_options():
 
 def main(args):
     """
-    The "main" function.
+    Prepare workdir for process_spectra.
 
-    This function creates two files. A .json containing a list of
-    templates, and another one containing
+    This function creates a json file containing a list of list of spectra.
 
     :param args: parsed arguments of the program.
     """
@@ -66,7 +61,9 @@ def main(args):
     # bunch
     bunch_list = []
     for ao_list in bunch(bunch_size, os.path.join(args.workdir, args.spectra_path)):
-        bunch_list.append(ao_list)
+        f = open(NamedTemporaryFile(prefix='spectralist_', dir=args.workdir, delete=False), 'w')
+        json.dump(f, ao_list)
+        bunch_list.append(f.name)
 
     # create json containing list of bunches
     output_list = os.path.join(args.workdir, args.bunch_list)
