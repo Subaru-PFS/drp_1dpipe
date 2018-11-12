@@ -29,7 +29,7 @@ def get_conf_path(file_name):
     return os.path.join(os.path.dirname(__file__), 'conf', file_name)
 
 
-def init_logger(process_name):
+def init_logger(process_name, logdir, loglevel):
     """initializes a logger depending on which module calls it.
 
     :param process_name: name of the module calling it.
@@ -45,7 +45,9 @@ def init_logger(process_name):
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
     # file handler
-    file_handler = logging.FileHandler(process_name + '.log', 'w')
+    file_handler = logging.FileHandler(os.path.join(logdir,
+                                                    process_name + '.log'),
+                                                    'w')
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
