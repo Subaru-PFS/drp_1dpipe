@@ -9,7 +9,7 @@ import os
 import json
 import logging
 import argparse
-from drp_1dpipe.io.utils import init_logger
+from drp_1dpipe.io.utils import init_logger, get_args_from_file
 
 def define_program_options():
     """
@@ -19,14 +19,13 @@ def define_program_options():
     and call the main() function.
     """
 
-    init_logger("pre_process")
-    logger = logging.getLogger("pre_process")
-
     parser = argparse.ArgumentParser()
     parser.add_argument('--workdir', type=str, required=True,
                         help='The root working directory where data is located')
     parser.add_argument('--logdir', type=str, required=False,
                         help='The logging directory')
+    parser.add_argument('--loglevel', type=str, required=False,
+                        help='The logging level')
     parser.add_argument('--bunch_size', type=str, required=True,
                         help='Maximum number of spectra per bunch')
 
@@ -42,6 +41,10 @@ def define_program_options():
     parser.add_argument('--template_list', type=str, required=True,
                         help='List of templates used in process_spectra')
     args = parser.parse_args()
+    get_args_from_file("pre_process.conf", args)
+
+    init_logger("pre_process", args.logdir, args.loglevel)
+    logger = logging.getLogger("pre_process")
 
     # Start the main program
     main(args)
@@ -67,8 +70,8 @@ def main(args):
         bunch_list.append(ao_list)
 
     # create json containing list of bunches
-    output = os.path.join(args.workdir, args.bunch_list)
-    with open(output, 'w') as f:
+    output_list = os.path.join(args.workdir, args.bunch_list)
+    with open(output_list, 'w') as f:
         f.write(json.dumps(bunch_list))
 
     # Generate the template list :
@@ -78,6 +81,8 @@ def main(args):
     template_list = os.path.join(args.workdir, args.template_list)
     with open(template_list, 'w') as ff:
         ff.write(json.dumps(l))
+
+    return output_list, template_list
 
 def bunch(bunch_size, spectra_path):
     """
