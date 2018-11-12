@@ -13,7 +13,7 @@ from tempfile import NamedTemporaryFile
 from drp_1dpipe.io.utils import init_logger, get_args_from_file
 from tempfile import NamedTemporaryFile
 
-def define_program_options():
+def main():
     """
     The "define_program_options" function.
 
@@ -44,10 +44,10 @@ def define_program_options():
     init_logger("pre_process", args.logdir, args.loglevel)
 
     # Start the main program
-    main(args)
+    run(args)
 
 
-def main(args):
+def run(args):
     """
     Prepare workdir for process_spectra.
 

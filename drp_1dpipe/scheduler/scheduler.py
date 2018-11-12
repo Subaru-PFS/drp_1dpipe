@@ -11,7 +11,7 @@ from drp_1dpipe import pre_process, process_spectra
 from drp_1dpipe import pbs, local
 
 
-def define_program_options():
+def main():
     """
     The "define_program_options" function.
     """
@@ -32,9 +32,9 @@ def define_program_options():
     # Initialize logger
     init_logger("scheduler", args.logdir, args.loglevel)
 
-    main(args)
+    run(args)
 
-def main(args):
+def run(args):
 
     if args.scheduler.lower() == 'pbs':
         parallel = pbs.parallel
@@ -54,7 +54,3 @@ def main(args):
     parallel('process_spectra', bunch_list, 'spectra_listfile',
              args={'workdir': args.workdir,
                    'logdir': args.logdir})
-
-
-
-

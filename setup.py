@@ -16,7 +16,7 @@ VERSION = '0.0.0'   #PEP 440
 entry_points = {}
 # Command-line scripts
 entry_points['console_scripts'] = [
-    'split = drp_1dpipe.pre_process.pre_process:define_program_options',
+    'split = drp_1dpipe.pre_process.pre_process:main',
     'process_spectra = drp_1dpipe.process_spectra.process_spectra:main'
 ]
 

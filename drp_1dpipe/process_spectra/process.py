@@ -13,7 +13,7 @@ from redshift import *
 
 logger = logging.getLogger("process_spectra")
 
-def define_program_options():
+def main():
     """
     The "define_program_options" function.
     """
@@ -51,7 +51,7 @@ def define_program_options():
     init_logger("process_spectra", args.logdir, args.loglevel)
 
     # Start the main program
-    main(args)
+    run(args)
 
 def _calibration_path(args, *path):
     return os.path.normpath(os.path.expanduser(os.path.join(args.workdir,
@@ -157,7 +157,7 @@ def dummy(args):
     """A dummy client, for pipeline testing purpose"""
     pass
 
-def main(args):
+def run(args):
     if args.process_method.lower() == 'amazed':
         amazed(args)
     elif args.process_method.lower() == 'dummy':
