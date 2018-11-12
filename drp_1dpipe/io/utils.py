@@ -29,6 +29,17 @@ def get_conf_path(file_name):
     return os.path.join(os.path.dirname(__file__), 'conf', file_name)
 
 
+_loglevels = {
+    'CRITICAL': logging.CRITICAL,
+    'FATAL': logging.CRITICAL,
+    'ERROR': logging.ERROR,
+    'WARNING': logging.WARNING,
+    'WARN': logging.WARNING,
+    'INFO': logging.INFO,
+    'DEBUG': logging.DEBUG,
+    'NOTSET': logging.NOTSET,
+}
+
 def init_logger(process_name, logdir, loglevel):
     """initializes a logger depending on which module calls it.
 
@@ -40,21 +51,23 @@ def init_logger(process_name, logdir, loglevel):
 
     init_logger("pre_process")
     """
+    _level = _loglevels[loglevel.upper()]
+
     logger = logging.getLogger(process_name)
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(_level)
     formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
     # file handler
     file_handler = logging.FileHandler(os.path.join(logdir,
                                                     process_name + '.log'),
                                                     'w')
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(_level)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
     # stream handler
     stream_handler = logging.StreamHandler()
-    stream_handler.setLevel(logging.DEBUG)
+    stream_handler.setLevel(_level)
     logger.addHandler(stream_handler)
 
 

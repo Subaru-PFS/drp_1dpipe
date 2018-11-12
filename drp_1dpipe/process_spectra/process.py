@@ -24,6 +24,8 @@ def define_program_options():
                         help='The root working directory where data is located')
     parser.add_argument('--logdir', type=str, required=False,
                         help='The logging directory')
+    parser.add_argument('--loglevel', type=str, required=False,
+                        help='The logging level')
 
     # specific arguments
     parser.add_argument('--spectra_listfile', metavar='FILE', type=str,
@@ -46,7 +48,7 @@ def define_program_options():
     get_args_from_file("process_spectra.conf", args)
 
     # Initialize logger
-    init_logger("process_spectra")
+    init_logger("process_spectra", args.logdir, args.loglevel)
 
     # Start the main program
     main(args)

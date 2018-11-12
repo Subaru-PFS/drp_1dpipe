@@ -7,7 +7,6 @@ Author: CeSAM
 
 import json
 import uuid
-from tempfile NamedTemporaryFile
 from collections import namedtuple
 from drp_1dpipe import pre_process, process_spectra
 from drp_1dpipe import pbs, local
@@ -34,6 +33,8 @@ def define_program_options():
                         help='The root working directory where data is located')
     parser.add_argument('--logdir', type=str, required=False,
                         help='The logging directory')
+    parser.add_argument('--loglevel', type=str, required=False,
+                        help='The logging level. CRITICAL, ERROR, WARNING, INFO or DEBUG')
     parser.add_argument('--scheduler', type=str, required=False,
                         help='The scheduler to use. Whether "local" or "pbs".')
 
@@ -41,7 +42,7 @@ def define_program_options():
     get_args_from_file("scheduler.conf", args)
 
     # Initialize logger
-    init_logger("scheduler")
+    init_logger("scheduler", args.logdir, args.loglevel)
 
     main(args)
 

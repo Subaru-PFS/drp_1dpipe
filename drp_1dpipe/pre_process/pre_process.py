@@ -10,6 +10,7 @@ import json
 import logging
 import argparse
 from drp_1dpipe.io.utils import init_logger, get_args_from_file
+from tempfile import NamedTemporaryFile
 
 def define_program_options():
     """
@@ -69,16 +70,6 @@ def main(args):
     output_list = os.path.join(args.workdir, args.bunch_list)
     with open(output_list, 'w') as f:
         f.write(json.dumps(bunch_list))
-
-    # Generate the template list :
-    l = []
-    for file in os.listdir(os.path.join(args.workdir, args.templates_path)):
-        l.append(file)
-    template_list = os.path.join(args.workdir, args.template_list)
-    with open(template_list, 'w') as ff:
-        ff.write(json.dumps(l))
-
-    return output_list, template_list
 
 def bunch(bunch_size, spectra_path):
     """
