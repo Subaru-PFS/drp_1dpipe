@@ -9,6 +9,7 @@ import os
 import json
 import logging
 import argparse
+from tempfile import NamedTemporaryFile
 from drp_1dpipe.io.utils import init_logger, get_args_from_file
 from tempfile import NamedTemporaryFile
 

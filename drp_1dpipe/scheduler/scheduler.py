@@ -7,20 +7,8 @@ Author: CeSAM
 
 import json
 import uuid
-from collections import namedtuple
 from drp_1dpipe import pre_process, process_spectra
 from drp_1dpipe import pbs, local
-
-PreProcessArgs = namedtuple('PreProcessArgs',
-                            ['workdir', 'logdir', 'bunch_size', 'spectra_path', # inputs
-                             'bunch_list' # outputs
-                            ])
-
-ProcessArgs = namedtuple('ProcessArgs',
-                         ['workdir', 'logdir', 'spectra_listfile', 'parameters_file',
-                          'template_dir', 'linecatalog', 'calibration_dir', 'zclassifier_dir', # inputs
-                          'output_dir' # outputs
-                         ])
 
 
 def define_program_options():
