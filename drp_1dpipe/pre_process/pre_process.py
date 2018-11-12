@@ -44,7 +44,6 @@ def define_program_options():
     get_args_from_file("pre_process.conf", args)
 
     init_logger("pre_process", args.logdir, args.loglevel)
-    logger = logging.getLogger("pre_process")
 
     # Start the main program
     main(args)
