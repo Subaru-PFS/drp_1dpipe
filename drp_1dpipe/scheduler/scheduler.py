@@ -7,8 +7,10 @@ Author: CeSAM
 
 import json
 import uuid
-from drp_1dpipe import pre_process, process_spectra
-from drp_1dpipe import pbs, local
+import argparse
+import subprocess
+from drp_1dpipe.io.utils import init_logger, get_args_from_file
+from drp_1dpipe.scheduler import pbs, local
 
 
 def main():
@@ -46,9 +48,10 @@ def run(args):
     bunch_list = '{}.json'.format(uuid.uuid4().hex)
 
     # prepare workdir
-    pre_process.main({'workdir': args.workdir,
-                      'logdir': args.logdir,
-                      'bunch_list': bunch_list})
+    result = subprocess.run(['pre_process', '--workdir={}'.format(args.workdir),
+                             '--logdir={}'.format(args.logdir),
+                             '--bunch_list={}'.format(bunch_list)])
+    assert result.returncode == 0
 
     # process spectra
     parallel('process_spectra', bunch_list, 'spectra_listfile',

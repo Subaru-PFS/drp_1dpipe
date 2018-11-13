@@ -1,3 +1,5 @@
+import subprocess
+
 def parallel(command, filelist, arg_name, args):
     """Run a command on local host
 

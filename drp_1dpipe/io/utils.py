@@ -51,6 +51,8 @@ def init_logger(process_name, logdir, loglevel):
 
     init_logger("pre_process")
     """
+
+    os.makedirs(logdir, exist_ok=True)
     _level = _loglevels[loglevel.upper()]
 
     logger = logging.getLogger(process_name)
@@ -97,7 +99,7 @@ def get_args_from_file(file_name, args):
     args.arg1 # -> 1
     args.arg2 # -> foo
     """
-    with open(file_name, 'r') as ff:
+    with open(get_conf_path(file_name), 'r') as ff:
         lines = ff.readlines()
     for line in lines:
         try:

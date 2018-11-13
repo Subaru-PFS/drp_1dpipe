@@ -28,15 +28,15 @@ def main():
                         help='The logging directory')
     parser.add_argument('--loglevel', type=str, required=False,
                         help='The logging level')
-    parser.add_argument('--bunch_size', type=str, required=True,
+    parser.add_argument('--bunch_size', type=str, required=False,
                         help='Maximum number of spectra per bunch')
 
     # data input
-    parser.add_argument('--spectra_path', type=str, required=True,
+    parser.add_argument('--spectra_path', type=str, required=False,
                         help='Path to spectra to process')
 
     # outputs
-    parser.add_argument('--bunch_list', type=str, required=True,
+    parser.add_argument('--bunch_list', type=str, required=False,
                         help='List of files of bunch of astronomical objects')
     args = parser.parse_args()
     get_args_from_file("pre_process.conf", args)

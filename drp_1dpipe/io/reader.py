@@ -1,5 +1,4 @@
 import fitsio
-from pfs.datamodel import pfsObject
 from pyamazed.redshift import *
 import numpy as np
 

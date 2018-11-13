@@ -3,8 +3,6 @@ import textwrap
 import subprocess
 import tempfile
 import uuid
-from paramiko.client import SSHClient
-from paramiko.sftp_client import SFTPClient
 
 
 pbs_script_template = textwrap.dedent("""\
@@ -53,11 +51,11 @@ def parallel(command, filelist, arg_name, args):
                                         executor=executor_script,
                                         task_id=task_id)
     pbs_script_name = os.path.join(arg.workdir, 'pbs_script_{}.sh'.format(task_id))
-    with open(pbs_script_name), 'w') as pbs_script:
+    with open(pbs_script_name, 'w') as pbs_script:
         pbs_script.write(script)
 
     # run pbs
-    result = subprocess.call('qsub {}'.format(pbs_script_name))
-    assert result == 0
+    result = subprocess.run(['qsub', pbs_script_name])
+    assert result.returncode == 0
 
 

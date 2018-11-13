@@ -8,6 +8,7 @@ Author: CeSAM
 import os.path
 import json
 import logging
+import argparse
 from drp_1dpipe.io.reader import read_spectrum
 from redshift import *
 
@@ -68,11 +69,11 @@ def _output_path(config, *path):
                                                             *path)))
 
 def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog, param, classif):
+
     try:
         spectrum = read_spectrum(_spectrum_path(args, spectrum_path))
     except Exception as e:
-        logger.log(logging.CRITICAL, "Can't load spectrum : {}".format(e))
-        continue
+        logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
 
     proc_id = '{}-{}'.format(spectrum.GetName(), i)
 
@@ -90,14 +91,12 @@ def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog
                  classif)
     except Exception as e:
         logger.log(logging.ERROR, "Can't init process flow : {}".format(e))
-        continue
 
     pflow=CProcessFlow()
     try:
         pflow.Process(ctx)
     except Exception as e:
         logger.log(logging.ERROR, "Can't process : {}".format(e))
-        continue
 
     ctx.GetDataStore().SaveRedshiftResult(args.output_folder)
     ctx.GetDataStore().SaveAllResults(output_path(args, proc_id), 'all')

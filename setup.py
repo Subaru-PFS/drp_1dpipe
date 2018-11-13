@@ -16,8 +16,9 @@ VERSION = '0.0.0'   #PEP 440
 entry_points = {}
 # Command-line scripts
 entry_points['console_scripts'] = [
-    'split = drp_1dpipe.pre_process.pre_process:main',
-    'process_spectra = drp_1dpipe.process_spectra.process_spectra:main'
+    'pre_process = drp_1dpipe.pre_process.pre_process:main',
+    'process_spectra = drp_1dpipe.process_spectra.process_spectra:main',
+    'scheduler = drp_1dpipe.scheduler.scheduler:main'
 ]
 
 setup(name=NAME,
