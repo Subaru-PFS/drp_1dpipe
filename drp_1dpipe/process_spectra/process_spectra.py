@@ -9,10 +9,21 @@ import os.path
 import json
 import logging
 import argparse
+import time
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath
 from drp_1dpipe.io.reader import read_spectrum
 from redshift import *
 
 logger = logging.getLogger("process_spectra")
+
+def _calibration_path(args, *path):
+    return normpath(args.workdir, args.calibration_dir, *path)
+
+def _spectrum_path(config, *path):
+    return normpath(args.workdir, args.spectrum_dir, *path)
+
+def _output_path(config, *path):
+    return normpath(args.workdir, args.output_dir, *path)
 
 def main():
     """
@@ -41,7 +52,7 @@ def main():
                         help='Path to the rest lines catalog file. Relative to calibration_dir')
     parser.add_argument('--zclassifier_dir', metavar='DIR', type=str,
                         help='Specify directory in which zClassifier files are stored. Relative to calibration_dir')
-    parser.add_argument('--process_method', type=str, required=True,
+    parser.add_argument('--process_method', type=str, required=False,
                         help='Process method to use. Whether Dummy or Amazed')
     parser.add_argument('--output_dir', metavar='DIR', type=str,
                         help='Directory where all generated files are going to be stored')
@@ -53,20 +64,7 @@ def main():
 
     # Start the main program
     run(args)
-
-def _calibration_path(args, *path):
-    return os.path.normpath(os.path.expanduser(os.path.join(args.workdir,
-                                                            args.calibration_dir,
-                                                            *path)))
-
-def _spectrum_path(config, *path):
-    return os.path.normpath(os.path.expanduser(os.path.join(args.workdir,
-                                                            args.spectrum_dir,
-                                                            *path)))
-def _output_path(config, *path):
-    return os.path.normpath(os.path.expanduser(os.path.join(args.workdir,
-                                                            args.output_dir,
-                                                            *path)))
+    return 0
 
 def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog, param, classif):
 
@@ -154,7 +152,9 @@ def amazed(args):
 
 def dummy(args):
     """A dummy client, for pipeline testing purpose"""
-    pass
+    print("running dummy client {}".format(args))
+    time.sleep(60)
+    print("done")
 
 def run(args):
     if args.process_method.lower() == 'amazed':
@@ -163,3 +163,4 @@ def run(args):
         dummy(args)
     else:
         raise "Unknown process_method {}".format(args.process_method)
+

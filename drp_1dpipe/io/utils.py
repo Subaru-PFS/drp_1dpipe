@@ -111,3 +111,7 @@ def get_args_from_file(file_name, args):
                 setattr(args, key.strip(), value.strip())
         except AttributeError:
             setattr(args, key.strip(), value.strip())
+
+def normpath(*args):
+    return os.path.normpath(os.path.expanduser(os.path.join(*args)))
+

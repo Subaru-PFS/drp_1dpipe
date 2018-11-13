@@ -9,7 +9,7 @@ import json
 import uuid
 import argparse
 import subprocess
-from drp_1dpipe.io.utils import init_logger, get_args_from_file
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath
 from drp_1dpipe.scheduler import pbs, local
 
 
@@ -27,6 +27,8 @@ def main():
                         help='The logging level. CRITICAL, ERROR, WARNING, INFO or DEBUG')
     parser.add_argument('--scheduler', type=str, required=False,
                         help='The scheduler to use. Whether "local" or "pbs".')
+    parser.add_argument('--pre_commands', type=str, required=False,
+                        help='Commands to run before before process_spectra.')
 
     args = parser.parse_args()
     get_args_from_file("scheduler.conf", args)
@@ -45,7 +47,7 @@ def run(args):
     else:
         raise "Unknown scheduler {}".format(args.scheduler)
 
-    bunch_list = '{}.json'.format(uuid.uuid4().hex)
+    bunch_list = normpath(args.workdir, '{}.json'.format(uuid.uuid4().hex))
 
     # prepare workdir
     result = subprocess.run(['pre_process', '--workdir={}'.format(args.workdir),
@@ -55,5 +57,6 @@ def run(args):
 
     # process spectra
     parallel('process_spectra', bunch_list, 'spectra_listfile',
-             args={'workdir': args.workdir,
-                   'logdir': args.logdir})
+             args={'workdir': normpath(args.workdir),
+                   'logdir': normpath(args.logdir),
+                   'pre_commands': args.pre_commands})

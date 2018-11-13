@@ -10,7 +10,7 @@ import json
 import logging
 import argparse
 from tempfile import NamedTemporaryFile
-from drp_1dpipe.io.utils import init_logger, get_args_from_file
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath
 from tempfile import NamedTemporaryFile
 
 def main():
@@ -46,7 +46,6 @@ def main():
     # Start the main program
     run(args)
 
-
 def run(args):
     """
     Prepare workdir for process_spectra.
@@ -57,20 +56,21 @@ def run(args):
     """
     logger = logging.getLogger("pre_process")
 
-    spectra_path = args.spectra_path
+    spectra_path = normpath(args.workdir, args.spectra_path)
     bunch_size = args.bunch_size
 
     # bunch
     bunch_list = []
-    for ao_list in bunch(bunch_size, os.path.join(args.workdir, args.spectra_path)):
-        f = open(NamedTemporaryFile(prefix='spectralist_', dir=args.workdir, delete=False), 'w')
-        json.dump(f, ao_list)
-        bunch_list.append(f.name)
+    for ao_list in bunch(bunch_size, spectra_path):
+        f = NamedTemporaryFile(prefix='spectralist_', dir=normpath(args.workdir), delete=False,
+                               mode='w')
+        json.dump(ao_list, f)
+        bunch_list.append(normpath(args.workdir, f.name))
 
     # create json containing list of bunches
-    output_list = os.path.join(args.workdir, args.bunch_list)
+    output_list = normpath(args.workdir, args.bunch_list)
     with open(output_list, 'w') as f:
-        f.write(json.dumps(bunch_list))
+        json.dump(bunch_list, f)
 
 def bunch(bunch_size, spectra_path):
     """
@@ -84,11 +84,11 @@ def bunch(bunch_size, spectra_path):
     """
     logger = logging.getLogger("pre_process")
 
-    list = []
+    _list = []
     for source in os.listdir(spectra_path):
-        list.append(source)
-        if len(list) >= int(bunch_size):
-            yield list
-            list = []
-    if list:
-        yield list
+        _list.append(normpath(spectra_path, source))
+        if len(_list) >= int(bunch_size):
+            yield _list
+            _list = []
+    if _list:
+        yield _list
