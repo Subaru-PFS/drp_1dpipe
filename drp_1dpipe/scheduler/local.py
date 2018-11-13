@@ -1,7 +1,10 @@
 import subprocess
+import json
 
 def parallel(command, filelist, arg_name, args):
     """Run a command on local host
+
+    Warning: pre_commands is not honored
 
     :param command: Path to command to execute
     :param filelist: JSON file. a list of list of FITS file
@@ -13,11 +16,10 @@ def parallel(command, filelist, arg_name, args):
     with open(filelist, 'r') as f:
         subtasks = json.load(f)
 
-    extra_args = ' '.join(['--{}={}'.format(k,v) for k,v in args.items()])
+    extra_args = ['--{}={}'.format(k,v) for k,v in args.items() if k != 'pre_commands']
 
     # process each task
     for arg_value in subtasks:
-        subprocess.call('{command} --{arg_name}={arg_value} {extra_args}'.format(command=command,
-                                                                                 arg_name=arg_name,
-                                                                                 arg_value=arg_value,
-                                                                                 extra_args=extra_args))
+        task = [command, '--{arg_name}={arg_value}'.format(arg_name=arg_name, arg_value=arg_value)]
+        task.extend(extra_args)
+        subprocess.run(task)

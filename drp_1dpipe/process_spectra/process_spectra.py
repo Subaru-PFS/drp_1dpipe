@@ -12,7 +12,7 @@ import argparse
 import time
 from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath
 from drp_1dpipe.io.reader import read_spectrum
-from redshift import *
+from pyamazed.redshift import *
 
 logger = logging.getLogger("process_spectra")
 
