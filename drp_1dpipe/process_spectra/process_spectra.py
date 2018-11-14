@@ -10,7 +10,7 @@ import json
 import logging
 import argparse
 import time
-from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
 from drp_1dpipe.io.reader import read_spectrum
 from pyamazed.redshift import *
 
@@ -27,44 +27,33 @@ def _output_path(args, *path):
 
 def main():
     """
-    The "define_program_options" function.
+    process_spectra entry point.
+
+    Parse command line arguments, and call the run() function.
     """
 
-    parser = argparse.ArgumentParser()
-    # mandatory arguments
-    parser.add_argument('--workdir', type=str, required=True,
-                        help='The root working directory where data is located')
-    parser.add_argument('--logdir', type=str, required=False,
-                        help='The logging directory')
-    parser.add_argument('--loglevel', type=str, required=False,
-                        help='The logging level')
-
-    # specific arguments
-    parser.add_argument('--spectra_listfile', metavar='FILE', type=str,
+    parser = init_argparse()
+    parser.add_argument('--spectra_listfile', metavar='FILE',
                         help='JSON file holding a list of files of astronomical objects')
-    parser.add_argument('--calibration_dir', metavar='DIR', type=str,
+    parser.add_argument('--calibration_dir', metavar='DIR',
                         help='Specify directory in which calibration files are stored')
-    parser.add_argument('--parameters_file', metavar='FILE', type=str,
+    parser.add_argument('--parameters_file', metavar='FILE',
                         help='Parameters file. Relative to workdir')
-    parser.add_argument('--template_dir', metavar='DIR', type=str,
+    parser.add_argument('--template_dir', metavar='DIR',
                         help='Specify directory in which input templates files are stored. Relative to calibration_dir')
-    parser.add_argument('--linecatalog', metavar='FILE', type=str,
+    parser.add_argument('--linecatalog', metavar='FILE',
                         help='Path to the rest lines catalog file. Relative to calibration_dir')
-    parser.add_argument('--zclassifier_dir', metavar='DIR', type=str,
+    parser.add_argument('--zclassifier_dir', metavar='DIR',
                         help='Specify directory in which zClassifier files are stored. Relative to calibration_dir')
-    parser.add_argument('--process_method', type=str, required=False,
+    parser.add_argument('--process_method',
                         help='Process method to use. Whether Dummy or Amazed')
-    parser.add_argument('--output_dir', metavar='DIR', type=str,
+    parser.add_argument('--output_dir', metavar='DIR',
                         help='Directory where all generated files are going to be stored')
     args = parser.parse_args()
     get_args_from_file("process_spectra.conf", args)
 
-    # Initialize logger
-    init_logger("process_spectra", args.logdir, args.loglevel)
-
     # Start the main program
-    run(args)
-    return 0
+    return run(args)
 
 def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog, param, classif):
 
@@ -168,12 +157,16 @@ def amazed(args):
         json.dump({'cpf-redshift-version': get_version()}, f)
 
 def dummy(args):
-    """A dummy client, for pipeline testing purpose"""
-    print("running dummy client {}".format(args))
-    time.sleep(20)
+    """A dummy client, for pipeline testing purpose."""
+    logger.log("running dummy client {}".format(args))
+    time.sleep(10)
     print("done")
 
 def run(args):
+
+    # initialize logger
+    init_logger("process_spectra", args.logdir, args.loglevel)
+
     if args.process_method.lower() == 'amazed':
         amazed(args)
     elif args.process_method.lower() == 'dummy':
@@ -181,3 +174,4 @@ def run(args):
     else:
         raise "Unknown process_method {}".format(args.process_method)
 
+    return 0

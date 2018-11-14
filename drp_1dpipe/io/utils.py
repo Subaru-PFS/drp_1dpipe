@@ -2,14 +2,29 @@ import os.path
 import copy
 import logging
 import time
+import argparse
 from logging.handlers import RotatingFileHandler
 
 
-def get_auxiliary_path(file_name):
-    """Return the full path of file in auxiliary directory
+def init_argparse():
+    """Initialize command-line argument parser with common arguments.
 
-    :param file_name: name of the file
-    :return: full path
+    :return: An initialized ArgumentParsel object.
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--workdir', type=str, required=False,
+                        help='The root working directory where data is located.')
+    parser.add_argument('--logdir', type=str, required=False,
+                        help='The logging directory.')
+    parser.add_argument('--loglevel', type=str, required=False,
+                        help='The logging level. CRITICAL, ERROR, WARNING, INFO or DEBUG.')
+    return parser
+
+def get_auxiliary_path(file_name):
+    """Get the full path of file in auxiliary directory.
+
+    :param file_name: Name of the file.
+    :return: Full path of auxiliary directory.
 
     :Example:
 
@@ -19,10 +34,10 @@ def get_auxiliary_path(file_name):
 
 
 def get_conf_path(file_name):
-    """Return the full path of file in configuration directory
+    """Get the full path of file in configuration directory.
 
-    :param file_name: name of the file
-    :return: full path
+    :param file_name: Name of the file.
+    :return: Full path of configuration file.
 
     :Example:
 
@@ -43,7 +58,7 @@ _loglevels = {
 }
 
 def init_logger(process_name, logdir, loglevel):
-    """initializes a logger depending on which module calls it.
+    """Initializes a logger depending on which module calls it.
 
     :param process_name: name of the module calling it.
 
@@ -76,7 +91,7 @@ def init_logger(process_name, logdir, loglevel):
 
 
 def get_args_from_file(file_name, args):
-    """Get arguments value from configuration file
+    """Get arguments value from configuration file.
 
     :param file_name: name of the configuration file
     :param args: object (ex. retrieve from argparse module)
@@ -121,16 +136,16 @@ def wait_semaphores(semaphores, timeout=4.354e17):
     """Wait all files are created.
 
     :param semaphores: List of files to watch for creation.
+    :param timeout: Maximun wait time, in seconds.
     """
+    TICK = 20
     start = time.time()
-    while semaphores:
-        print(f"waiting {semaphores}")
-        time.sleep(20)
-        wait_list = []
-        for s in semaphores:
-            if not os.path.exists(s):
-                wait_list.append(s)
-        semaphores = wait_list
-        if time.time() - start > timeout:
+    while True:
+        while semaphores and os.path.exists(semaphores[0]):
+            del semaphores[0]
+        if not semaphores:
+            return
+        if time.time() - start + TICK > timeout:
             raise TimeoutError
+        time.sleep(TICK)
 

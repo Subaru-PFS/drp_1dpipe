@@ -1,4 +1,5 @@
 import fitsio
+import os.path
 from pyamazed.redshift import *
 import numpy as np
 
@@ -15,5 +16,5 @@ def read_spectrum(path):
     spectralaxis = CSpectrumSpectralAxis(data['lambda'][:]*10)
     signal = CSpectrumFluxAxis(data['flux'][:], np.sqrt(data['fluxVariance'][:]))
     spectrum = CSpectrum(spectralaxis, signal)
-    spectrum.SetName(str(obj_id))
+    spectrum.SetName(os.path.basename(path))
     return spectrum

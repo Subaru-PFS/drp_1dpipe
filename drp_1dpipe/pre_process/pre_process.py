@@ -10,42 +10,34 @@ import json
 import logging
 import argparse
 from tempfile import NamedTemporaryFile
-from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
 from tempfile import NamedTemporaryFile
+
+
+logger = logging.getLogger("pre_process")
 
 def main():
     """
-    The "define_program_options" function.
+    pre_process entry point.
 
-    This function initializes a logger, parses all command line arguments,
-    and call the main() function.
+    Parse command line arguments, and call the run() function.
     """
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--workdir', type=str, required=True,
-                        help='The root working directory where data is located')
-    parser.add_argument('--logdir', type=str, required=False,
-                        help='The logging directory')
-    parser.add_argument('--loglevel', type=str, required=False,
-                        help='The logging level')
-    parser.add_argument('--bunch_size', type=str, required=False,
-                        help='Maximum number of spectra per bunch')
+    parser = init_argparse()
+    parser.add_argument('--bunch_size', metavar='SIZE', help='Maximum number of spectra per bunch')
 
     # data input
-    parser.add_argument('--spectra_path', type=str, required=False,
-                        help='Path to spectra to process')
+    parser.add_argument('--spectra_path', metavar='DIR', help='Path to spectra to process')
 
     # outputs
-    parser.add_argument('--bunch_list', type=str, required=False,
+    parser.add_argument('--bunch_list', metavar='FILE',
                         help='List of files of bunch of astronomical objects')
+
     args = parser.parse_args()
     get_args_from_file("pre_process.conf", args)
 
-    init_logger("pre_process", args.logdir, args.loglevel)
-
     # Start the main program
     return run(args)
-
 
 def run(args):
     """
@@ -54,8 +46,11 @@ def run(args):
     This function creates a json file containing a list of list of spectra.
 
     :param args: parsed arguments of the program.
+    :return: 0 on success
     """
-    logger = logging.getLogger("pre_process")
+
+    # initialize logger
+    init_logger("pre_process", args.logdir, args.loglevel)
 
     spectra_path = normpath(args.workdir, args.spectra_path)
     bunch_size = args.bunch_size
@@ -75,7 +70,6 @@ def run(args):
 
     return 0
 
-
 def bunch(bunch_size, spectra_path):
     """
     The "bunch" function.
@@ -86,7 +80,6 @@ def bunch(bunch_size, spectra_path):
     :param spectra_path: List of sources in the workdir.
     :return: a generator with the max number of sources.
     """
-    logger = logging.getLogger("pre_process")
 
     _list = []
     for source in os.listdir(spectra_path):

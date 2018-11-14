@@ -96,7 +96,7 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
         task = [command, '--{arg_name}={arg_value}'.format(arg_name=arg_name, arg_value=arg_value)]
         task.extend(extra_args)
         if seq_arg_name:
-            task.append('--{}={}-{}'.format(seq_arg_name, args[seq_arg_name], i))
+            task.append('--{}={}{}'.format(seq_arg_name, args[seq_arg_name], i))
         tasks.append(task)
 
     with open(os.path.join(os.path.dirname(__file__), 'pbs_executor.py.in'), 'r') as f:
