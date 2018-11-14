@@ -12,7 +12,7 @@ def single(command, args):
     task.extend(extra_args)
     subprocess.run(task)
 
-def parallel(command, filelist, arg_name, args):
+def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     """Run a command on local host
 
     Warning: pre_commands is not honored
@@ -20,6 +20,7 @@ def parallel(command, filelist, arg_name, args):
     :param command: Path to command to execute
     :param filelist: JSON file. a list of list of FITS file
     :param arg_name: command-line argument name that will be given the FITS-list file name
+    :param seq_arg_name: command-line argument that will have appended a sequence index
     :param args: extra parameters to give to command, as a dictionnary
     """
 
@@ -27,10 +28,14 @@ def parallel(command, filelist, arg_name, args):
     with open(filelist, 'r') as f:
         subtasks = json.load(f)
 
-    extra_args = ['--{}={}'.format(k,v) for k,v in args.items() if k != 'pre_commands']
+    extra_args = ['--{}={}'.format(k, v)
+                  for k, v in args.items()
+                  if k not in ('pre_commands', seq_arg_name)]
 
     # process each task
-    for arg_value in subtasks:
+    for i, arg_value in enumerate(subtasks):
         task = [command, '--{arg_name}={arg_value}'.format(arg_name=arg_name, arg_value=arg_value)]
         task.extend(extra_args)
+        if seq_arg_name:
+            task.append('--{}={}-{}'.format(seq_arg_name, args[seq_arg_name], i))
         subprocess.run(task)

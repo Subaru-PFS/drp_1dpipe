@@ -56,7 +56,8 @@ def run(args):
                                           'bunch_list': bunch_list})
 
     # process spectra
-    scheduler.parallel('process_spectra', bunch_list, 'spectra_listfile',
+    scheduler.parallel('process_spectra', bunch_list, 'spectra_listfile', 'output_dir',
                        args={'workdir': normpath(args.workdir),
                              'logdir': normpath(args.logdir),
-                             'pre_commands': args.pre_commands})
+                             'pre_commands': args.pre_commands,
+                             'output_dir': normpath(args.workdir, 'output')})

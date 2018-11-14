@@ -125,7 +125,7 @@ def wait_semaphores(semaphores, timeout=4.354e17):
     start = time.time()
     while semaphores:
         print(f"waiting {semaphores}")
-        time.sleep(5)
+        time.sleep(20)
         wait_list = []
         for s in semaphores:
             if not os.path.exists(s):
