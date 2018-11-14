@@ -153,7 +153,7 @@ def amazed(args):
 def dummy(args):
     """A dummy client, for pipeline testing purpose"""
     print("running dummy client {}".format(args))
-    time.sleep(60)
+    time.sleep(20)
     print("done")
 
 def run(args):

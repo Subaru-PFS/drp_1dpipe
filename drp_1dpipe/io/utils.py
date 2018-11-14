@@ -1,5 +1,7 @@
 import os.path
+import copy
 import logging
+import time
 from logging.handlers import RotatingFileHandler
 
 
@@ -114,4 +116,21 @@ def get_args_from_file(file_name, args):
 
 def normpath(*args):
     return os.path.normpath(os.path.expanduser(os.path.join(*args)))
+
+def wait_semaphores(semaphores, timeout=4.354e17):
+    """Wait all files are created.
+
+    :param semaphores: List of files to watch for creation.
+    """
+    start = time.time()
+    while semaphores:
+        print(f"waiting {semaphores}")
+        time.sleep(5)
+        wait_list = []
+        for s in semaphores:
+            if not os.path.exists(s):
+                wait_list.append(s)
+        semaphores = wait_list
+        if time.time() - start > timeout:
+            raise TimeoutError
 

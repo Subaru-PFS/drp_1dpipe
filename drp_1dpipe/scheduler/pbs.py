@@ -4,7 +4,7 @@ import textwrap
 import subprocess
 import tempfile
 import uuid
-from drp_1dpipe.io.utils import normpath
+from drp_1dpipe.io.utils import normpath, wait_semaphores
 
 
 pbs_script_template = textwrap.dedent("""\
@@ -12,10 +12,10 @@ pbs_script_template = textwrap.dedent("""\
             #PBS -l nodes=1:ppn=1
             #PBS -l walltime=0:1:0
             #PBS -t 1-{jobs}
-            cd $PBS_O_WORKDIR
+            cd {workdir}
             {pre_commands}
             /usr/bin/env python3 {executor_script} ${{PBS_ARRAYID}} >> out-{task_id}-${{PBS_ARRAYID}}.txt
-            echo "$?" >> {task_id}-${{PBS_ARRAYID}}.done
+            echo "$?" >> {task_id}_${{PBS_ARRAYID}}.done
             """)
 
 def parallel(command, filelist, arg_name, args):
@@ -59,7 +59,9 @@ def parallel(command, filelist, arg_name, args):
         pre_commands = '\n'.join([' '.join([w for w in command]) for command in _cmds])
     else:
         pre_commands = ''
+
     script = pbs_script_template.format(jobs=len(subtasks),
+                                        workdir=args['workdir'],
                                         pre_commands=pre_commands,
                                         executor_script=executor_script,
                                         task_id=task_id)
@@ -71,4 +73,7 @@ def parallel(command, filelist, arg_name, args):
     result = subprocess.run(['qsub', pbs_script_name])
     assert result.returncode == 0
 
+    # wait all sub-tasks
+    semaphores = ['{}_{}.done'.format(task_id, i) for i in range(1, len(subtasks)+1)]
+    wait_semaphores(semaphores)
 

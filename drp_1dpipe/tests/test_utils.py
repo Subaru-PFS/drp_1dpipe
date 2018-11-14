@@ -7,7 +7,10 @@ Author: PSF DRP1D developers
 
 import pytest
 import os.path
-from drp_1dpipe.io.utils import get_auxiliary_path, get_conf_path
+import tempfile
+import threading
+import time
+from drp_1dpipe.io.utils import get_auxiliary_path, get_conf_path, normpath, wait_semaphores
 
 
 def test_auxdir():
@@ -66,3 +69,38 @@ def test_args_from_file():
     with pytest.raises(AttributeError):
         getattr(args, "arg7")
     fp1.close()
+
+def test_normpath():
+    assert normpath('~/foo//bar/baz/~') == os.path.expanduser('~/foo/bar/baz/~')
+    assert normpath('~/foo/.././bar/./baz/') == os.path.expanduser('~/bar/baz')
+    assert normpath('////foo/baz////') == os.path.expanduser('/foo/baz')
+
+
+def _create_semaphores(semaphores):
+    """Create all files in semaphores, one per second"""
+    for f in semaphores:
+        fd = open(f, 'w')
+        time.sleep(1)
+        fd.close()
+
+def test_wait_semaphores():
+
+    # wait a never creater file
+    try:
+        wait_semaphores(['/tmp/foo'], 5)
+    except TimeoutError:
+        pass
+    except:
+        raise
+
+    # create files before waiting
+    semaphores = [tempfile.NamedTemporaryFile(prefix='pytest_') for i in range(5)]
+    wait_semaphores([s.name for s in semaphores], 10)
+
+    # create files after waiting
+    with tempfile.TemporaryDirectory(prefix='pytest_') as tmpdir:
+        semaphores = [os.path.join(tmpdir, str(i)) for i in range(8)]
+        t = threading.Thread(target=_create_semaphores, args=(semaphores,))
+        t.start()
+        wait_semaphores(semaphores, 20)
+        t.join(timeout=2)
