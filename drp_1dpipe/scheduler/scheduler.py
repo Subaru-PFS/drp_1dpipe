@@ -41,22 +41,22 @@ def main():
 def run(args):
 
     if args.scheduler.lower() == 'pbs':
-        parallel = pbs.parallel
+        scheduler = pbs
     elif args.scheduler.lower() == 'local':
-        parallel = local.parallel
+        scheduler = local
     else:
         raise "Unknown scheduler {}".format(args.scheduler)
 
     bunch_list = normpath(args.workdir, '{}.json'.format(uuid.uuid4().hex))
 
     # prepare workdir
-    result = subprocess.run(['pre_process', '--workdir={}'.format(args.workdir),
-                             '--logdir={}'.format(args.logdir),
-                             '--bunch_list={}'.format(bunch_list)])
-    assert result.returncode == 0
+    scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
+                                          'logdir': normpath(args.logdir),
+                                          'pre_commands': args.pre_commands,
+                                          'bunch_list': bunch_list})
 
     # process spectra
-    parallel('process_spectra', bunch_list, 'spectra_listfile',
-             args={'workdir': normpath(args.workdir),
-                   'logdir': normpath(args.logdir),
-                   'pre_commands': args.pre_commands})
+    scheduler.parallel('process_spectra', bunch_list, 'spectra_listfile',
+                       args={'workdir': normpath(args.workdir),
+                             'logdir': normpath(args.logdir),
+                             'pre_commands': args.pre_commands})

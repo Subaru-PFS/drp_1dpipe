@@ -17,12 +17,12 @@ from pyamazed.redshift import *
 logger = logging.getLogger("process_spectra")
 
 def _calibration_path(args, *path):
-    return normpath(args.workdir, args.calibration_dir, *path)
+    return normpath(args.calibration_dir, *path)
 
-def _spectrum_path(config, *path):
-    return normpath(args.workdir, args.spectrum_dir, *path)
+def _spectrum_path(args, *path):
+    return normpath(args.workdir, *path)
 
-def _output_path(config, *path):
+def _output_path(args, *path):
     return normpath(args.workdir, args.output_dir, *path)
 
 def main():
@@ -45,7 +45,7 @@ def main():
     parser.add_argument('--calibration_dir', metavar='DIR', type=str,
                         help='Specify directory in which calibration files are stored')
     parser.add_argument('--parameters_file', metavar='FILE', type=str,
-                        help='Parameters file. Relative to calibration_dir')
+                        help='Parameters file. Relative to workdir')
     parser.add_argument('--template_dir', metavar='DIR', type=str,
                         help='Specify directory in which input templates files are stored. Relative to calibration_dir')
     parser.add_argument('--linecatalog', metavar='FILE', type=str,
@@ -72,8 +72,9 @@ def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog
         spectrum = read_spectrum(_spectrum_path(args, spectrum_path))
     except Exception as e:
         logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
+        return
 
-    proc_id = '{}-{}'.format(spectrum.GetName(), i)
+    proc_id = '{}-{}'.format(spectrum.GetName(), index)
 
     range = TFloat64Range(3800, 12600)
     done, mean, std = spectrum.GetMeanAndStdFluxInRange(range)
@@ -96,16 +97,32 @@ def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog
     except Exception as e:
         logger.log(logging.ERROR, "Can't process : {}".format(e))
 
-    ctx.GetDataStore().SaveRedshiftResult(args.output_folder)
-    ctx.GetDataStore().SaveAllResults(output_path(args, proc_id), 'all')
+    ctx.GetDataStore().SaveRedshiftResult(args.output_dir)
+    ctx.GetDataStore().SaveAllResults(_output_path(args, proc_id), 'all')
+
+_map_loglevel = {'CRITICAL': CLog.nLevel_Critical,
+                 'FATAL': CLog.nLevel_Critical,
+                 'ERROR': CLog.nLevel_Error,
+                 'WARNING': CLog.nLevel_Warning,
+                 'WARN': CLog.nLevel_Warning,
+                 'INFO': CLog.nLevel_Info,
+                 'DEBUG': CLog.nLevel_Debug,
+                 'NOTSET': CLog.nLevel_None,
+}
 
 def amazed(args):
     """Run the full-featured amazed client"""
 
+    zlog = CLog()
+    logConsoleHandler = CLogConsoleHandler( zlog )
+    logConsoleHandler.SetLevelMask ( _map_loglevel[args.loglevel.upper()] )
+
     param = CParameterStore()
-    param.Load(os.path.normpath(os.path.expanduser(args.parameters_file)))
-    update_paramstore(param, args)
+    param.Load(normpath(args.workdir, args.parameters_file))
+
     opt_saveIntermediateResults = param.Get_String('SaveIntermediateResults', 'all')
+
+    param.Set_String('calibrationDir', normpath(args.calibration_dir))
 
     classif = CClassifierStore()
 
@@ -147,7 +164,7 @@ def amazed(args):
         _process_spectrum(i, args, spectrum_path, template_catalog, line_catalog, param, classif)
 
     # save cpf-redshift version in output dir
-    with open(output_path(args, 'version.json'), 'w') as f:
+    with open(_output_path(args, 'version.json'), 'w') as f:
         json.dump({'cpf-redshift-version': get_version()}, f)
 
 def dummy(args):

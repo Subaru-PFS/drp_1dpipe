@@ -1,6 +1,17 @@
 import subprocess
 import json
 
+def single(command, args):
+    """Run a single command on local host
+
+    :param command: Path to command to execute
+    :param args: extra parameters to give to command, as a dictionnary
+    """
+    task = [command]
+    extra_args = ['--{}={}'.format(k,v) for k,v in args.items() if k != 'pre_commands']
+    task.extend(extra_args)
+    subprocess.run(task)
+
 def parallel(command, filelist, arg_name, args):
     """Run a command on local host
 
