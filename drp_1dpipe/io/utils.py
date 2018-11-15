@@ -12,11 +12,9 @@ def init_argparse():
     :return: An initialized ArgumentParsel object.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--workdir', type=str, required=False,
-                        help='The root working directory where data is located.')
-    parser.add_argument('--logdir', type=str, required=False,
-                        help='The logging directory.')
-    parser.add_argument('--loglevel', type=str, required=False,
+    parser.add_argument('--workdir', help='The root working directory where data is located.')
+    parser.add_argument('--logdir', help='The logging directory.')
+    parser.add_argument('--loglevel',
                         help='The logging level. CRITICAL, ERROR, WARNING, INFO or DEBUG.')
     return parser
 

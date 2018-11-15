@@ -39,8 +39,8 @@ class FakeArgs(object):
         self.spectra_path = os.path.join(workdir, 'spectra')
         os.mkdir(self.spectra_path)
         self.bunch_list = os.path.join(workdir, 'bunch_list.json')
-        self.loglevel = 10
-        self.bunch_size = 4
+        self.loglevel = 'debug'
+        self.bunch_size = '4'
 
 
 def test_run():
