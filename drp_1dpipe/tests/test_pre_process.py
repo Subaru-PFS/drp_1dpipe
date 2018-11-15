@@ -14,11 +14,6 @@ from tempfile import NamedTemporaryFile
 from drp_1dpipe.io.utils import normpath
 from drp_1dpipe.pre_process.pre_process import run, bunch
 
-def check_if_exists(arg):
-    if arg:
-        return True
-    else:
-        return False
 
 def compare(a, b):
     """
@@ -65,7 +60,7 @@ def test_run():
 
     result_run = run(args)
 
-    assert check_if_exists(os.path.join(args.workdir, args.bunch_list))
+    assert os.path.isfile(os.path.join(args.workdir, args.bunch_list))
 
     with open(os.path.join(args.workdir, args.bunch_list), 'r') as f:
         data = json.load(f)
