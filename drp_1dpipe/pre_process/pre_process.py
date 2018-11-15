@@ -44,7 +44,8 @@ def main():
     init_logger("pre_process", args.logdir, args.loglevel)
 
     # Start the main program
-    run(args)
+    return run(args)
+
 
 def run(args):
     """
@@ -71,6 +72,9 @@ def run(args):
     output_list = normpath(args.workdir, args.bunch_list)
     with open(output_list, 'w') as f:
         json.dump(bunch_list, f)
+
+    return 0
+
 
 def bunch(bunch_size, spectra_path):
     """
