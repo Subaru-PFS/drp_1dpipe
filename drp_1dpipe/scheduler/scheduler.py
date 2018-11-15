@@ -7,7 +7,6 @@ Author: CeSAM
 
 import json
 import uuid
-import argparse
 import subprocess
 from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
 from drp_1dpipe.scheduler import pbs, local
@@ -20,7 +19,6 @@ def main():
     """
 
     parser = init_argparse()
-
     parser.add_argument('--scheduler', metavar='SCHEDULER',
                         help='The scheduler to use. Whether "local" or "pbs".')
     parser.add_argument('--pre_commands', metavar='COMMAND',

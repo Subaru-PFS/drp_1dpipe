@@ -77,15 +77,16 @@ def test_normpath():
 
 
 def _create_semaphores(semaphores):
-    """Create all files in semaphores, one every other second"""
+    """Create all files in semaphores, one every 4 seconds"""
     for f in semaphores:
         fd = open(f, 'w')
-        time.sleep(2)
+        fd.write('foo')
         fd.close()
+        time.sleep(4)
 
 def test_wait_semaphores():
 
-    # wait a never creater file
+    # wait a never created file
     try:
         wait_semaphores(['/tmp/foo'], 10)
     except TimeoutError:
@@ -99,8 +100,8 @@ def test_wait_semaphores():
 
     # create files after waiting
     with tempfile.TemporaryDirectory(prefix='pytest_') as tmpdir:
-        semaphores = [os.path.join(tmpdir, str(i)) for i in range(10)]
+        semaphores = [os.path.join(tmpdir, str(i)) for i in range(6)]
         t = threading.Thread(target=_create_semaphores, args=(semaphores,))
         t.start()
-        wait_semaphores(semaphores, 30)
+        wait_semaphores(semaphores, 50)
         t.join(timeout=2)

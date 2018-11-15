@@ -138,12 +138,13 @@ def wait_semaphores(semaphores, timeout=4.354e17):
     """
     TICK = 20
     start = time.time()
-    while True:
-        while semaphores and os.path.exists(semaphores[0]):
-            del semaphores[0]
-        if not semaphores:
-            return
-        if time.time() - start + TICK > timeout:
+    # we have to copy the semaphore list as some other thread may use it
+    _semaphores = copy.copy(semaphores)
+    while _semaphores:
+        if time.time() - start > timeout:
             raise TimeoutError
+        if os.path.exists(_semaphores[0]):
+            del _semaphores[0]
+            continue
         time.sleep(TICK)
 

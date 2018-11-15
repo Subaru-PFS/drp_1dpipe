@@ -7,7 +7,7 @@ Author: CeSAM
 
 import os.path
 import glob
-import argparse
+import logging
 from collections import namedtuple
 from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
 
