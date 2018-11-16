@@ -142,7 +142,7 @@ def wait_semaphores(semaphores, timeout=4.354e17):
     _semaphores = copy.copy(semaphores)
     while _semaphores:
         if time.time() - start > timeout:
-            raise TimeoutError
+            raise TimeoutError(_semaphores)
         if os.path.exists(_semaphores[0]):
             del _semaphores[0]
             continue

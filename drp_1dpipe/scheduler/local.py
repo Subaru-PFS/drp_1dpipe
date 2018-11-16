@@ -1,3 +1,4 @@
+import concurrent.futures
 import subprocess
 import json
 
@@ -33,9 +34,10 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
                   if k not in ('pre_commands', seq_arg_name)]
 
     # process each task
-    for i, arg_value in enumerate(subtasks):
-        task = [command, '--{arg_name}={arg_value}'.format(arg_name=arg_name, arg_value=arg_value)]
-        task.extend(extra_args)
-        if seq_arg_name:
-            task.append('--{}={}{}'.format(seq_arg_name, args[seq_arg_name], i))
-        subprocess.run(task)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        for i, arg_value in enumerate(subtasks):
+            task = [command, '--{arg_name}={arg_value}'.format(arg_name=arg_name, arg_value=arg_value)]
+            task.extend(extra_args)
+            if seq_arg_name:
+                task.append('--{}={}{}'.format(seq_arg_name, args[seq_arg_name], i))
+            executor.submit(subprocess.run, task)

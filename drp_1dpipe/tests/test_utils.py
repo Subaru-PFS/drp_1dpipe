@@ -87,12 +87,15 @@ def _create_semaphores(semaphores):
 def test_wait_semaphores():
 
     # wait a never created file
+    _error = []
     try:
-        wait_semaphores(['/tmp/foo'], 10)
-    except TimeoutError:
-        pass
+        wait_semaphores(['/tmp/foo'], 3)
+    except TimeoutError as e:
+        _error = e.args[0]
     except:
         raise
+
+    assert _error == ['/tmp/foo']
 
     # create files before waiting
     semaphores = [tempfile.NamedTemporaryFile(prefix='pytest_') for i in range(5)]

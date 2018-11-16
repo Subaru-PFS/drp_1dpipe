@@ -53,7 +53,7 @@ def run(args):
     scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
                                           'logdir': normpath(args.logdir),
                                           'pre_commands': args.pre_commands,
-                                          'spectra_path': normpath(args.spectra_path)
+                                          'spectra_path': normpath(args.spectra_path),
                                           'bunch_list': bunch_list})
 
     # process spectra
@@ -66,7 +66,7 @@ def run(args):
     # merge results
     scheduler.single('merge_results', args={'workdir': normpath(args.workdir),
                                             'logdir': normpath(args.logdir),
-                                            'spectra_path': normpath(args.spectra_path)
+                                            'spectra_path': normpath(args.spectra_path),
                                             'result_dirs': normpath(args.workdir, 'output-*')})
 
     return 0

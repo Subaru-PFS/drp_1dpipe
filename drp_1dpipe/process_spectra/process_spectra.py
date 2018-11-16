@@ -157,7 +157,7 @@ def amazed(args):
 
 def dummy(args):
     """A dummy client, for pipeline testing purpose."""
-    logger.log("running dummy client {}".format(args))
+    logger.log(logging.INFO, "running dummy client {}".format(args))
     time.sleep(10)
     print("done")
 
