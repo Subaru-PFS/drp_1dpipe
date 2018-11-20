@@ -89,22 +89,22 @@ def test_wait_semaphores():
     # wait a never created file
     _error = []
     try:
-        wait_semaphores(['/tmp/foo'], 3)
+        wait_semaphores(['/file/that/should/not/exist'], 3)
     except TimeoutError as e:
         _error = e.args[0]
     except:
         raise
 
-    assert _error == ['/tmp/foo']
+    assert _error == ['/file/that/should/not/exist']
 
     # create files before waiting
     semaphores = [tempfile.NamedTemporaryFile(prefix='pytest_') for i in range(5)]
-    wait_semaphores([s.name for s in semaphores], 10)
+    wait_semaphores([s.name for s in semaphores], 10, 5)
 
     # create files after waiting
     with tempfile.TemporaryDirectory(prefix='pytest_') as tmpdir:
         semaphores = [os.path.join(tmpdir, str(i)) for i in range(6)]
         t = threading.Thread(target=_create_semaphores, args=(semaphores,))
         t.start()
-        wait_semaphores(semaphores, 50)
+        wait_semaphores(semaphores, 50, 5)
         t.join(timeout=2)

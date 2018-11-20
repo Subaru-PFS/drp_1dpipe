@@ -23,14 +23,14 @@ def main():
     """
 
     parser = init_argparse()
-    parser.add_argument('--bunch_size', metavar='SIZE', help='Maximum number of spectra per bunch')
+    parser.add_argument('--bunch_size', metavar='SIZE', help='Maximum number of spectra per bunch.')
 
     # data input
-    parser.add_argument('--spectra_path', metavar='DIR', help='Path to spectra to process')
+    parser.add_argument('--spectra_path', metavar='DIR', help='Path to spectra to process. Relative to workdir.')
 
     # outputs
     parser.add_argument('--bunch_list', metavar='FILE',
-                        help='List of files of bunch of astronomical objects')
+                        help='List of files of bunch of astronomical objects.')
 
     args = parser.parse_args()
     get_args_from_file("pre_process.conf", args)
@@ -60,7 +60,7 @@ def run(args):
         f = NamedTemporaryFile(prefix='spectralist_', dir=normpath(args.workdir), delete=False,
                                mode='w')
         json.dump(ao_list, f)
-        bunch_list.append(normpath(args.workdir, f.name))
+        bunch_list.append(f.name)
 
     # create json containing list of bunches
     output_list = normpath(args.workdir, args.bunch_list)
@@ -82,7 +82,7 @@ def bunch(bunch_size, spectra_path):
 
     _list = []
     for source in os.listdir(spectra_path):
-        _list.append(normpath(spectra_path, source))
+        _list.append(source)
         if len(_list) >= int(bunch_size):
             yield _list
             _list = []

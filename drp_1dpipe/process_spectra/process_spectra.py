@@ -16,10 +16,7 @@ from pyamazed.redshift import *
 logger = logging.getLogger("process_spectra")
 
 def _calibration_path(args, *path):
-    return normpath(args.calibration_dir, *path)
-
-def _spectrum_path(args, *path):
-    return normpath(args.workdir, *path)
+    return normpath(args.workdir, args.calibration_dir, *path)
 
 def _output_path(args, *path):
     return normpath(args.workdir, args.output_dir, *path)
@@ -32,22 +29,23 @@ def main():
     """
 
     parser = init_argparse()
+    parser.add_argument('--spectra_path', metavar='DIR', help='Path where spectra are stored. Relative to workdir.')
     parser.add_argument('--spectra_listfile', metavar='FILE',
-                        help='JSON file holding a list of files of astronomical objects')
+                        help='JSON file holding a list of files of astronomical objects.')
     parser.add_argument('--calibration_dir', metavar='DIR',
-                        help='Specify directory in which calibration files are stored')
+                        help='Specify directory in which calibration files are stored. Relative to workdir.')
     parser.add_argument('--parameters_file', metavar='FILE',
-                        help='Parameters file. Relative to workdir')
+                        help='Parameters file. Relative to workdir.')
     parser.add_argument('--template_dir', metavar='DIR',
-                        help='Specify directory in which input templates files are stored. Relative to calibration_dir')
+                        help='Specify directory in which input templates files are stored. Relative to calibration_dir.')
     parser.add_argument('--linecatalog', metavar='FILE',
-                        help='Path to the rest lines catalog file. Relative to calibration_dir')
+                        help='Path to the rest lines catalog file. Relative to calibration_dir.')
     parser.add_argument('--zclassifier_dir', metavar='DIR',
-                        help='Specify directory in which zClassifier files are stored. Relative to calibration_dir')
+                        help='Specify directory in which zClassifier files are stored. Relative to calibration_dir.')
     parser.add_argument('--process_method',
-                        help='Process method to use. Whether Dummy or Amazed')
+                        help='Process method to use. Whether Dummy or Amazed.')
     parser.add_argument('--output_dir', metavar='DIR',
-                        help='Directory where all generated files are going to be stored')
+                        help='Directory where all generated files are going to be stored. Relative to workdir.')
     args = parser.parse_args()
     get_args_from_file("process_spectra.conf", args)
 
@@ -57,7 +55,7 @@ def main():
 def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog, param, classif):
 
     try:
-        spectrum = read_spectrum(_spectrum_path(args, spectrum_path))
+        spectrum = read_spectrum(normpath(args.workdir, args.spectra_path, spectrum_path))
     except Exception as e:
         logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
         return
@@ -85,7 +83,7 @@ def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog
     except Exception as e:
         logger.log(logging.ERROR, "Can't process : {}".format(e))
 
-    ctx.GetDataStore().SaveRedshiftResult(args.output_dir)
+    ctx.GetDataStore().SaveRedshiftResult(normpath(args.workdir, args.output_dir))
     ctx.GetDataStore().SaveAllResults(_output_path(args, proc_id), 'all')
 
 _map_loglevel = {'CRITICAL': CLog.nLevel_Critical,
@@ -108,9 +106,9 @@ def amazed(args):
     param = CParameterStore()
     param.Load(normpath(args.workdir, args.parameters_file))
 
-    opt_saveIntermediateResults = param.Get_String('SaveIntermediateResults', 'all')
+    #opt_saveIntermediateResults = param.Get_String('SaveIntermediateResults', 'all')
 
-    param.Set_String('calibrationDir', normpath(args.calibration_dir))
+    param.Set_String('calibrationDir', normpath(args.workdir, args.calibration_dir))
 
     classif = CClassifierStore()
 

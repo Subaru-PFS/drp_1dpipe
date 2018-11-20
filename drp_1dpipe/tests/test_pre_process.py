@@ -56,7 +56,7 @@ def test_run():
     fits_file = []
     for i in range(9):
         with open(normpath(args.spectra_path, '{}.fits'.format(i)), 'w') as f:
-            fits_file.append(f.name)
+            fits_file.append(os.path.basename(f.name))
 
     result_run = run(args)
 

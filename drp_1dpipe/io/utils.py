@@ -130,13 +130,12 @@ def get_args_from_file(file_name, args):
 def normpath(*args):
     return os.path.normpath(os.path.expanduser(os.path.join(*args)))
 
-def wait_semaphores(semaphores, timeout=4.354e17):
+def wait_semaphores(semaphores, timeout=4.354e17, tick=60):
     """Wait all files are created.
 
     :param semaphores: List of files to watch for creation.
     :param timeout: Maximun wait time, in seconds.
     """
-    TICK = 20
     start = time.time()
     # we have to copy the semaphore list as some other thread may use it
     _semaphores = copy.copy(semaphores)
@@ -146,5 +145,5 @@ def wait_semaphores(semaphores, timeout=4.354e17):
         if os.path.exists(_semaphores[0]):
             del _semaphores[0]
             continue
-        time.sleep(TICK)
+        time.sleep(tick)
 

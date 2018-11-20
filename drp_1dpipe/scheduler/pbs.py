@@ -29,7 +29,7 @@ parallel_script_template = textwrap.dedent("""\
             """)
 
 def _build_pre_commands(pre_commands):
-    """Build pre-commands string"""
+    """Build pre-commands string."""
 
     _cmds = eval(pre_commands)
     if not isinstance(_cmds, list):
@@ -42,7 +42,7 @@ def _build_pre_commands(pre_commands):
     return result
 
 def single(command, args):
-    """Run a single command on a PBS cluster
+    """Run a single command on a PBS cluster.
 
     :param command: Path to command to execute
     :param args: extra parameters to give to command, as a dictionnary
@@ -71,7 +71,7 @@ def single(command, args):
     wait_semaphores([normpath(args['workdir'], '{}.done'.format(task_id))])
 
 def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
-    """Run a command in parallel on a PBS cluster
+    """Run a command in parallel on a PBS cluster.
 
     :param command: Path to command to execute
     :param filelist: JSON file. a list of list of FITS file

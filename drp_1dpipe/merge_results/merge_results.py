@@ -23,9 +23,9 @@ def main():
 
     parser = init_argparse()
     parser.add_argument('--spectra_path', metavar='DIR',
-                        help='Base path where to find spectra. Relative to workdir')
+                        help='Base path where to find spectra. Relative to workdir.')
     parser.add_argument('--result_dirs', metavar='DIR',
-                        help='Shell glob pattern of directories where to find result files. Relative to workdir')
+                        help='Shell glob pattern of directories where to find result files. Relative to workdir.')
 
     args = parser.parse_args()
     get_args_from_file("merge_results.conf", args)

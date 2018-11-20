@@ -53,20 +53,21 @@ def run(args):
     scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
                                           'logdir': normpath(args.logdir),
                                           'pre_commands': args.pre_commands,
-                                          'spectra_path': normpath(args.spectra_path),
+                                          'spectra_path': args.spectra_path,
                                           'bunch_list': bunch_list})
 
     # process spectra
     scheduler.parallel('process_spectra', bunch_list, 'spectra_listfile', 'output_dir',
                        args={'workdir': normpath(args.workdir),
                              'logdir': normpath(args.logdir),
+                             'spectra_path': args.spectra_path,
                              'pre_commands': args.pre_commands,
-                             'output_dir': normpath(args.workdir, 'output-')})
+                             'output_dir': 'output-'})
 
     # merge results
     scheduler.single('merge_results', args={'workdir': normpath(args.workdir),
                                             'logdir': normpath(args.logdir),
-                                            'spectra_path': normpath(args.spectra_path),
-                                            'result_dirs': normpath(args.workdir, 'output-*')})
+                                            'spectra_path': args.spectra_path,
+                                            'result_dirs': 'output-*'})
 
     return 0
