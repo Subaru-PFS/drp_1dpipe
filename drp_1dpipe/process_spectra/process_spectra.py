@@ -145,6 +145,7 @@ def amazed(args):
     line_catalog = CRayCatalog()
     logger.log(logging.INFO, "Loading %s" % args.linecatalog)
     line_catalog.Load(_calibration_path(args, args.linecatalog))
+    line_catalog.ConvertVacuumToAir()
 
     for i, spectrum_path in enumerate(spectra_list):
         _process_spectrum(i, args, spectrum_path, template_catalog, line_catalog, param, classif)
