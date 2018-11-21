@@ -5,6 +5,8 @@ Created on: 01/11/18
 Author: CeSAM
 """
 
+MULTIPROC=False
+
 import os.path
 import json
 import logging
@@ -12,6 +14,10 @@ import time
 from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
 from drp_1dpipe.io.reader import read_spectrum
 from pyamazed.redshift import *
+from results import AmazedResults
+
+if MULTIPROC:
+    import concurrent.futures
 
 logger = logging.getLogger("process_spectra")
 
@@ -86,6 +92,7 @@ def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog
     ctx.GetDataStore().SaveRedshiftResult(normpath(args.workdir, args.output_dir))
     ctx.GetDataStore().SaveAllResults(_output_path(args, proc_id), 'all')
 
+
 _map_loglevel = {'CRITICAL': CLog.nLevel_Critical,
                  'FATAL': CLog.nLevel_Critical,
                  'ERROR': CLog.nLevel_Error,
@@ -148,11 +155,26 @@ def amazed(args):
     line_catalog.ConvertVacuumToAir()
 
     for i, spectrum_path in enumerate(spectra_list):
-        _process_spectrum(i, args, spectrum_path, template_catalog, line_catalog, param, classif)
+        if MULTIPROC:
+            futures = []
+            with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
+                futures.append(executor.submit(_process_spectrum,
+                                               i, args, spectrum_path, template_catalog,
+                                               line_catalog, param, classif))
+        else:
+            _process_spectrum(i, args, spectrum_path, template_catalog,
+                              line_catalog, param, classif)
+
+    if MULTIPROC:
+        concurrent.futures.wait(futures)
 
     # save cpf-redshift version in output dir
     with open(_output_path(args, 'version.json'), 'w') as f:
         json.dump({'cpf-redshift-version': get_version()}, f)
+
+    # create output products
+    results = AmazedResults(_output_path(args), normpath(args.workdir, args.spectra_path))
+    results.write()
 
 def dummy(args):
     """A dummy client, for pipeline testing purpose."""

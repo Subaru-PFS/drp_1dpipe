@@ -34,16 +34,20 @@ def main():
 
 RedshiftResult = namedtuple('RedshiftResult', ['spectrum', 'processingid', 'redshift', 'merit',
                                                'template', 'method', 'deltaz', 'reliability',
-                                               'snrha',
-                                               #'lfha',  # TODO: missing ?
+                                               'snrha', 'lfha',
+                                               'snroII', 'lfoII',
                                                'type_'])
 def _list_redshifts(lines):
     results = []
     for l in lines:
         if not l or l.startswith('#'):
             continue
-        result = RedshiftResult(*l.split())
-        results.append(result)
+        try:
+            result = RedshiftResult(*l.split())
+        except:
+            logger.log(logging.CRITICAL, "Can't parse result : {}".format(l))
+        else:
+            results.append(result)
     return results
 
 def _update_pfsobject(spectra_path, redshift):

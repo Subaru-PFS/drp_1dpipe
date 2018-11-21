@@ -65,9 +65,9 @@ def run(args):
                              'output_dir': 'output-'})
 
     # merge results
-    scheduler.single('merge_results', args={'workdir': normpath(args.workdir),
-                                            'logdir': normpath(args.logdir),
-                                            'spectra_path': args.spectra_path,
-                                            'result_dirs': 'output-*'})
+    #scheduler.single('merge_results', args={'workdir': normpath(args.workdir),
+    #                                        'logdir': normpath(args.logdir),
+    #                                        'spectra_path': args.spectra_path,
+    #                                        'result_dirs': 'output-*'})
 
     return 0
