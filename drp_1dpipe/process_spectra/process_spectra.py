@@ -14,7 +14,7 @@ import time
 from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
 from drp_1dpipe.io.reader import read_spectrum
 from pyamazed.redshift import *
-from results import AmazedResults
+from drp_1dpipe.process_spectra.results import AmazedResults
 
 if MULTIPROC:
     import concurrent.futures
@@ -122,7 +122,7 @@ def amazed(args):
     if args.zclassifier_dir:
         classif.Load(_calibration_path(args, args.zclassifier_dir))
 
-    with open(os.path.normpath(os.path.expanduser(args.spectra_listfile)), 'r') as f:
+    with open(os.path.normpath(normpath(args.workdir, args.spectra_listfile)), 'r') as f:
         spectra_list = json.load(f)
 
     retcode, medianRemovalMethod = param.Get_String("continuumRemoval.method",
