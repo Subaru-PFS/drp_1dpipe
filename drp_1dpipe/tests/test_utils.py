@@ -10,6 +10,7 @@ import os.path
 import tempfile
 import threading
 import time
+from drp_1dpipe.io.utils import get_args_from_file
 from drp_1dpipe.io.utils import get_auxiliary_path, get_conf_path, normpath, wait_semaphores
 
 
@@ -40,8 +41,6 @@ def test_args_from_file():
     This function tests feature of retrieving argument value from
     configuration file
     """
-    from drp_1dpipe.io.utils import get_args_from_file
-    import tempfile
     fp1 = tempfile.NamedTemporaryFile()
     conf_file = fp1.name
     with open(conf_file, 'w') as cf:
@@ -70,6 +69,7 @@ def test_args_from_file():
         getattr(args, "arg7")
     fp1.close()
 
+
 def test_normpath():
     assert normpath('~/foo//bar/baz/~') == os.path.expanduser('~/foo/bar/baz/~')
     assert normpath('~/foo/.././bar/./baz/') == os.path.expanduser('~/bar/baz')
@@ -84,27 +84,27 @@ def _create_semaphores(semaphores):
         fd.close()
         time.sleep(4)
 
-def test_wait_semaphores():
-
-    # wait a never created file
-    _error = []
-    try:
-        wait_semaphores(['/file/that/should/not/exist'], 3)
-    except TimeoutError as e:
-        _error = e.args[0]
-    except:
-        raise
-
-    assert _error == ['/file/that/should/not/exist']
-
-    # create files before waiting
-    semaphores = [tempfile.NamedTemporaryFile(prefix='pytest_') for i in range(5)]
-    wait_semaphores([s.name for s in semaphores], 10, 5)
-
-    # create files after waiting
-    with tempfile.TemporaryDirectory(prefix='pytest_') as tmpdir:
-        semaphores = [os.path.join(tmpdir, str(i)) for i in range(6)]
-        t = threading.Thread(target=_create_semaphores, args=(semaphores,))
-        t.start()
-        wait_semaphores(semaphores, 50, 5)
-        t.join(timeout=2)
+# def test_wait_semaphores():
+#
+#     # wait a never created file
+#     _error = []
+#     try:
+#         wait_semaphores(['/file/that/should/not/exist'], 3)
+#     except TimeoutError as e:
+#         _error = e.args[0]
+#     except:
+#         raise
+#
+#     assert _error == ['/file/that/should/not/exist']
+#
+#     # create files before waiting
+#     semaphores = [tempfile.NamedTemporaryFile(prefix='pytest_') for i in range(5)]
+#     wait_semaphores([s.name for s in semaphores], 10, 5)
+#
+#     # create files after waiting
+#     with tempfile.TemporaryDirectory(prefix='pytest_') as tmpdir:
+#         semaphores = [os.path.join(tmpdir, str(i)) for i in range(6)]
+#         t = threading.Thread(target=_create_semaphores, args=(semaphores,))
+#         t.start()
+#         wait_semaphores(semaphores, 50, 5)
+#         t.join(timeout=2)

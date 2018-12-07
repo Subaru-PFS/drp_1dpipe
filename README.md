@@ -6,7 +6,9 @@
 
 Activate your virtualenv as needed.
 
-Install Subaru-PFS datamodel. See https://github.com/Subaru-PFS/datamodel/tree/master/python/pfs
+Add the Subaru-PFS datamodel to your PYTHONPATH. See https://github.com/Subaru-PFS/datamodel/tree/master/python
+
+	export PYTHONPATH=/path/to/Subaru-PFS/datamodel/python
 
 Install Amazed library for Subaru-PFS project. See https://github.com/Subaru-PFS/drp_1d
 
