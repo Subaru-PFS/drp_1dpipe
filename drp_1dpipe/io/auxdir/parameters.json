@@ -1,0 +1,98 @@
+{
+    "lambdarange": [
+        "12500",
+        "18500"
+    ],
+    "redshiftrange": [
+        "0.0",
+        "5.0"
+    ],
+    "redshiftstep": "0.0001",
+    "smoothWidth": "0",
+    "templateCategoryList": [
+        "emission",
+        "galaxy",
+        "star",
+        "qso"
+    ],
+    "continuumRemoval": {
+        "method": "zero",
+        "medianKernelWidth": "300",
+        "binPath": "\/home\/aschmitt\/amazed_cluster\/gitlab\/amazed\/extern\/df_linux\/",
+        "decompScales": "9"
+    },
+    "chisquare2solve": {
+        "overlapThreshold": "1",
+        "spectrum": {
+            "component": "raw"
+        },
+        "interpolation": "precomputedfinegrid",
+        "extinction": "no",
+        "dustfit": "yes",
+        "pdfcombination": "marg",
+        "saveintermediateresults": "no"
+    },
+    "chisquarelogsolve": {
+        "overlapThreshold": "1",
+        "spectrum": {
+            "component": "raw"
+        },
+        "interpolation": "precomputedfinegrid",
+        "extinction": "no",
+        "dustfit": "yes",
+        "pdfcombination": "marg",
+        "saveintermediateresults": "no",
+        "enablespclogrebin": "yes"
+    },
+    "linemodelsolve": {
+        "linemodel": {
+            "linetypefilter": "E",
+            "lineforcefilter": "no",
+            "fittingmethod": "hybrid",
+            "fastfitlargegridstep": "0.001",
+            "continuumcomponent": "tplfit",
+            "rigidity": "tplshape",
+            "linewidthtype": "velocitydriven",
+            "instrumentresolution": "2350",
+            "velocityemission": "100",
+            "velocityabsorption": "300",
+            "velocityfit": "yes",
+            "emvelocityfitmin": "20",
+            "emvelocityfitmax": "500",
+            "absvelocityfitmin": "150",
+            "absvelocityfitmax": "500",
+            "continuumreestimation": "no",
+            "rules": "all",
+            "extremacount": "10",
+            "stronglinesprior": "1e-6",
+            "pdfcombination": "marg",
+            "saveintermediateresults": "no"
+        }
+    },
+    "templateCatalog": {
+        "continuumRemoval": {
+            "method": "zero",
+            "medianKernelWidth": "75",
+            "decompScales": "8",
+            "binPath": "absolute_path_to_df_binaries_here"
+        }
+    },
+    "method": "chisquarelogsolve",
+    "enablestellarsolve": "yes",
+    "stellarsolve": {
+        "starsolve": {
+            "spectrum": {
+                "component": "raw"
+            },
+            "interpolation": "precomputedfinegrid",
+            "extinction": "no",
+            "dustfit": "yes"
+        },
+        "chisquarelogsolve": {
+            "pdfcombination": "marg",
+            "saveintermediateresults": "no",
+            "enablespclogrebin": "yes"
+        }
+    },
+    "dtreepathnum": "0"
+}

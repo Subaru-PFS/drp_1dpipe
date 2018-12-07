@@ -1,0 +1,22 @@
+# **Template** python script used by pbs scheduler to produce python executor script
+#
+
+import sys
+import subprocess
+import json
+import ssl
+
+tasks = {tasks}
+
+if __name__ == '__main__':
+    # usage :
+    # pbs_executor N : run task #N
+
+    print("Running {{}}".format(sys.argv))
+    task = tasks[int(sys.argv[1]) - 1]
+
+    p = subprocess.run(task)
+
+# Local Variables:
+# mode: python
+# End:
