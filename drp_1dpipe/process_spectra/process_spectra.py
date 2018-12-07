@@ -11,7 +11,7 @@ import os.path
 import json
 import logging
 import time
-from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse, get_auxiliary_path
 from drp_1dpipe.io.reader import read_spectrum
 from pyamazed.redshift import *
 from drp_1dpipe.process_spectra.results import AmazedResults
@@ -40,7 +40,7 @@ def main():
                         help='JSON file holding a list of files of astronomical objects.')
     parser.add_argument('--calibration_dir', metavar='DIR',
                         help='Specify directory in which calibration files are stored. Relative to workdir.')
-    parser.add_argument('--parameters_file', metavar='FILE',
+    parser.add_argument('--parameters_file', metavar='FILE', default=get_auxiliary_path("parameters.json"),
                         help='Parameters file. Relative to workdir.')
     parser.add_argument('--template_dir', metavar='DIR',
                         help='Specify directory in which input templates files are stored. Relative to calibration_dir.')
