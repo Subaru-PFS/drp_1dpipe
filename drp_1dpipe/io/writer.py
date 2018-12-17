@@ -44,7 +44,7 @@ def write_candidates(output_dir,
         data['ZCANDIDATES'][i]['ZFIT'] = np.zeros((npix,))
 
     data['ZPDF'] = np.ndarray((1,),
-                              dtype=[('REDSHIFT', 'f8', (npdf,)), ('DENSITY', 'f8', (npdf,))])
+                              dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
     data['ZLINES'] = np.ndarray((1,),
                                 dtype=[('LINENAME', 'S15'),
                                        ('LINEWAVE', 'f8'),
