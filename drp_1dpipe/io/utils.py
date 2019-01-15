@@ -3,7 +3,6 @@ import copy
 import logging
 import time
 import argparse
-from logging.handlers import RotatingFileHandler
 
 
 def init_argparse():
@@ -12,11 +11,15 @@ def init_argparse():
     :return: An initialized ArgumentParsel object.
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('--workdir', help='The root working directory where data is located.')
+    parser.add_argument('--workdir',
+                        help='The root working directory where data is '
+                        'located.')
     parser.add_argument('--logdir', help='The logging directory.')
     parser.add_argument('--loglevel',
-                        help='The logging level. CRITICAL, ERROR, WARNING, INFO or DEBUG.')
+                        help='The logging level. CRITICAL, ERROR, WARNING, '
+                        'INFO or DEBUG.')
     return parser
+
 
 def get_auxiliary_path(file_name):
     """Get the full path of file in auxiliary directory.
@@ -54,6 +57,7 @@ _loglevels = {
     'DEBUG': logging.DEBUG,
     'NOTSET': logging.NOTSET,
 }
+
 
 def init_logger(process_name, logdir, loglevel):
     """Initializes a logger depending on which module calls it.

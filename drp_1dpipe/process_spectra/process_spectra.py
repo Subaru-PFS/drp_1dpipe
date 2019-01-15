@@ -107,8 +107,8 @@ def amazed(args):
     """Run the full-featured amazed client"""
 
     zlog = CLog()
-    logConsoleHandler = CLogConsoleHandler( zlog )
-    logConsoleHandler.SetLevelMask ( _map_loglevel[args.loglevel.upper()] )
+    logFileHandler = CLogFileHandler( zlog, os.path.join(args.logdir, 'amazed.log') )
+    logFileHandler.SetLevelMask ( _map_loglevel[args.loglevel.upper()] )
 
     param = CParameterStore()
     param.Load(normpath(args.workdir, args.parameters_file))

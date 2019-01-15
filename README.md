@@ -16,9 +16,9 @@ Install required python packages
 
 	pip install -r pip-requirements.txt
 
-### Using pip
+### Install drp1d_pip
 
-To install Subaru PFS 1D data reduction pipeline with `pip` simply run.
+To install Subaru PFS 1D data reduction pipeline, simply run :
 
     pip install .
 

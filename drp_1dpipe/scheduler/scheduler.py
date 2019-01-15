@@ -5,17 +5,17 @@ Created on: 01/11/18
 Author: CeSAM
 """
 
-import json
 import uuid
-import subprocess
-from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, \
+    init_argparse
 from drp_1dpipe.scheduler import pbs, local
 
 
 def main():
     """Pipeline entry point.
 
-    Initialize a logger, parse command line arguments, and call the run() function.
+    Initialize a logger, parse command line arguments, and call the run()
+    function.
     """
 
     parser = init_argparse()
@@ -24,12 +24,14 @@ def main():
     parser.add_argument('--pre_commands', metavar='COMMAND',
                         help='Commands to run before before process_spectra.')
     parser.add_argument('--spectra_path', metavar='DIR',
-                        help='Base path where to find spectra. Relative to workdir.')
+                        help='Base path where to find spectra. '
+                        'Relative to workdir.')
 
     args = parser.parse_args()
     get_args_from_file("scheduler.conf", args)
 
     return run(args)
+
 
 def run(args):
     """Run the 1D Data Reduction Pipeline.
@@ -52,6 +54,7 @@ def run(args):
     # prepare workdir
     scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
                                           'logdir': normpath(args.logdir),
+                                          'loglevel': normpath(args.loglevel),
                                           'pre_commands': args.pre_commands,
                                           'spectra_path': args.spectra_path,
                                           'bunch_list': bunch_list})
@@ -60,6 +63,7 @@ def run(args):
     scheduler.parallel('process_spectra', bunch_list, 'spectra_listfile', 'output_dir',
                        args={'workdir': normpath(args.workdir),
                              'logdir': normpath(args.logdir),
+                             'loglevel': normpath(args.loglevel),
                              'spectra_path': args.spectra_path,
                              'pre_commands': args.pre_commands,
                              'output_dir': 'output-'})
