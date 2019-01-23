@@ -1,74 +1,22 @@
 {
     "lambdarange": [
-        "12500",
-        "18500"
+        "3000",
+        "13000"
     ],
     "redshiftrange": [
         "0.0",
-        "5.0"
+        "6.0"
     ],
     "redshiftstep": "0.0001",
+    "redshiftsampling": "log",
     "smoothWidth": "0",
+    "method": "linemodel",
     "templateCategoryList": [
         "emission",
         "galaxy",
         "star",
         "qso"
     ],
-    "continuumRemoval": {
-        "method": "zero",
-        "medianKernelWidth": "300",
-        "binPath": "\/home\/aschmitt\/amazed_cluster\/gitlab\/amazed\/extern\/df_linux\/",
-        "decompScales": "9"
-    },
-    "chisquare2solve": {
-        "overlapThreshold": "1",
-        "spectrum": {
-            "component": "raw"
-        },
-        "interpolation": "precomputedfinegrid",
-        "extinction": "no",
-        "dustfit": "yes",
-        "pdfcombination": "marg",
-        "saveintermediateresults": "no"
-    },
-    "chisquarelogsolve": {
-        "overlapThreshold": "1",
-        "spectrum": {
-            "component": "raw"
-        },
-        "interpolation": "precomputedfinegrid",
-        "extinction": "no",
-        "dustfit": "yes",
-        "pdfcombination": "marg",
-        "saveintermediateresults": "no",
-        "enablespclogrebin": "yes"
-    },
-    "linemodelsolve": {
-        "linemodel": {
-            "linetypefilter": "E",
-            "lineforcefilter": "no",
-            "fittingmethod": "hybrid",
-            "fastfitlargegridstep": "0.001",
-            "continuumcomponent": "tplfit",
-            "rigidity": "tplshape",
-            "linewidthtype": "velocitydriven",
-            "instrumentresolution": "2350",
-            "velocityemission": "100",
-            "velocityabsorption": "300",
-            "velocityfit": "yes",
-            "emvelocityfitmin": "20",
-            "emvelocityfitmax": "500",
-            "absvelocityfitmin": "150",
-            "absvelocityfitmax": "500",
-            "continuumreestimation": "no",
-            "rules": "all",
-            "extremacount": "10",
-            "stronglinesprior": "1e-6",
-            "pdfcombination": "marg",
-            "saveintermediateresults": "no"
-        }
-    },
     "templateCatalog": {
         "continuumRemoval": {
             "method": "zero",
@@ -77,22 +25,57 @@
             "binPath": "absolute_path_to_df_binaries_here"
         }
     },
-    "method": "chisquarelogsolve",
-    "enablestellarsolve": "yes",
-    "stellarsolve": {
-        "starsolve": {
-            "spectrum": {
-                "component": "raw"
-            },
-            "interpolation": "precomputedfinegrid",
-            "extinction": "no",
-            "dustfit": "yes"
-        },
-        "chisquarelogsolve": {
-            "pdfcombination": "marg",
+    "continuumRemoval": {
+        "method": "zero",
+        "medianKernelWidth": "400",
+        "binPath": "~\/amazed_cluster\/gitlab\/amazed\/extern\/df_centos\/",
+        "decompScales": "9"
+    },
+    "linemodelsolve": {
+        "linemodel": {
+            "linetypefilter": "no",
+            "lineforcefilter": "no",
+            "fittingmethod": "individual",
+            "continuumcomponent": "tplfit",
+            "linewidthtype": "combined",
+            "instrumentresolution": "5000",
+            "velocityemission": "200",
+            "velocityabsorption": "300",
+            "continuumreestimation": "no",
+            "rules": "all",
+            "extremacount": "5",
+            "velocityfit": "yes",
+            "rigidity": "tplshape",
+            "pdfcombination": "bestchi2",
+            "emvelocityfitmin": "20",
+            "emvelocityfitmax": "500",
+            "absvelocityfitmin": "150",
+            "absvelocityfitmax": "500",
             "saveintermediateresults": "no",
-            "enablespclogrebin": "yes"
+            "tplratio_catalog": "linecatalogs_tplshapes\/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v3_emission",
+            "continuumismfit": "yes",
+            "continuumigmfit": "yes",
+            "secondpasslcfittingmethod": "no",
+            "offsets_catalog": "linecatalogs_offsets\/offsetsCatalogs_20170410_m150",
+            "emvelocityfitstep": "50",
+            "absvelocityfitstep": "50",
+            "tplratio_ismfit": "no",
+            "firstpass": {
+                "largegridstep": "0.001",
+                "tplratio_ismfit": "no",
+                "multiplecontinuumfit_disable": "yes",
+                "fittingmethod": "individual"
+            },
+            "continuumfitcount": "1",
+            "continuumfitignorelinesupport": "no",
+            "stronglinesprior": "-1",
+            "euclidnhaemittersStrength": "-1",
+            "extremacutprobathreshold": "30"
         }
     },
-    "dtreepathnum": "0"
+    "enablestellarsolve": "no",
+    "calibrationDir": "\/home\/aschmitt\/amazed_cluster\/calibration\/",
+    "SaveIntermediateResults": "default",
+    "linemeascatalog": "",
+    "autocorrectinput": "no"
 }
