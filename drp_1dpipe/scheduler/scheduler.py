@@ -26,6 +26,8 @@ def main():
     parser.add_argument('--spectra_path', metavar='DIR',
                         help='Base path where to find spectra. '
                         'Relative to workdir.')
+    parser.add_argument('--bunch_size', metavar='SIZE',
+                        help='Maximum number of spectra per bunch.')
 
     args = parser.parse_args()
     get_args_from_file("scheduler.conf", args)
@@ -56,6 +58,7 @@ def run(args):
     scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
                                           'logdir': normpath(args.logdir),
                                           'loglevel': normpath(args.loglevel),
+                                          'bunch_size': args.bunch_size,
                                           'pre_commands': args.pre_commands,
                                           'spectra_path': args.spectra_path,
                                           'bunch_list': bunch_list})
