@@ -68,9 +68,9 @@ def _process_spectrum(index, args, spectrum_path, template_catalog, line_catalog
 
     proc_id = '{}-{}'.format(spectrum.GetName(), index)
 
-    range = TFloat64Range(3800, 12600)
-    done, mean, std = spectrum.GetMeanAndStdFluxInRange(range)
-    logger.log(logging.DEBUG, 'Spectrum stats: {}, {}, {}'.format(done, mean, std))
+    #range = TFloat64Range(3000, 13000)
+    #done, mean, std = spectrum.GetMeanAndStdFluxInRange(range)
+    #logger.log(logging.DEBUG, 'Spectrum stats: {}, {}, {}'.format(done, mean, std))
 
     try:
         ctx = CProcessFlowContext()

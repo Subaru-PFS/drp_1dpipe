@@ -45,8 +45,8 @@ setup(name=NAME,
       ],
       include_package_data=True,
       package_data={
-         'drp_1dpipe': ['io/conf/*', 'io/auxdir/*'],
-         },
+          'drp_1dpipe': ['io/conf/*', 'io/auxdir/*'],
+      },
       entry_points=entry_points,
       python_requires='>=' + __minimum_python_version__,
       tests_require=['pytest']

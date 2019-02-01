@@ -49,7 +49,8 @@ def run(args):
     else:
         raise "Unknown scheduler {}".format(args.scheduler)
 
-    bunch_list = normpath(args.workdir, '{}.json'.format(uuid.uuid4().hex))
+    bunch_list = normpath(args.workdir,
+                          'list_{}.json'.format(uuid.uuid4().hex))
 
     # prepare workdir
     scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
@@ -60,7 +61,8 @@ def run(args):
                                           'bunch_list': bunch_list})
 
     # process spectra
-    scheduler.parallel('process_spectra', bunch_list, 'spectra_listfile', 'output_dir',
+    scheduler.parallel('process_spectra', bunch_list,
+                       'spectra_listfile', 'output_dir',
                        args={'workdir': normpath(args.workdir),
                              'logdir': normpath(args.logdir),
                              'loglevel': normpath(args.loglevel),
