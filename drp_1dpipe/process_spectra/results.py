@@ -3,16 +3,17 @@ import os.path
 import fitsio
 from drp_1dpipe.io.writer import write_candidates
 import logging
+import numpy as np
 
-RedshiftResult = namedtuple('RedshiftResult', ['spectrum', 'processingid', 'redshift', 'merit',
-                                               'template', 'method', 'deltaz', 'reliability',
-                                               'snrha', 'lfha',
-                                               'snroII', 'lfoII',
-                                               'type_'])
+RedshiftResult = namedtuple('RedshiftResult',
+                            ['spectrum', 'processingid', 'redshift', 'merit',
+                             'template', 'method', 'deltaz', 'reliability',
+                             'snrha', 'lfha', 'snroII', 'lfoII', 'type_'])
 
-RedshiftCandidate = namedtuple('RedshiftCandidate', ['rank', 'redshift', 'intgProba',
-                                                     'gaussAmp', 'gaussAmpErr', 'gaussSigma',
-                                                     'gaussSigmaErr'])
+RedshiftCandidate = namedtuple('RedshiftCandidate',
+                               ['rank', 'redshift', 'intgProba', 'gaussAmp',
+                                'gaussAmpErr', 'gaussSigma', 'gaussSigmaErr'])
+
 
 class AmazedResults:
     """
@@ -30,6 +31,7 @@ class AmazedResults:
         self.redshift_results = {}
         self.lambda_ranges = {}
         self.candidates = {}
+        self.zpdf = {}
 
         # Start by reading redshifts.csv
         self._read_redshifts_csv()
@@ -40,33 +42,40 @@ class AmazedResults:
         # read candidates from output dirs
         self._read_candidates()
 
+        # read zPDF from output dirs
+        self._read_zPDF()
+
     def write(self):
         for spectrum, results in self.redshift_results.items():
             tract, patch, catId, objId, \
                 nVisit, pfsVisitHash = self._parse_pfsObject_name(spectrum)
             write_candidates(self.output_dir,
                              tract, patch, catId, objId, nVisit, pfsVisitHash,
-                             self.lambda_ranges[spectrum], self.redshift_results[spectrum],
-                             self.candidates[spectrum])
+                             self.lambda_ranges[spectrum],
+                             self.redshift_results[spectrum],
+                             self.candidates[spectrum],
+                             self.zpdf[spectrum])
 
     def _read_redshifts_csv(self):
         """Build redshift_results.
 
-        redshift_results is a dict RedshiftResult, keyed by spectrum file names.
+        redshift_results is a dict RedshiftResult, keyed by spectrum
+        file names.
         """
-        with open( os.path.join(self.output_dir, 'redshift.csv'), 'r') as f:
+        with open(os.path.join(self.output_dir, 'redshift.csv'), 'r') as f:
             for l in f:
                 if not l.strip() or l.startswith('#'):
                     continue
                 try:
-                    _r = [f(x) for f,x in zip((str, str, float, float,
-                                               str, str, float, str,
-                                               float, float, float, float,
-                                               str),
-                                              l.split())]
+                    _r = [f(x) for f, x in zip((str, str, float, float,
+                                                str, str, float, str,
+                                                float, float, float, float,
+                                                str),
+                                               l.split())]
                     result = RedshiftResult(*_r)
                 except Exception as e:
-                    logging.log(logging.CRITICAL, "Can't parse result : {}: {}".format(e,l))
+                    logging.log(logging.CRITICAL,
+                                "Can't parse result : {}: {}".format(e, l))
                     continue
                 else:
                     self.redshift_results[result.spectrum] = result
@@ -84,17 +93,33 @@ class AmazedResults:
     def _read_candidates(self):
         """Read redshift candidates from candidatesresult.csv."""
         for result in self.redshift_results.values():
-            path = os.path.join(self.output_dir, result.processingid, 'candidatesresult.csv')
+            path = os.path.join(self.output_dir, result.processingid,
+                                'candidatesresult.csv')
             with open(path, 'r') as f:
                 self.candidates[result.spectrum] = []
                 for l in f:
                     if not l.strip() or l.startswith('#'):
                         continue
-                    #rank redshift intgProba gaussAmp gaussAmpErr gaussSigma gaussSigmaErr
-                    _r = [f(x) for f,x in zip((int, float, float, float, float, float, float),
-                                              l.split())]
+                    # rank redshift intgProba gaussAmp gaussAmpErr gaussSigma gaussSigmaErr
+                    _r = [f(x) for f, x in zip((int, float, float, float,
+                                                float, float, float),
+                                               l.split())]
                     candidate = RedshiftCandidate(*_r)
                     self.candidates[result.spectrum].append(candidate)
+
+    def _read_zPDF(self):
+        """Read zPDF for each spectrum."""
+        for result in self.redshift_results.values():
+            path = os.path.join(self.output_dir, result.processingid,
+                                'zPDF',
+                                'logposterior.logMargP_Z_data.csv')
+            with open(path, 'r') as f:
+                pdf = []
+                for l in f:
+                    if not l.strip() or l.startswith('#'):
+                        continue
+                    pdf.append(l.split())
+                self.zpdf[result.spectrum] = np.array(pdf, dtype=float)
 
     @staticmethod
     def _parse_pfsObject_name(name):
@@ -103,9 +128,8 @@ class AmazedResults:
         Template is : pfsObject-%05d-%s-%03d-%08x-%02d-0x%08x.fits
         """
         basename = os.path.splitext(name)[0]
-        head, tract, patch, catId, objId, nVisit, pfsVisitHash = basename.split('-')
+        head, tract, patch, catId, objId, nVisit, \
+            pfsVisitHash = basename.split('-')
         assert head == 'pfsObject'
-        return int(tract), patch, int(catId), int(objId,16), int(nVisit), int(pfsVisitHash, 16)
-
-
-
+        return (int(tract), patch, int(catId), int(objId, 16), int(nVisit),
+                int(pfsVisitHash, 16))

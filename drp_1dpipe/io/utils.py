@@ -131,8 +131,10 @@ def get_args_from_file(file_name, args):
         except AttributeError:
             setattr(args, key.strip(), value.strip())
 
+
 def normpath(*args):
     return os.path.normpath(os.path.expanduser(os.path.join(*args)))
+
 
 def wait_semaphores(semaphores, timeout=4.354e17, tick=60):
     """Wait all files are created.

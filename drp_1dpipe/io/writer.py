@@ -6,13 +6,14 @@ import numpy as np
 
 def write_candidates(output_dir,
                      tract, patch, catId, objId, nVisit, pfsVisitHash,
-                     lambda_ranges, redshift, candidates):
+                     lambda_ranges, redshift, candidates, zpdf):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
     path = "pfsZcandidates-%05d-%s-%03d-%08x-%02d-0x%08x.fits" % (
         tract, patch, catId, objId, nVisit % 100, pfsVisitHash)
 
-    print("Saving {} redshifts to {}".format(len(candidates), os.path.join(output_dir, path)))
+    print("Saving {} redshifts to {}".format(len(candidates),
+                                             os.path.join(output_dir, path)))
     print("redshifts is", redshift)
     fits = fitsio.FITS(os.path.join(output_dir, path), 'rw', clobber=True)
 
@@ -42,7 +43,7 @@ def write_candidates(output_dir,
         data['ZCANDIDATES'][i]['SUBCLASS'] = ''
         data['ZCANDIDATES'][i]['ZFIT'] = np.zeros((npix,))
 
-    data['ZPDF'] = np.ndarray((1,),
+    data['ZPDF'] = np.ndarray(len(zpdf), buffer=zpdf,
                               dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
     data['ZLINES'] = np.ndarray((1,),
                                 dtype=[('LINENAME', 'S15'),
