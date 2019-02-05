@@ -14,6 +14,13 @@ RedshiftCandidate = namedtuple('RedshiftCandidate',
                                ['rank', 'redshift', 'intgProba', 'gaussAmp',
                                 'gaussAmpErr', 'gaussSigma', 'gaussSigmaErr'])
 
+LineMeasurement = namedtuple('LineMeasurement',
+                             ['type', 'force', 'name', 'elt_id',
+                              'lambda_rest_beforeOffset', 'lambda_obs', 'amp',
+                              'err', 'err_fit', 'fit_group', 'velocity',
+                              'offset', 'sigma', 'flux', 'flux_err', 'flux_di',
+                              'center_cont_flux', 'cont_err_'])
+
 
 class AmazedResults:
     """
@@ -32,6 +39,7 @@ class AmazedResults:
         self.lambda_ranges = {}
         self.candidates = {}
         self.zpdf = {}
+        self.linemeas = {}
 
         # Start by reading redshifts.csv
         self._read_redshifts_csv()
@@ -45,6 +53,9 @@ class AmazedResults:
         # read zPDF from output dirs
         self._read_zPDF()
 
+        # read line measurement from output-lf dirs
+        self._read_linemeas()
+
     def write(self):
         for spectrum, results in self.redshift_results.items():
             tract, patch, catId, objId, \
@@ -54,7 +65,8 @@ class AmazedResults:
                              self.lambda_ranges[spectrum],
                              self.redshift_results[spectrum],
                              self.candidates[spectrum],
-                             self.zpdf[spectrum])
+                             self.zpdf[spectrum],
+                             self.linemeas[spectrum])
 
     def _read_redshifts_csv(self):
         """Build redshift_results.
@@ -120,6 +132,33 @@ class AmazedResults:
                         continue
                     pdf.append(l.split())
                 self.zpdf[result.spectrum] = np.array(pdf, dtype=float)
+
+    def _read_linemeas(self):
+        """Read line measurement for each spectrum."""
+        for result in self.redshift_results.values():
+            path = os.path.join('-'.join([self.output_dir, 'lf']),
+                                result.processingid,
+                                'linemodelsolve.linemodel_fit_extrema_0.csv')
+            with open(path, 'r') as f:
+                lm = []
+                for l in f:
+                    if not l.strip() or l.startswith('#'):
+                        continue
+                    try:
+                        _r = [f(x) for f, x in zip((str, str, str, int, float,
+                                                    float, float, float, float,
+                                                    lambda x: None if x == '-1' else x,
+                                                    float, float, float,
+                                                    float, float, float, float,
+                                                    float),
+                                                   l.split())]
+                        lm.append(LineMeasurement(*_r))
+                    except Exception as e:
+                        logging.log(logging.CRITICAL,
+                                    "Can't parse line measurement : "
+                                    "{}: {}".format(e, l))
+                        continue
+                self.linemeas[result.spectrum] = lm
 
     @staticmethod
     def _parse_pfsObject_name(name):

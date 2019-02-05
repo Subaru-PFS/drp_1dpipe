@@ -6,7 +6,7 @@ import numpy as np
 
 def write_candidates(output_dir,
                      tract, patch, catId, objId, nVisit, pfsVisitHash,
-                     lambda_ranges, redshift, candidates, zpdf):
+                     lambda_ranges, redshift, candidates, zpdf, linemeas):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
     path = "pfsZcandidates-%05d-%s-%03d-%08x-%02d-0x%08x.fits" % (
@@ -45,7 +45,7 @@ def write_candidates(output_dir,
 
     data['ZPDF'] = np.ndarray(len(zpdf), buffer=zpdf,
                               dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
-    data['ZLINES'] = np.ndarray((1,),
+    data['ZLINES'] = np.ndarray((len(linemeas),),
                                 dtype=[('LINENAME', 'S15'),
                                        ('LINEWAVE', 'f8'),
                                        ('LINEZ', 'f8'),
@@ -60,6 +60,23 @@ def write_candidates(output_dir,
                                        ('LINEEW_ERR', 'f8'),
                                        ('LINECONTLEVEL', 'f8'),
                                        ('LINECONTLEVEL_ERR', 'f8')])
+    for i, lm in enumerate(linemeas):
+        data['ZLINES'][i]['LINENAME'] = lm.name
+        data['ZLINES'][i]['LINEWAVE'] = lm.lambda_obs  # TODO: or lambda_rest_beforeOffset ?
+        data['ZLINES'][i]['LINEZ'] = np.nan  # TODO: what is that ?
+        data['ZLINES'][i]['LINEZ_ERR'] = np.nan  # TODO: what is that ?
+        data['ZLINES'][i]['LINESIGMA'] = lm.sigma
+        data['ZLINES'][i]['LINESIGMA_ERR'] = np.nan  # TODO: what is that ?
+        data['ZLINES'][i]['LINEVEL'] = lm.velocity
+        data['ZLINES'][i]['LINEVEL_ERR'] = np.nan  # TODO: what is that
+        data['ZLINES'][i]['LINEFLUX'] = lm.flux
+        data['ZLINES'][i]['LINEFLUX_ERR'] = lm.flux_err
+        data['ZLINES'][i]['LINEEW'] = np.nan  # TODO: what is that
+        data['ZLINES'][i]['LINEEW_ERR'] = np.nan  # TODO: what is that
+        data['ZLINES'][i]['LINECONTLEVEL'] = np.nan  # TODO: what is that
+        data['ZLINES'][i]['LINECONTLEVEL_ERR'] = np.nan  # TODO: what is that
+
+
     #fits.write(data['PDU'], extname='PDU', header=header)
     fits.write(data['LAMBDA_SCALE'], extname='LAMBDA_SCALE')
     fits.write(data['ZCANDIDATES'], extname='ZCANDIDATES')

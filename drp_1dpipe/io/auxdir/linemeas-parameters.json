@@ -1,0 +1,66 @@
+{
+    "lambdarange": [
+        "2000",
+        "20000"
+    ],
+    "redshiftrange": [
+        "0.0",
+        "0.0"
+    ],
+    "redshiftstep": "0.0001",
+    "redshiftsampling": "lin",
+    "smoothWidth": "0",
+    "method": "LineModel",
+    "templateCategoryList": [
+        "emission",
+        "galaxy",
+        "star",
+        "qso"
+    ],
+    "templateCatalog": {
+        "continuumRemoval": {
+            "method": "zero",
+            "medianKernelWidth": "75",
+            "decompScales": "8",
+            "binPath": "absolute_path_to_df_binaries_here"
+        }
+    },
+    "continuumRemoval": {
+        "method": "IrregularSamplingMedian",
+        "medianKernelWidth": "50",
+        "binPath": "~\/amazed_cluster\/gitlab\/amazed\/extern\/df_centos\/",
+        "decompScales": "9"
+    },
+    "linemodelsolve": {
+        "linemodel": {
+            "linetypefilter": "no",
+            "lineforcefilter": "no",
+            "fittingmethod": "hybrid",
+            "firstpass": {
+                "largegridstep": "0.001",
+                "tplratio_ismfit": "no",
+                "multiplecontinuumfit_disable": "yes"
+            },
+            "continuumcomponent": "fromspectrum",
+            "rigidity": "rules",
+            "linewidthtype": "velocitydriven",
+            "instrumentresolution": "2350",
+            "velocityemission": "100",
+            "velocityabsorption": "300",
+            "velocityfit": "yes",
+            "continuumreestimation": "onlyextrema",
+            "rules": "no",
+            "extremacount": "1",
+            "stronglinesprior": "1e-1",
+            "pdfcombination": "marg",
+            "continuumismfit": "no",
+            "continuumigmfit": "no",
+	    "emvelocityfitmin": "20",
+            "emvelocityfitmax": "2000",
+            "emvelocityfitstep": "1",
+            "absvelocityfitmin": "20",
+            "absvelocityfitmax": "2000",
+            "absvelocityfitstep": "5"
+        }
+    }
+}

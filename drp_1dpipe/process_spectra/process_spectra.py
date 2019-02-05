@@ -17,16 +17,12 @@ from pyamazed.redshift import CProcessFlowContext, \
 from drp_1dpipe.process_spectra.results import AmazedResults
 
 
-MULTIPROC=False
+MULTIPROC = False
 
 if MULTIPROC:
     import concurrent.futures
 
 logger = logging.getLogger("process_spectra")
-
-
-def _calibration_path(args, *path):
-    return normpath(args.workdir, args.calibration_dir, *path)
 
 
 def _output_path(args, *path):
@@ -55,18 +51,24 @@ def main():
                         help='Parameters file. Relative to workdir.')
     parser.add_argument('--template_dir', metavar='DIR',
                         help='Specify directory in which input templates files'
-                        'are stored. Relative to calibration_dir.')
+                        'are stored.')
     parser.add_argument('--linecatalog', metavar='FILE',
-                        help='Path to the rest lines catalog file. Relative to'
-                        ' calibration_dir.')
+                        help='Path to the rest lines catalog file.')
     parser.add_argument('--zclassifier_dir', metavar='DIR',
                         help='Specify directory in which zClassifier files are'
-                        ' stored. Relative to calibration_dir.')
+                        ' stored.')
     parser.add_argument('--process_method',
                         help='Process method to use. Whether Dummy or Amazed.')
     parser.add_argument('--output_dir', metavar='DIR',
                         help='Directory where all generated files are going to'
                         ' be stored. Relative to workdir.')
+    parser.add_argument('--linemeas_parameters_file', metavar='FILE',
+                        default=get_auxiliary_path("linemeas-parameters.json"),
+                        help='Parameters file used for line measurement. '
+                        'Relative to workdir.')
+    parser.add_argument('--linemeas_linecatalog', metavar='FILE',
+                        help='Path to the rest lines catalog file used for '
+                        'line measurement.')
     args = parser.parse_args()
     get_args_from_file("process_spectra.conf", args)
 
@@ -74,12 +76,10 @@ def main():
     return run(args)
 
 
-def _process_spectrum(index, args, spectrum_path, template_catalog,
-                      line_catalog, param, classif):
-
+def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
+                      line_catalog, param, classif, save_results):
     try:
-        spectrum = read_spectrum(normpath(args.workdir, args.spectra_path,
-                                          spectrum_path))
+        spectrum = read_spectrum(spectrum_path)
     except Exception as e:
         logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
         return
@@ -103,9 +103,15 @@ def _process_spectrum(index, args, spectrum_path, template_catalog,
     except Exception as e:
         logger.log(logging.ERROR, "Can't process : {}".format(e))
 
-    ctx.GetDataStore().SaveRedshiftResult(normpath(args.workdir,
-                                                   args.output_dir))
-    ctx.GetDataStore().SaveAllResults(_output_path(args, proc_id), 'all')
+    if save_results == 'all':
+        ctx.GetDataStore().SaveRedshiftResult(output_dir)
+        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id),
+                                          'all')
+    elif save_results == 'linemeas':
+        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id),
+                                          'linemeas')
+    else:
+        raise Exception("Unhandled save_results {}".format(save_results))
 
 
 _map_loglevel = {'CRITICAL': CLog.nLevel_Critical,
@@ -118,6 +124,22 @@ _map_loglevel = {'CRITICAL': CLog.nLevel_Critical,
                  'NOTSET': CLog.nLevel_None}
 
 
+def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
+
+    # setup parameter store
+    param = CParameterStore()
+    param.Load(parameters_file)
+    param.Set_String('calibrationDir', calibration_dir)
+
+    # load line catalog
+    line_catalog = CRayCatalog()
+    logger.log(logging.INFO, "Loading %s" % line_catalog_file)
+    line_catalog.Load(line_catalog_file)
+    line_catalog.ConvertVacuumToAir()
+
+    return param, line_catalog
+
+
 def amazed(args):
     """Run the full-featured amazed client"""
 
@@ -126,37 +148,37 @@ def amazed(args):
                                                         'amazed.log'))
     logFileHandler.SetLevelMask(_map_loglevel[args.loglevel.upper()])
 
-    param = CParameterStore()
-    param.Load(normpath(args.workdir, args.parameters_file))
+    #
+    # Set up param and linecatalog for redshift pass
+    #
+    param, line_catalog = _setup_pass(normpath(args.calibration_dir),
+                                      normpath(args.parameters_file),
+                                      normpath(args.linecatalog))
+    medianRemovalMethod = param.Get_String("continuumRemoval.method",
+                                           "IrregularSamplingMedian")
+    opt_medianKernelWidth = param.Get_Float64('continuumRemoval.'
+                                              'medianKernelWidth',
+                                              75.0)
+    opt_nscales = param.Get_Float64("continuumRemoval.decompScales",
+                                    8.0)
+    dfBinPath = param.Get_String("continuumRemoval.binPath",
+                                 "absolute_path_to_df_binaries_here")
 
-    param.Set_String('calibrationDir', normpath(args.workdir,
-                                                args.calibration_dir))
+    #
+    # Set up param and linecatalog for line measurement pass
+    #
+    linemeas_param, linemeas_line_catalog = \
+        _setup_pass(normpath(args.calibration_dir),
+                    normpath(args.linemeas_parameters_file),
+                    normpath(args.linemeas_linecatalog))
 
     classif = CClassifierStore()
 
     if args.zclassifier_dir:
-        classif.Load(_calibration_path(args, args.zclassifier_dir))
+        classif.Load(normpath(args.zclassifier_dir))
 
-    with open(os.path.normpath(normpath(args.workdir, args.spectra_listfile)),
-              'r') as f:
+    with open(normpath(args.workdir, args.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
-
-    retcode, medianRemovalMethod = param.Get_String("continuumRemoval.method",
-                                                    "IrregularSamplingMedian")
-    assert retcode
-
-    retcode, opt_medianKernelWidth = param.Get_Float64('continuumRemoval.'
-                                                       'medianKernelWidth',
-                                                       75.0)
-    assert retcode
-
-    retcode, opt_nscales = param.Get_Float64("continuumRemoval.decompScales",
-                                             8.0)
-    assert retcode
-
-    retcode, dfBinPath = param.Get_String("continuumRemoval.binPath",
-                                          "absolute_path_to_df_binaries_here")
-    assert retcode
 
     template_catalog = CTemplateCatalog(medianRemovalMethod,
                                         opt_medianKernelWidth,
@@ -164,17 +186,14 @@ def amazed(args):
     logger.log(logging.INFO, "Loading %s" % args.template_dir)
 
     try:
-        template_catalog.Load(_calibration_path(args, args.template_dir))
+        template_catalog.Load(normpath(args.template_dir))
     except Exception as e:
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise
 
-    line_catalog = CRayCatalog()
-    logger.log(logging.INFO, "Loading %s" % args.linecatalog)
-    line_catalog.Load(_calibration_path(args, args.linecatalog))
-    line_catalog.ConvertVacuumToAir()
-
     for i, spectrum_path in enumerate(spectra_list):
+        outdir = normpath(args.workdir, args.output_dir)
+        spectrum = normpath(args.workdir, args.spectra_path, spectrum_path)
         if MULTIPROC:
             futures = []
             with concurrent.futures.ProcessPoolExecutor(max_workers=4) as ex:
@@ -183,8 +202,17 @@ def amazed(args):
                                          template_catalog,
                                          line_catalog, param, classif))
         else:
-            _process_spectrum(i, args, spectrum_path, template_catalog,
-                              line_catalog, param, classif)
+            # first pass : compute redshift
+            _process_spectrum(outdir, i, spectrum, template_catalog,
+                              line_catalog, param, classif, 'all')
+
+            # second pass : compute line fluxes
+            linemeas_param.Set_String('linemeascatalog',
+                                      os.path.join(outdir, 'redshift.csv'))
+            _process_spectrum('-'.join([outdir, 'lf']), i, spectrum,
+                              template_catalog,
+                              linemeas_line_catalog, linemeas_param, classif,
+                              'linemeas')
 
     if MULTIPROC:
         concurrent.futures.wait(futures)
