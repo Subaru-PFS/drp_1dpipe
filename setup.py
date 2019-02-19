@@ -9,7 +9,7 @@ if sys.version_info < tuple((int(val) for val in __minimum_python_version__.spli
     sys.exit(1)
 
 NAME = 'drp_1dpipe'
-VERSION = '0.9.0'
+VERSION = '0.11.0'
 
 # Add any necessary entry points
 entry_points = {}
