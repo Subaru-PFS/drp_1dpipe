@@ -57,7 +57,7 @@ def run(args):
     # prepare workdir
     scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
                                           'logdir': normpath(args.logdir),
-                                          'loglevel': normpath(args.loglevel),
+                                          'loglevel': args.loglevel,
                                           'bunch_size': args.bunch_size,
                                           'pre_commands': args.pre_commands,
                                           'spectra_path': args.spectra_path,
@@ -68,7 +68,7 @@ def run(args):
                        'spectra_listfile', 'output_dir',
                        args={'workdir': normpath(args.workdir),
                              'logdir': normpath(args.logdir),
-                             'loglevel': normpath(args.loglevel),
+                             'loglevel': args.loglevel,
                              'spectra_path': args.spectra_path,
                              'pre_commands': args.pre_commands,
                              'output_dir': 'output-'})

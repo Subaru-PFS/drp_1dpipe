@@ -128,11 +128,21 @@ def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
 
     # setup parameter store
     param = CParameterStore()
-    param.Load(parameters_file)
+    if not os.path.exists(parameters_file):
+        raise FileNotFoundError(f"Parameter file not found: {parameters_file}")
+    assert param.Load(parameters_file), "Unable to read parameter file"
+
+    # setup calibration dir
+    if not os.path.exists(calibration_dir):
+        raise FileNotFoundError(f"Calibration directory does not exist: "
+                                f"{calibration_dir}")
     param.Set_String('calibrationDir', calibration_dir)
 
     # load line catalog
     line_catalog = CRayCatalog()
+    if not os.path.exists(line_catalog_file):
+        raise FileNotFoundError(f"Line catalog file not found: "
+                                f"{line_catalog_file}")
     logger.log(logging.INFO, "Loading %s" % line_catalog_file)
     line_catalog.Load(line_catalog_file)
     line_catalog.ConvertVacuumToAir()
@@ -151,31 +161,43 @@ def amazed(args):
     #
     # Set up param and linecatalog for redshift pass
     #
-    param, line_catalog = _setup_pass(normpath(args.calibration_dir),
-                                      normpath(args.parameters_file),
-                                      normpath(args.linecatalog))
-    medianRemovalMethod = param.Get_String("continuumRemoval.method",
-                                           "IrregularSamplingMedian")
-    opt_medianKernelWidth = param.Get_Float64('continuumRemoval.'
-                                              'medianKernelWidth',
-                                              75.0)
-    opt_nscales = param.Get_Float64("continuumRemoval.decompScales",
-                                    8.0)
-    dfBinPath = param.Get_String("continuumRemoval.binPath",
-                                 "absolute_path_to_df_binaries_here")
+    param, line_catalog = \
+        _setup_pass(normpath(args.workdir, args.calibration_dir),
+                    normpath(args.workdir, args.parameters_file),
+                    normpath(args.workdir, args.linecatalog))
 
+    retcode, medianRemovalMethod = param.Get_String("continuumRemoval.method",
+                                                    "IrregularSamplingMedian")
+    assert retcode, "Unable to get parameter: continuumRemoval.method "
+
+    retcode, opt_medianKernelWidth = param.Get_Float64('continuumRemoval.'
+                                                       'medianKernelWidth',
+                                                       75.0)
+    assert retcode, "Unable to get parameter: continuumRemoval"
+
+    retcode, opt_nscales = param.Get_Float64("continuumRemoval.decompScales",
+                                             8.0)
+    assert retcode, "Unable to get parameter: continuumRemoval.decompScales"
+
+    retcode, dfBinPath = param.Get_String("continuumRemoval.binPath",
+                                          "absolute_path_to_df_binaries_here")
+    assert retcode, "Unable to get parameter: continuumRemoval.binPath"
     #
     # Set up param and linecatalog for line measurement pass
     #
     linemeas_param, linemeas_line_catalog = \
-        _setup_pass(normpath(args.calibration_dir),
-                    normpath(args.linemeas_parameters_file),
-                    normpath(args.linemeas_linecatalog))
+        _setup_pass(normpath(args.workdir, args.calibration_dir),
+                    normpath(args.workdir, args.linemeas_parameters_file),
+                    normpath(args.workdir, args.linemeas_linecatalog))
 
     classif = CClassifierStore()
 
     if args.zclassifier_dir:
-        classif.Load(normpath(args.zclassifier_dir))
+        zclassifier_dir = normpath(args.workdir, args.zclassifier_dir)
+        if not os.path.exists(zclassifier_dir):
+            raise FileNotFoundError(f"zclassifier directory does not exist: "
+                                    f"{zclassifier_dir}")
+        classif.Load(zclassifier_dir)
 
     with open(normpath(args.workdir, args.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
@@ -186,7 +208,7 @@ def amazed(args):
     logger.log(logging.INFO, "Loading %s" % args.template_dir)
 
     try:
-        template_catalog.Load(normpath(args.template_dir))
+        template_catalog.Load(normpath(args.workdir, args.template_dir))
     except Exception as e:
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise

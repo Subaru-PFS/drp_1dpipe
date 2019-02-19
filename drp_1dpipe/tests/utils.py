@@ -1,5 +1,5 @@
 import numpy as np
-from pfs.datamodel.pfsObject import PfsObject
+from pfs.datamodel.drp import PfsObject
 
 NROW = 11640
 NCOARSE = 10
