@@ -130,7 +130,10 @@ def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
     param = CParameterStore()
     if not os.path.exists(parameters_file):
         raise FileNotFoundError(f"Parameter file not found: {parameters_file}")
-    assert param.Load(parameters_file), "Unable to read parameter file"
+    try:
+        param.Load(parameters_file)
+    except Exception as e:
+        print("Unable to read parameter file :", e)
 
     # setup calibration dir
     if not os.path.exists(calibration_dir):
