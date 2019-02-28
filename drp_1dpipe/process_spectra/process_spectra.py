@@ -128,11 +128,21 @@ def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
 
     # setup parameter store
     param = CParameterStore()
-    param.Load(parameters_file)
+    if not os.path.exists(parameters_file):
+        raise FileNotFoundError(f"Parameter file not found: {parameters_file}")
+    assert param.Load(parameters_file), "Unable to read parameter file"
+
+    # setup calibration dir
+    if not os.path.exists(calibration_dir):
+        raise FileNotFoundError(f"Calibration directory does not exist: "
+                                f"{calibration_dir}")
     param.Set_String('calibrationDir', calibration_dir)
 
     # load line catalog
     line_catalog = CRayCatalog()
+    if not os.path.exists(line_catalog_file):
+        raise FileNotFoundError(f"Line catalog file not found: "
+                                f"{line_catalog_file}")
     logger.log(logging.INFO, "Loading %s" % line_catalog_file)
     line_catalog.Load(line_catalog_file)
     line_catalog.ConvertVacuumToAir()
@@ -175,7 +185,11 @@ def amazed(args):
     classif = CClassifierStore()
 
     if args.zclassifier_dir:
-        classif.Load(normpath(args.zclassifier_dir))
+        zclassifier_dir = normpath(args.workdir, args.zclassifier_dir)
+        if not os.path.exists(zclassifier_dir):
+            raise FileNotFoundError(f"zclassifier directory does not exist: "
+                                    f"{zclassifier_dir}")
+        classif.Load(zclassifier_dir)
 
     with open(normpath(args.workdir, args.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)

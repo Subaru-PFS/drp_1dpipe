@@ -55,21 +55,22 @@ def run(args):
                           'list_{}.json'.format(uuid.uuid4().hex))
 
     # prepare workdir
-    scheduler.single('pre_process', args={'workdir': normpath(args.workdir),
-                                          'logdir': normpath(args.logdir),
-                                          'loglevel': normpath(args.loglevel),
-                                          'bunch_size': args.bunch_size,
-                                          'pre_commands': args.pre_commands,
-                                          'spectra_path': args.spectra_path,
-                                          'bunch_list': bunch_list})
+    scheduler.single('pre_process',
+                     args={'workdir': normpath(args.workdir),
+                           'logdir': normpath(args.logdir),
+                           'loglevel': args.loglevel,
+                           'bunch_size': args.bunch_size,
+                           'pre_commands': args.pre_commands,
+                           'spectra_path': normpath(args.spectra_path),
+                           'bunch_list': bunch_list})
 
     # process spectra
     scheduler.parallel('process_spectra', bunch_list,
                        'spectra_listfile', 'output_dir',
                        args={'workdir': normpath(args.workdir),
                              'logdir': normpath(args.logdir),
-                             'loglevel': normpath(args.loglevel),
-                             'spectra_path': args.spectra_path,
+                             'loglevel': args.loglevel,
+                             'spectra_path': normpath(args.spectra_path),
                              'pre_commands': args.pre_commands,
                              'output_dir': 'output-'})
 
