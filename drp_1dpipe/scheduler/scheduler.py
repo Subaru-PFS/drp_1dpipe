@@ -61,7 +61,7 @@ def run(args):
                            'loglevel': args.loglevel,
                            'bunch_size': args.bunch_size,
                            'pre_commands': args.pre_commands,
-                           'spectra_path': normpath(args.spectra_path),
+                           'spectra_path': args.spectra_path,
                            'bunch_list': bunch_list})
 
     # process spectra
@@ -70,7 +70,7 @@ def run(args):
                        args={'workdir': normpath(args.workdir),
                              'logdir': normpath(args.logdir),
                              'loglevel': args.loglevel,
-                             'spectra_path': normpath(args.spectra_path),
+                             'spectra_path': args.spectra_path,
                              'pre_commands': args.pre_commands,
                              'output_dir': 'output-'})
 
