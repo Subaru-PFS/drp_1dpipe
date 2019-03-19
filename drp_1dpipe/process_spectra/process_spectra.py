@@ -17,6 +17,8 @@ from pyamazed.redshift import CProcessFlowContext, \
 from drp_1dpipe.process_spectra.results import AmazedResults
 
 
+# MULTIPROC won't work until we wake CTemplateCatalog, CRayCatalog
+# and CTemplate picklable
 MULTIPROC = False
 
 if MULTIPROC:

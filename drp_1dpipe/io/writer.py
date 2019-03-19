@@ -1,6 +1,5 @@
 import fitsio
 import os.path
-from pyamazed.redshift import *
 import numpy as np
 
 
@@ -19,29 +18,39 @@ def write_candidates(output_dir,
 
     npix = len(lambda_ranges)
 
-    header = [{'name': 'tract', 'value': tract, 'comment': 'Area of the sky'},
-              {'name': 'patch', 'value': patch, 'comment': 'Region within tract'},
-              {'name': 'catId', 'value': catId, 'comment': 'Source of the objId'},
-              {'name': 'objId', 'value': objId, 'comment': 'Unique ID for object'},
-              {'name': 'nVisit', 'value': nVisit, 'comment': 'Number of visits'},
-              {'name': 'pfsVisitHash', 'value': pfsVisitHash, 'comment': 'SHA-1 hash of the visits'}]
+    header = [{'name': 'tract', 'value': tract,
+               'comment': 'Area of the sky'},
+              {'name': 'patch', 'value': patch,
+               'comment': 'Region within tract'},
+              {'name': 'catId', 'value': catId,
+               'comment': 'Source of the objId'},
+              {'name': 'objId', 'value': objId,
+               'comment': 'Unique ID for object'},
+              {'name': 'nVisit', 'value': nVisit,
+               'comment': 'Number of visits'},
+              {'name': 'pfsVisitHash', 'value': pfsVisitHash,
+               'comment': 'SHA-1 hash of the visits'}]
     data = {}
 
     #data['PDU'] = np.array([])
-    data['LAMBDA_SCALE'] = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
+    data['LAMBDA_SCALE'] = np.array(lambda_ranges,
+                                    dtype=[('WAVELENGTH', 'f4')])
     data['ZCANDIDATES'] = np.ndarray((len(candidates),),
-                                     dtype=[('Z', 'f8'), ('Z_ERR', 'f8'), ('ZRANK', 'i4'),
-                                            ('RELIABILITY', 'f8'), ('CLASS', 'S15'),
-                                            ('SUBCLASS', 'S15'), ('ZFIT', 'f8', (npix,))])
+                                     dtype=[('Z', 'f8'), ('Z_ERR', 'f8'),
+                                            ('ZRANK', 'i4'),
+                                            ('RELIABILITY', 'f8'),
+                                            ('CLASS', 'S15'),
+                                            ('SUBCLASS', 'S15'),
+                                            ('MODELFLUX', 'f8', (npix,))])
 
     for i, candidate in enumerate(candidates):
         data['ZCANDIDATES'][i]['Z'] = candidate.redshift
         data['ZCANDIDATES'][i]['Z_ERR'] = -1
         data['ZCANDIDATES'][i]['ZRANK'] = candidate.rank
-        data['ZCANDIDATES'][i]['RELIABILITY'] = -1
+        data['ZCANDIDATES'][i]['RELIABILITY'] = candidate.intgProba
         data['ZCANDIDATES'][i]['CLASS'] = ''
         data['ZCANDIDATES'][i]['SUBCLASS'] = ''
-        data['ZCANDIDATES'][i]['ZFIT'] = np.zeros((npix,))
+        data['ZCANDIDATES'][i]['MODELFLUX'] = np.zeros((npix,))  # TODO : get from linemodel_spc_extrema_0
 
     data['ZPDF'] = np.ndarray(len(zpdf), buffer=zpdf,
                               dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
