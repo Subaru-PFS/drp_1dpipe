@@ -90,7 +90,7 @@ def run(args):
                            'loglevel': args.loglevel,
                            'bunch_size': args.bunch_size,
                            'pre_commands': args.pre_commands,
-                           'spectra_path': args.spectra_path,
+                           'spectra_path': normpath(args.spectra_path),
                            'bunch_list': bunch_list})
 
     notif.update('pre_process', 'SUCCESS')

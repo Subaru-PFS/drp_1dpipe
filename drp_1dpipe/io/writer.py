@@ -4,12 +4,12 @@ import numpy as np
 
 
 def write_candidates(output_dir,
-                     tract, patch, catId, objId, nVisit, pfsVisitHash,
+                     catId, tract, patch, objId, expId,
                      lambda_ranges, redshift, candidates, zpdf, linemeas):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
-    path = "pfsZcandidates-%05d-%s-%03d-%08x-%02d-0x%08x.fits" % (
-        tract, patch, catId, objId, nVisit % 100, pfsVisitHash)
+    path = "pfsZcandidates-%05d-%s-%03d-%08x-%06d.fits" % (
+        tract, patch, catId, objId, expId)
 
     print("Saving {} redshifts to {}".format(len(candidates),
                                              os.path.join(output_dir, path)))
@@ -26,10 +26,8 @@ def write_candidates(output_dir,
                'comment': 'Source of the objId'},
               {'name': 'objId', 'value': objId,
                'comment': 'Unique ID for object'},
-              {'name': 'nVisit', 'value': nVisit,
-               'comment': 'Number of visits'},
-              {'name': 'pfsVisitHash', 'value': pfsVisitHash,
-               'comment': 'SHA-1 hash of the visits'}]
+              {'name': 'expId', 'value': expId,
+               'comment': 'expId'}]
     data = {}
 
     #data['PDU'] = np.array([])

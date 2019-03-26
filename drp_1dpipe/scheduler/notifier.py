@@ -4,7 +4,7 @@ import json
 
 class DummyNotifier:
     """Pipeline watcher dummy interface"""
-    def __init__(self, api_url, name=None, nodes=None):
+    def __init__(self, api_url=None, name=None, nodes=None):
         self.pipeline_url = None
 
     def update(self, node, state=None, children=None):

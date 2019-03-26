@@ -142,3 +142,4 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     semaphores = [normpath(args['workdir'], '{}_{}.done'.format(task_id, i))
                   for i in range(1, len(subtasks)+1)]
     wait_semaphores(semaphores)
+    notifier.update(command, 'SUCCESS')

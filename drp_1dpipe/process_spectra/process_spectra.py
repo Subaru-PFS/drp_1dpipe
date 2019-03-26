@@ -17,7 +17,7 @@ from pyamazed.redshift import CProcessFlowContext, \
 from drp_1dpipe.process_spectra.results import AmazedResults
 
 
-# MULTIPROC won't work until we wake CTemplateCatalog, CRayCatalog
+# MULTIPROC won't work until we make CTemplateCatalog, CRayCatalog
 # and CTemplate picklable
 MULTIPROC = False
 
@@ -166,9 +166,9 @@ def amazed(args):
     #
     # Set up param and linecatalog for redshift pass
     #
-    param, line_catalog = _setup_pass(normpath(args.workdir, args.calibration_dir),
-                                      normpath(args.workdir, args.parameters_file),
-                                      normpath(args.workdir, args.linecatalog))
+    param, line_catalog = _setup_pass(normpath(args.calibration_dir),
+                                      normpath(args.parameters_file),
+                                      normpath(args.linecatalog))
     medianRemovalMethod = param.Get_String("continuumRemoval.method",
                                            "IrregularSamplingMedian")
     opt_medianKernelWidth = param.Get_Float64('continuumRemoval.'
@@ -183,9 +183,9 @@ def amazed(args):
     # Set up param and linecatalog for line measurement pass
     #
     linemeas_param, linemeas_line_catalog = \
-        _setup_pass(normpath(args.workdir, args.calibration_dir),
-                    normpath(args.workdir, args.linemeas_parameters_file),
-                    normpath(args.workdir, args.linemeas_linecatalog))
+        _setup_pass(normpath(args.calibration_dir),
+                    normpath(args.linemeas_parameters_file),
+                    normpath(args.linemeas_linecatalog))
 
     classif = CClassifierStore()
 
@@ -205,7 +205,7 @@ def amazed(args):
     logger.log(logging.INFO, "Loading %s" % args.template_dir)
 
     try:
-        template_catalog.Load(normpath(args.workdir, args.template_dir))
+        template_catalog.Load(normpath(args.template_dir))
     except Exception as e:
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise

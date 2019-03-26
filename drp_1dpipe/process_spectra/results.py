@@ -58,10 +58,10 @@ class AmazedResults:
 
     def write(self):
         for spectrum, results in self.redshift_results.items():
-            tract, patch, catId, objId, \
-                nVisit, pfsVisitHash = self._parse_pfsObject_name(spectrum)
+            catId, tract, patch, objId, expId = \
+                self._parse_pfsObject_name(spectrum)
             write_candidates(self.output_dir,
-                             tract, patch, catId, objId, nVisit, pfsVisitHash,
+                             catId, tract, patch, objId, expId,
                              self.lambda_ranges[spectrum],
                              self.redshift_results[spectrum],
                              self.candidates[spectrum],
@@ -100,7 +100,7 @@ class AmazedResults:
         for spectrum, result in self.redshift_results.items():
             path = os.path.join(self.spectrum_dir, spectrum)
             fits = fitsio.FITS(path, 'r')
-            self.lambda_ranges[spectrum] = fits['FLUXTBL']['lambda'][:]
+            self.lambda_ranges[spectrum] = fits['FLUXTBL']['wavelength'][:]
 
     def _read_candidates(self):
         """Read redshift candidates from candidatesresult.csv."""
@@ -165,10 +165,9 @@ class AmazedResults:
         """Parse a pfsObject file name.
 
         Template is : pfsObject-%05d-%s-%03d-%08x-%02d-0x%08x.fits
+        pfsObject-%(catId)03d-%(tract)05d-%(patch)s-%(objId)08x-%(expId)06d.fits
         """
         basename = os.path.splitext(name)[0]
-        head, tract, patch, catId, objId, nVisit, \
-            pfsVisitHash = basename.split('-')
+        head, catId, tract, patch, objId, expId = basename.split('-')
         assert head == 'pfsObject'
-        return (int(tract), patch, int(catId), int(objId, 16), int(nVisit),
-                int(pfsVisitHash, 16))
+        return (int(catId), int(tract), patch, int(objId, 16), int(expId))
