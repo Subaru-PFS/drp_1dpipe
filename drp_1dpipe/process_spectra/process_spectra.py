@@ -243,6 +243,8 @@ def amazed(args):
     # create output products
     results = AmazedResults(_output_path(args), normpath(args.workdir,
                                                          args.spectra_path))
+    param.Save(os.path.join(normpath(args.workdir, args.output_dir),
+                            'parameters.json'))
     results.write()
 
 
