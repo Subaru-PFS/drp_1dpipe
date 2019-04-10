@@ -172,8 +172,7 @@ def amazed(args):
     medianRemovalMethod = param.Get_String("continuumRemoval.method",
                                            "IrregularSamplingMedian")
     opt_medianKernelWidth = param.Get_Float64('continuumRemoval.'
-                                              'medianKernelWidth',
-                                              75.0)
+                                              'medianKernelWidth')
     opt_nscales = param.Get_Float64("continuumRemoval.decompScales",
                                     8.0)
     dfBinPath = param.Get_String("continuumRemoval.binPath",
