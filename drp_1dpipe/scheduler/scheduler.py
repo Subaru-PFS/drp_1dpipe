@@ -24,7 +24,7 @@ def main():
 
     parser = init_argparse()
     parser.add_argument('--scheduler', metavar='SCHEDULER',
-                        help='The scheduler to use. Whether "local" or "pbs".')
+                        help='The scheduler to use. Either "local" or "pbs".')
     parser.add_argument('--pre_commands', metavar='COMMAND',
                         help='Commands to run before before process_spectra.')
     parser.add_argument('--spectra_path', metavar='DIR',
@@ -36,7 +36,7 @@ def main():
                         help='Notification URL.')
 
     args = parser.parse_args()
-    get_args_from_file('scheduler.conf', args)
+    get_args_from_file('drp_1dpipe.conf', args)
 
     return run(args)
 

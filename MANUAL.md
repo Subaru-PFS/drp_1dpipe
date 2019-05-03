@@ -18,7 +18,7 @@ drp_1dpipe [-h] [--workdir WORKDIR] [--logdir LOGDIR] [--spectra_path DIR]
 ```
 #### Optional arguments
 
-Arguments can be given on the command line and in the configuration file `drp_1dpipe/io/conf/scheduler.conf`. **TODO: Find a better name, maybe. File location ?** Command line argument takes precedence.
+Arguments can be given on the command line and in the configuration file `drp_1dpipe/io/conf/drp_1dpipe.conf`. Command line arguments take precedence.
 
 ##### `--workdir WORKDIR`
 
@@ -34,7 +34,7 @@ The logging level. `CRITICAL`, `ERROR`, `WARNING`, `INFO` or `DEBUG`.
 
 ##### `--scheduler SCHEDULER`
 
-The scheduler to use. Whether `local` or `pbs`.
+The scheduler to use. Either `local` or `pbs`.
 
 ##### `--pre_commands COMMAND`
 
