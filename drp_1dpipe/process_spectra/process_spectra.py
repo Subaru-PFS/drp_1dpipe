@@ -8,12 +8,14 @@ import os.path
 import json
 import logging
 import time
-from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, \
-    init_argparse, get_auxiliary_path
+from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
+                                 init_argparse, get_auxiliary_path)
 from drp_1dpipe.io.reader import read_spectrum
-from pyamazed.redshift import CProcessFlowContext, \
-    CProcessFlow, CLog, CParameterStore, CClassifierStore, \
-    CLogFileHandler, CRayCatalog, CTemplateCatalog, get_version
+from .parameters import default_parameters
+from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
+                                  CParameterStore, CClassifierStore,
+                                  CLogFileHandler, CRayCatalog,
+                                  CTemplateCatalog, get_version)
 from drp_1dpipe.process_spectra.results import AmazedResults
 
 
@@ -40,12 +42,14 @@ def main():
 
     parser = init_argparse()
     parser.add_argument('--spectra_path', metavar='DIR',
+                        default='spectra',
                         help='Path where spectra are stored. '
                         'Relative to workdir.')
-    parser.add_argument('--spectra_listfile', metavar='FILE',
+    parser.add_argument('--spectra_listfile', metavar='FILE', required=True,
                         help='JSON file holding a list of files of '
                         'astronomical objects.')
     parser.add_argument('--calibration_dir', metavar='DIR',
+                        default='calibration',
                         help='Specify directory in which calibration files are'
                         ' stored. Relative to workdir.')
     parser.add_argument('--parameters_file', metavar='FILE',
@@ -59,9 +63,10 @@ def main():
     parser.add_argument('--zclassifier_dir', metavar='DIR',
                         help='Specify directory in which zClassifier files are'
                         ' stored.')
-    parser.add_argument('--process_method',
-                        help='Process method to use. Whether Dummy or Amazed.')
+    parser.add_argument('--process_method', default='AMAZED',
+                        help='Process method to use. Whether DUMMY or AMAZED.')
     parser.add_argument('--output_dir', metavar='DIR',
+                        default='output',
                         help='Directory where all generated files are going to'
                         ' be stored. Relative to workdir.')
     parser.add_argument('--linemeas_parameters_file', metavar='FILE',
@@ -130,12 +135,15 @@ def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
 
     # setup parameter store
     param = CParameterStore()
-    if not os.path.exists(parameters_file):
-        raise FileNotFoundError(f"Parameter file not found: {parameters_file}")
-    try:
-        param.Load(parameters_file)
-    except Exception as e:
-        print("Unable to read parameter file :", e)
+    _params = default_parameters.copy()
+    if parameters_file:
+        try:
+            # override default parameters with those found in parameters_file
+            with open(parameters_file, 'r') as f:
+                _params.update(json.load(f))
+        except Exception as e:
+            print("Warning: unable to read parameter file :", e)
+    param.FromString(json.dumps(_params))
 
     # setup calibration dir
     if not os.path.exists(calibration_dir):

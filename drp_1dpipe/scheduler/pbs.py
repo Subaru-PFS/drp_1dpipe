@@ -28,20 +28,6 @@ parallel_script_template = textwrap.dedent("""\
             """)
 
 
-def _build_pre_commands(pre_commands):
-    """Build pre-commands string."""
-
-    _cmds = eval(pre_commands)
-    if not isinstance(_cmds, list):
-        raise Exception("pre_commands must be a list of commands")
-    for command in _cmds:
-        if not isinstance(command, list):
-            raise Exception("each command must be a list of words, as `args` in subprocess.run()")
-
-    result = '\n'.join([' '.join([w for w in command]) for command in _cmds])
-    return result
-
-
 def single(command, args):
     """Run a single command on a PBS cluster.
 
@@ -54,10 +40,9 @@ def single(command, args):
     # generate pbs script
     extra_args = ' '.join(['--{}={}'.format(k, v)
                            for k, v in args.items() if k != 'pre_commands'])
-    pre_commands = _build_pre_commands(args['pre_commands'])
 
     script = single_script_template.format(workdir=normpath(args['workdir']),
-                                           pre_commands=pre_commands,
+                                           pre_commands=args['pre_commands'],
                                            command=command,
                                            extra_args=extra_args,
                                            task_id=task_id)
@@ -123,11 +108,9 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
         executor.write(pbs_executor)
 
     # generate pbs script
-    pre_commands = _build_pre_commands(args['pre_commands'])
-
     script = parallel_script_template.format(jobs=len(subtasks),
                                              workdir=normpath(args['workdir']),
-                                             pre_commands=pre_commands,
+                                             pre_commands=args['pre_commands'],
                                              executor_script=executor_script,
                                              task_id=task_id)
     pbs_script_name = normpath(args['workdir'], 'pbs_script_{}.sh'.format(task_id))

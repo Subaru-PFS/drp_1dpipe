@@ -10,12 +10,13 @@ def init_argparse():
 
     :return: An initialized ArgumentParsel object.
     """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--workdir',
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--workdir', default='.',
                         help='The root working directory where data is '
                         'located.')
-    parser.add_argument('--logdir', help='The logging directory.')
-    parser.add_argument('--loglevel',
+    parser.add_argument('--logdir', default='logdir',
+                        help='The logging directory.')
+    parser.add_argument('--loglevel', default='WARNING',
                         help='The logging level. CRITICAL, ERROR, WARNING, '
                         'INFO or DEBUG.')
     return parser
@@ -152,4 +153,3 @@ def wait_semaphores(semaphores, timeout=4.354e17, tick=60):
             del _semaphores[0]
             continue
         time.sleep(tick)
-
