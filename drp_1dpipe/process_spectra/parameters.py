@@ -54,7 +54,7 @@ default_parameters = {
             'tplratio_catalog': ('linecatalogs_tplshapes/linecatalogs_tplshape'
                                  '_ExtendedTemplatesJan2017v3_20170602_B14C_'
                                  'v5_emission'),
-            'tplratio_ismfit': 'yes',
+            'tplratio_ismfit': 'no',
             'offsets_catalog': ('linecatalogs_offsets/'
                                 'offsetsCatalogs_20170410_m150'),
             'continuumcomponent': 'tplfit',

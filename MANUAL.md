@@ -105,7 +105,7 @@ Parameters are as follow :
 | `linemodelsolve.linemodel.absvelocityfitmin` |`float` |`150`
 | `linemodelsolve.linemodel.absvelocityfitmax` |`float` |`500`
 | `linemodelsolve.linemodel.absvelocityfitstep` |`float` |`50`
-| `linemodelsolve.linemodel.tplratio_ismfit` |`yes`/`no` |`yes` | activate fit of ISM extinction _i.e._ Ebv parameter from Calzetti profiles. Parameter scan from 0 to 0.9, step = 0.1. (best value stored in FittedTplshapeIsmCoeff in `linemodelsolve.linemodel_extrema.csv`)
+| `linemodelsolve.linemodel.tplratio_ismfit` |`yes`/`no` |`no` | activate fit of ISM extinction _i.e._ Ebv parameter from Calzetti profiles. Parameter scan from 0 to 0.9, step = 0.1. (best value stored in FittedTplshapeIsmCoeff in `linemodelsolve.linemodel_extrema.csv`)
 | `linemodelsolve.linemodel.continuumcomponent` |`fromspectrum` / `tplfit` | `tplfit`  | select the method for processing the continuum:<br>&bull; `fromspectrum`: remove an estimated continuum (the continuum estmation is then tuned via `continuumRemoval` parameters). The redshift is thus only estimated from the lines.<br>&bull; `tplfit`: fit a set of redshifted template (aka `fullmodel` _i.e._ contiuum model + line model
 | `linemodelsolve.linemodel.continuumfit.ismfit` |`yes`/`no` |`yes` | activate fit of ISM extinction _i.e._. Ebv parameter from Calzetti profiles. Parameter scan from 0 to 0.9, step = 0.1. (best value stored in FittedTplDustCoeff in `linemodelsolve.linemodel_extrema.csv`)  |
 | `linemodelsolve.linemodel.continuumfit.igmfit` |`yes`/`no` |`yes` | activate fit of IGM with Meiksin tables. Index scan from 0 to 0.9, step = 0.1 ??? (best profile index stored in FittedTplMeiksinIdx parameter in `linemodelsolve.linemodel_extrema.csv`)
