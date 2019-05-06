@@ -86,9 +86,7 @@ Parameters are as follow :
 | `redshiftrange` | `["min", "max"]` | `[ "0.0", "6."]` | resdshift range
 | `redshiftstep` | `float` | `0.0001` | redshift step for linear scale or lowest step for log scale
 | `redshiftsampling` |`log` / `lin` | `log` | linear or logarithmic scale
-| `method` | `linemodel` / `chisquare2solve` / `amazed0_1` / `amazed0_2` / ...) | `linemodel` | select the fitting method:<br>&bull; `chisquare2Solve`: least-square template fitting<br>&bull; `linemodel`: least-square fitting of a line model (it includes fullmodel _i.e._ continuum model + line model)
 |`calibrationDir` | | | |
-|`linemeascatalog` | | |zref catalog (ID, ZREF) (uniq ID)
 ||
 | _**`continuumRemoval`**_ ||| _**Method parameters to remove continuum of data spectra**_
 | `continuumRemoval.method` | `zero` / `median` / `irregularSamplingMedian` / `raw` | `zero`| continuum estimation method|
@@ -113,7 +111,7 @@ Parameters are as follow :
 | `linemodelsolve.linemodel.continuumfit.igmfit` |`yes`/`no` |`yes` | activate fit of IGM with Meiksin tables. Index scan from 0 to 0.9, step = 0.1 ??? (best profile index stored in FittedTplMeiksinIdx parameter in `linemodelsolve.linemodel_extrema.csv`)
 | `linemodelsolve.linemodel.skipsecondpass` |`yes` / `no` |`no` | toggle the processing  of a second pass refined pass arround the candidates (`no` by default) |
 | `linemodelsolve.linemodel.extremacount` |`int` |`5` |Number of candidates to retain |
-| `linemodelsolve.linemodel.extremacutprobathreshold` |`float` |`75` |Select the number of candidates to refine at the 2nd pass.<br>&bull; `-1`: retain a fixed number (set from `extremacount` parameter)<br>&bull; any positive value: retain all candidates with `log(max(pdf))-log(pdf)` values (not integrated)  below this threshold
+| `linemodelsolve.linemodel.extremacutprobathreshold` |`float` |`30` |Select the number of candidates to refine at the 2nd pass.<br>&bull; `-1`: retain a fixed number (set from `extremacount` parameter)<br>&bull; any positive value: retain all candidates with `log(max(pdf))-log(pdf)` values (not integrated)  below this threshold
 | `linemodelsolve.linemodel.firstpass.tplratio_ismfit` |`yes` / `no` | `no` | overwrite the `tplratio_ismfit` parameter
 ||
 | `linemodelsolve.linemodel.stronglinesprior` |`float` |`-1` | strongline prior<br>&bull; `-1`: no prior<br>&bull; otherwise, use this value (positive below 1) as a low probability when no strong line is measured (the measured amplitude is s>0) & probability is set to 1 when a strong line is observed

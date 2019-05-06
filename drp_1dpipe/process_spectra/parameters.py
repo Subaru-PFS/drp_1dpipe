@@ -71,12 +71,12 @@ default_parameters = {
             },
             'skipsecondpass': 'no',
             'extremacount': 5,
-            'extremacutprobathreshold': 75,
+            'extremacutprobathreshold': 30,
             'modelpriorzStrength': -1,
             'firstpass': {
-                'fittingmethod': 'hybrid',
+                'fittingmethod': 'individual',
                 'largegridstep': 0.001,
-                'tplratio_ismfit': 'no',
+                'tplratio_ismfit': 'yes',
                 'multiplecontinuumfit_disable': 'yes',
             },
             'secondpass': {
