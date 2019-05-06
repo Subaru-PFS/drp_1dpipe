@@ -1,6 +1,6 @@
 from collections import namedtuple
 import os.path
-import fitsio
+from astropy.io import fits
 from drp_1dpipe.io.writer import write_candidates
 import logging
 import numpy as np
@@ -99,8 +99,8 @@ class AmazedResults:
         """
         for spectrum, result in self.redshift_results.items():
             path = os.path.join(self.spectrum_dir, spectrum)
-            fits = fitsio.FITS(path, 'r')
-            self.lambda_ranges[spectrum] = fits['FLUXTBL']['wavelength'][:]
+            hdul = fits.open(path)
+            self.lambda_ranges[spectrum] = hdul['FLUXTBL'].data.field('wavelength')
 
     def _read_candidates(self):
         """Read redshift candidates from candidatesresult.csv."""

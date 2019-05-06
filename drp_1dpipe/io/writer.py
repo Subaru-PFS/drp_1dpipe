@@ -1,4 +1,4 @@
-import fitsio
+from astropy.io import fits
 import os.path
 import numpy as np
 
@@ -14,80 +14,80 @@ def write_candidates(output_dir,
     print("Saving {} redshifts to {}".format(len(candidates),
                                              os.path.join(output_dir, path)))
     print("redshifts is", redshift)
-    fits = fitsio.FITS(os.path.join(output_dir, path), 'rw', clobber=True)
+
+    header = [fits.Card('tract', tract, 'Area of the sky'),
+              fits.Card('patch', patch, 'Region within tract'),
+              fits.Card('catId', catId, 'Source of the objId'),
+              fits.Card('objId', objId, 'Unique ID for object'),
+              fits.Card('expId', expId, 'expId')]
+
+    hdr = fits.Header(header)
+    primary = fits.PrimaryHDU(header=hdr)
+    hdul = [primary]
 
     npix = len(lambda_ranges)
 
-    header = [{'name': 'tract', 'value': tract,
-               'comment': 'Area of the sky'},
-              {'name': 'patch', 'value': patch,
-               'comment': 'Region within tract'},
-              {'name': 'catId', 'value': catId,
-               'comment': 'Source of the objId'},
-              {'name': 'objId', 'value': objId,
-               'comment': 'Unique ID for object'},
-              {'name': 'expId', 'value': expId,
-               'comment': 'expId'}]
-    data = {}
+    # create LAMBDA_SCALE HDU
+    lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
+    hdul.append(fits.BinTableHDU(name='LAMBDA_SCALE', data=lambda_scale))
 
-    #data['PDU'] = np.array([])
-    data['LAMBDA_SCALE'] = np.array(lambda_ranges,
-                                    dtype=[('WAVELENGTH', 'f4')])
-    data['ZCANDIDATES'] = np.ndarray((len(candidates),),
-                                     dtype=[('Z', 'f8'), ('Z_ERR', 'f8'),
-                                            ('ZRANK', 'i4'),
-                                            ('RELIABILITY', 'f8'),
-                                            ('CLASS', 'S15'),
-                                            ('SUBCLASS', 'S15'),
-                                            ('MODELFLUX', 'f8', (npix,))])
+    # data['PDU'] = np.array([])
 
+    # create ZCANDIDATES HDU
+    zcandidates = np.ndarray((len(candidates),),
+                             dtype=[('Z', 'f8'), ('Z_ERR', 'f8'),
+                                    ('ZRANK', 'i4'),
+                                    ('RELIABILITY', 'f8'),
+                                    ('CLASS', 'S15'),
+                                    ('SUBCLASS', 'S15'),
+                                    ('MODELFLUX', 'f8', (npix,))])
     for i, candidate in enumerate(candidates):
-        data['ZCANDIDATES'][i]['Z'] = candidate.redshift
-        data['ZCANDIDATES'][i]['Z_ERR'] = -1
-        data['ZCANDIDATES'][i]['ZRANK'] = candidate.rank
-        data['ZCANDIDATES'][i]['RELIABILITY'] = candidate.intgProba
-        data['ZCANDIDATES'][i]['CLASS'] = ''
-        data['ZCANDIDATES'][i]['SUBCLASS'] = ''
-        data['ZCANDIDATES'][i]['MODELFLUX'] = np.zeros((npix,))  # TODO : get from linemodel_spc_extrema_0
+        zcandidates[i]['Z'] = candidate.redshift
+        zcandidates[i]['Z_ERR'] = -1
+        zcandidates[i]['ZRANK'] = candidate.rank
+        zcandidates[i]['RELIABILITY'] = candidate.intgProba
+        zcandidates[i]['CLASS'] = ''
+        zcandidates[i]['SUBCLASS'] = ''
+        zcandidates[i]['MODELFLUX'] = np.zeros((npix,))  # TODO : get from linemodel_spc_extrema_0
+    hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
 
-    data['ZPDF'] = np.ndarray(len(zpdf), buffer=zpdf,
-                              dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
-    data['ZLINES'] = np.ndarray((len(linemeas),),
-                                dtype=[('LINENAME', 'S15'),
-                                       ('LINEWAVE', 'f8'),
-                                       ('LINEZ', 'f8'),
-                                       ('LINEZ_ERR', 'f8'),
-                                       ('LINESIGMA', 'f8'),
-                                       ('LINESIGMA_ERR', 'f8'),
-                                       ('LINEVEL', 'f8'),
-                                       ('LINEVEL_ERR', 'f8'),
-                                       ('LINEFLUX', 'f8'),
-                                       ('LINEFLUX_ERR', 'f8'),
-                                       ('LINEEW', 'f8'),
-                                       ('LINEEW_ERR', 'f8'),
-                                       ('LINECONTLEVEL', 'f8'),
-                                       ('LINECONTLEVEL_ERR', 'f8')])
+    # create ZPDF HDU
+    zpdf_hdu = np.ndarray(len(zpdf), buffer=zpdf,
+                          dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
+    hdul.append(fits.BinTableHDU(name='ZPDF', data=zpdf_hdu))
+
+    # create ZLINES HDU
+    zlines = np.ndarray((len(linemeas),),
+                        dtype=[('LINENAME', 'S15'),
+                               ('LINEWAVE', 'f8'),
+                               ('LINEZ', 'f8'),
+                               ('LINEZ_ERR', 'f8'),
+                               ('LINESIGMA', 'f8'),
+                               ('LINESIGMA_ERR', 'f8'),
+                               ('LINEVEL', 'f8'),
+                               ('LINEVEL_ERR', 'f8'),
+                               ('LINEFLUX', 'f8'),
+                               ('LINEFLUX_ERR', 'f8'),
+                               ('LINEEW', 'f8'),
+                               ('LINEEW_ERR', 'f8'),
+                               ('LINECONTLEVEL', 'f8'),
+                               ('LINECONTLEVEL_ERR', 'f8')])
     for i, lm in enumerate(linemeas):
-        data['ZLINES'][i]['LINENAME'] = lm.name
-        data['ZLINES'][i]['LINEWAVE'] = lm.lambda_obs  # TODO: or lambda_rest_beforeOffset ?
-        data['ZLINES'][i]['LINEZ'] = np.nan  # TODO: what is that ?
-        data['ZLINES'][i]['LINEZ_ERR'] = np.nan  # TODO: what is that ?
-        data['ZLINES'][i]['LINESIGMA'] = lm.sigma
-        data['ZLINES'][i]['LINESIGMA_ERR'] = np.nan  # TODO: what is that ?
-        data['ZLINES'][i]['LINEVEL'] = lm.velocity
-        data['ZLINES'][i]['LINEVEL_ERR'] = np.nan  # TODO: what is that
-        data['ZLINES'][i]['LINEFLUX'] = lm.flux
-        data['ZLINES'][i]['LINEFLUX_ERR'] = lm.flux_err
-        data['ZLINES'][i]['LINEEW'] = np.nan  # TODO: what is that
-        data['ZLINES'][i]['LINEEW_ERR'] = np.nan  # TODO: what is that
-        data['ZLINES'][i]['LINECONTLEVEL'] = np.nan  # TODO: what is that
-        data['ZLINES'][i]['LINECONTLEVEL_ERR'] = np.nan  # TODO: what is that
+        zlines[i]['LINENAME'] = lm.name
+        zlines[i]['LINEWAVE'] = lm.lambda_obs  # TODO: or lambda_rest_beforeOffset ?
+        zlines[i]['LINEZ'] = np.nan  # TODO: what is that ?
+        zlines[i]['LINEZ_ERR'] = np.nan  # TODO: what is that ?
+        zlines[i]['LINESIGMA'] = lm.sigma
+        zlines[i]['LINESIGMA_ERR'] = np.nan  # TODO: what is that ?
+        zlines[i]['LINEVEL'] = lm.velocity
+        zlines[i]['LINEVEL_ERR'] = np.nan  # TODO: what is that
+        zlines[i]['LINEFLUX'] = lm.flux
+        zlines[i]['LINEFLUX_ERR'] = lm.flux_err
+        zlines[i]['LINEEW'] = np.nan  # TODO: what is that
+        zlines[i]['LINEEW_ERR'] = np.nan  # TODO: what is that
+        zlines[i]['LINECONTLEVEL'] = np.nan  # TODO: what is that
+        zlines[i]['LINECONTLEVEL_ERR'] = np.nan  # TODO: what is that
+    hdul.append(fits.BinTableHDU(name='ZLINES', data=zlines))
 
-
-    #fits.write(data['PDU'], extname='PDU', header=header)
-    fits.write(data['LAMBDA_SCALE'], extname='LAMBDA_SCALE')
-    fits.write(data['ZCANDIDATES'], extname='ZCANDIDATES')
-    fits.write(data['ZPDF'], extname='ZPDF')
-    fits.write(data['ZLINES'], extname='ZLINES')
-
-    fits.close()
+    fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
+                               overwrite=True)
