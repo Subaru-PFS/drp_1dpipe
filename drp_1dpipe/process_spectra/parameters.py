@@ -23,7 +23,7 @@ default_parameters = {
         'linemodel': {
             'linetypefilter': 'no',
             'lineforcefilter': 'no',
-            'fittingmethod': 'hybrid',
+            'fittingmethod': 'individual',
             'linewidthtype': 'combined',
             'instrumentresolution': 4300,
             'velocityemission': 200,

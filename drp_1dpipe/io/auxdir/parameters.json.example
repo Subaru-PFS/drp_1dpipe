@@ -57,10 +57,10 @@
             "offsets_catalog": "linecatalogs_offsets\/offsetsCatalogs_20170410_m150",
             "emvelocityfitstep": "20",
             "absvelocityfitstep": "50",
-            "tplratio_ismfit": "yes",
+            "tplratio_ismfit": "no",
             "firstpass": {
                 "largegridstep": "0.001",
-                "tplratio_ismfit": "no",
+                "tplratio_ismfit": "yes",
                 "multiplecontinuumfit_disable": "yes",
                 "fittingmethod": "individual"
             },
@@ -68,7 +68,7 @@
                 "continuumfit": "retryall"
             },
             "continuumfit": {
-                "ismfit": "yes",
+                "ismfit": "no",
                 "igmfit": "no",
                 "count": "1",
                 "ignorelinesupport": "no",
