@@ -1,4 +1,4 @@
-import os.path
+import os
 import copy
 import logging
 import time
@@ -11,10 +11,11 @@ def init_argparse():
     :return: An initialized ArgumentParsel object.
     """
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('--workdir', default='.',
+    parser.add_argument('--workdir', default=os.getcwd(),
                         help='The root working directory where data is '
                         'located.')
-    parser.add_argument('--logdir', default='logdir',
+    parser.add_argument('--logdir',
+                        default=os.path.join(os.getcwd(), 'logdir'),
                         help='The logging directory.')
     parser.add_argument('--loglevel', default='WARNING',
                         help='The logging level. CRITICAL, ERROR, WARNING, '

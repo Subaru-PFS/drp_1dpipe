@@ -18,14 +18,6 @@ from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
                                   CTemplateCatalog, get_version)
 from drp_1dpipe.process_spectra.results import AmazedResults
 
-
-# MULTIPROC won't work until we make CTemplateCatalog, CRayCatalog
-# and CTemplate picklable
-MULTIPROC = False
-
-if MULTIPROC:
-    import concurrent.futures
-
 logger = logging.getLogger("process_spectra")
 
 
@@ -76,6 +68,12 @@ def main():
     parser.add_argument('--linemeas_linecatalog', metavar='FILE',
                         help='Path to the rest lines catalog file used for '
                         'line measurement.')
+    parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
+                        default='on',
+                        help='Whether to do line flux measurements.'
+                        '"on" to do redshift and line flux calculations, '
+                        '"off" to disable, '
+                        '"only" to skip the redshift part.')
     args = parser.parse_args()
     get_args_from_file("process_spectra.conf", args)
 
@@ -220,28 +218,19 @@ def amazed(args):
     for i, spectrum_path in enumerate(spectra_list):
         outdir = normpath(args.workdir, args.output_dir)
         spectrum = normpath(args.workdir, args.spectra_path, spectrum_path)
-        if MULTIPROC:
-            futures = []
-            with concurrent.futures.ProcessPoolExecutor(max_workers=4) as ex:
-                futures.append(ex.submit(_process_spectrum,
-                                         i, args, spectrum_path,
-                                         template_catalog,
-                                         line_catalog, param, classif))
-        else:
-            # first pass : compute redshift
+        if args.lineflux != 'only':
+            # first step : compute redshift
             _process_spectrum(outdir, i, spectrum, template_catalog,
                               line_catalog, param, classif, 'all')
 
-            # second pass : compute line fluxes
+        if args.lineflux in ['only', 'on']:
+            # second step : compute line fluxes
             linemeas_param.Set_String('linemeascatalog',
                                       os.path.join(outdir, 'redshift.csv'))
             _process_spectrum('-'.join([outdir, 'lf']), i, spectrum,
                               template_catalog,
-                              linemeas_line_catalog, linemeas_param, classif,
-                              'linemeas')
-
-    if MULTIPROC:
-        concurrent.futures.wait(futures)
+                              linemeas_line_catalog, linemeas_param,
+                              classif, 'linemeas')
 
     # save cpf-redshift version in output dir
     with open(_output_path(args, 'version.json'), 'w') as f:
@@ -249,7 +238,8 @@ def amazed(args):
 
     # create output products
     results = AmazedResults(_output_path(args), normpath(args.workdir,
-                                                         args.spectra_path))
+                                                         args.spectra_path),
+                            args.lineflux in ['only', 'on'])
     param.Save(os.path.join(normpath(args.workdir, args.output_dir),
                             'parameters.json'))
     results.write()

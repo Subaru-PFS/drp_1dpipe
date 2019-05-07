@@ -27,10 +27,11 @@ class AmazedResults:
     An object representation of an amazed output directory.
     """
 
-    def __init__(self, output_dir, spectrum_dir):
+    def __init__(self, output_dir, spectrum_dir, lineflux=True):
         """
         :param output_dir: Amazed output directory
         :param spectrum_dir: Base path to spectrums
+        :param lineflux: Whether we have line flux measurements
         """
 
         self.output_dir = output_dir
@@ -40,6 +41,7 @@ class AmazedResults:
         self.candidates = {}
         self.zpdf = {}
         self.linemeas = {}
+        self.lineflux = lineflux
 
         # Start by reading redshifts.csv
         self._read_redshifts_csv()
@@ -54,7 +56,8 @@ class AmazedResults:
         self._read_zPDF()
 
         # read line measurement from output-lf dirs
-        self._read_linemeas()
+        if lineflux:
+            self._read_linemeas()
 
     def write(self):
         for spectrum, results in self.redshift_results.items():
@@ -66,7 +69,9 @@ class AmazedResults:
                              self.redshift_results[spectrum],
                              self.candidates[spectrum],
                              self.zpdf[spectrum],
-                             self.linemeas[spectrum])
+                             (self.linemeas[spectrum]
+                              if self.lineflux
+                              else None))
 
     def _read_redshifts_csv(self):
         """Build redshift_results.

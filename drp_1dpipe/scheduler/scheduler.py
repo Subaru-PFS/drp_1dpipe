@@ -23,9 +23,9 @@ def main():
     """
 
     parser = init_argparse()
-    parser.add_argument('--scheduler', metavar='SCHEDULER',
+    parser.add_argument('--scheduler', metavar='SCHEDULER', default='local',
                         help='The scheduler to use. Either "local" or "pbs".')
-    parser.add_argument('--pre_commands', metavar='COMMAND',
+    parser.add_argument('--pre_commands', metavar='COMMAND', default='',
                         help='Commands to run before before process_spectra.')
     parser.add_argument('--spectra_path', metavar='DIR',
                         help='Base path where to find spectra. '
@@ -34,6 +34,12 @@ def main():
                         help='Maximum number of spectra per bunch.')
     parser.add_argument('--notification_url', metavar='URL',
                         help='Notification URL.')
+    parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
+                        default='on',
+                        help='Whether to do line flux measurements.'
+                        '"on" to do redshift and line flux calculations, '
+                        '"off" to disable line flux, '
+                        '"only" to skip the redshift part.')
 
     args = parser.parse_args()
     get_args_from_file('drp_1dpipe.conf', args)
@@ -102,6 +108,7 @@ def run(args):
                            args={'workdir': normpath(args.workdir),
                                  'logdir': normpath(args.logdir),
                                  'loglevel': args.loglevel,
+                                 'lineflux': args.lineflux,
                                  'spectra_path': normpath(args.spectra_path),
                                  'pre_commands': args.pre_commands,
                                  'notifier': notif,
