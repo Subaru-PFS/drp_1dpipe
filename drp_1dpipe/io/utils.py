@@ -94,32 +94,17 @@ def init_logger(process_name, logdir, loglevel):
     logger.addHandler(stream_handler)
 
 
-def get_args_from_file(file_name, args):
+def get_args_from_file(file_name):
     """Get arguments value from configuration file.
 
     :param file_name: name of the configuration file
-    :param args: object (ex. retrieve from argparse module)
 
     Get arguments value from configuration file. Value has to be formatted as
     ``option = string``. To comment use ``#``.
-    The function modifies every ``None`` args attribue.
-    The function add new args attribute.
 
-    :Example:
-
-    In ``my_conf.conf`` file:
-    arg1 = 2
-    arg2 = foo
-
-    class MyCls():
-        arg1=1
-
-    args = MyCls()
-    get_args_from_file("my_conf.conf",args)
-
-    args.arg1 # -> 1
-    args.arg2 # -> foo
+    Return a key, value pairs as a dictionnary.
     """
+    args = {}
     with open(get_conf_path(file_name), 'r') as ff:
         lines = ff.readlines()
     for line in lines:
@@ -127,12 +112,8 @@ def get_args_from_file(file_name, args):
             key, value = line.replace('\n', '').split('#')[0].split("=")
         except ValueError:
             continue
-        try:
-            if getattr(args, key.strip()) is None:
-                setattr(args, key.strip(), value.strip())
-        except AttributeError:
-            setattr(args, key.strip(), value.strip())
-
+        args[key.strip()] = value.strip()
+    return args
 
 def normpath(*args):
     return os.path.normpath(os.path.expanduser(os.path.join(*args)))

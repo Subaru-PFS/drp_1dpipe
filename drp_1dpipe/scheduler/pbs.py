@@ -39,10 +39,10 @@ def single(command, args):
 
     # generate pbs script
     extra_args = ' '.join(['--{}={}'.format(k, v)
-                           for k, v in args.items() if k != 'pre_commands'])
+                           for k, v in args.items() if k != 'pre-commands'])
 
     script = single_script_template.format(workdir=normpath(args['workdir']),
-                                           pre_commands=args['pre_commands'],
+                                           pre_commands=args['pre-commands'],
                                            command=command,
                                            extra_args=extra_args,
                                            task_id=task_id)
@@ -75,7 +75,7 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     tasks = []
     extra_args = ['--{}={}'.format(k, v)
                   for k, v in args.items()
-                  if k not in ('pre_commands', seq_arg_name, 'notifier')]
+                  if k not in ('pre-commands', seq_arg_name, 'notifier')]
 
     # setup tasks
     with open(filelist, 'r') as f:
@@ -110,7 +110,7 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     # generate pbs script
     script = parallel_script_template.format(jobs=len(subtasks),
                                              workdir=normpath(args['workdir']),
-                                             pre_commands=args['pre_commands'],
+                                             pre_commands=args['pre-commands'],
                                              executor_script=executor_script,
                                              task_id=task_id)
     pbs_script_name = normpath(args['workdir'], 'pbs_script_{}.sh'.format(task_id))

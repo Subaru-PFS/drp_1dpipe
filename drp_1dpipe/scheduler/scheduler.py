@@ -23,26 +23,39 @@ def main():
     """
 
     parser = init_argparse()
-    parser.add_argument('--scheduler', metavar='SCHEDULER', default='local',
+
+    defaults = {'scheduler': 'local',
+                'pre-commands': '',
+                'spectra-path': 'spectra',
+                'bunch-size': 8,
+                'notification-url': '',
+                'lineflux': 'on'}
+    defaults.update(get_args_from_file('drp_1dpipe.conf'))
+
+    parser.add_argument('--scheduler', metavar='SCHEDULER',
+                        default=defaults['scheduler'],
                         help='The scheduler to use. Either "local" or "pbs".')
-    parser.add_argument('--pre_commands', metavar='COMMAND', default='',
+    parser.add_argument('--pre-commands', metavar='COMMAND',
+                        default=defaults['pre_commands'],
                         help='Commands to run before before process_spectra.')
-    parser.add_argument('--spectra_path', metavar='DIR',
+    parser.add_argument('--spectra-path', metavar='DIR',
+                        default=defaults['spectra_path'],
                         help='Base path where to find spectra. '
                         'Relative to workdir.')
-    parser.add_argument('--bunch_size', metavar='SIZE',
+    parser.add_argument('--bunch-size', metavar='SIZE',
+                        default=defaults['bunch_size'],
                         help='Maximum number of spectra per bunch.')
-    parser.add_argument('--notification_url', metavar='URL',
+    parser.add_argument('--notification-url', metavar='URL',
+                        default=defaults['notification_url'],
                         help='Notification URL.')
     parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
-                        default='on',
+                        default=defaults['lineflux'],
                         help='Whether to do line flux measurements.'
                         '"on" to do redshift and line flux calculations, '
                         '"off" to disable line flux, '
                         '"only" to skip the redshift part.')
 
     args = parser.parse_args()
-    get_args_from_file('drp_1dpipe.conf', args)
 
     return run(args)
 
@@ -94,10 +107,10 @@ def run(args):
                      args={'workdir': normpath(args.workdir),
                            'logdir': normpath(args.logdir),
                            'loglevel': args.loglevel,
-                           'bunch_size': args.bunch_size,
-                           'pre_commands': args.pre_commands,
-                           'spectra_path': normpath(args.spectra_path),
-                           'bunch_list': bunch_list})
+                           'bunch-size': args.bunch_size,
+                           'pre-commands': args.pre_commands,
+                           'spectra-path': normpath(args.spectra_path),
+                           'bunch-list': bunch_list})
 
     notif.update('pre_process', 'SUCCESS')
 
@@ -109,10 +122,10 @@ def run(args):
                                  'logdir': normpath(args.logdir),
                                  'loglevel': args.loglevel,
                                  'lineflux': args.lineflux,
-                                 'spectra_path': normpath(args.spectra_path),
-                                 'pre_commands': args.pre_commands,
+                                 'spectra-path': normpath(args.spectra_path),
+                                 'pre-commands': args.pre_commands,
                                  'notifier': notif,
-                                 'output_dir': 'output-'})
+                                 'output-dir': 'output-'})
     except Exception as e:
         logger.log(logging.ERROR, 'Error in process_spectra:', e)
         notif.update('root', 'ERROR')

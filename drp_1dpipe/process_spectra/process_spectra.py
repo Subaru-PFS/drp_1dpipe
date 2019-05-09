@@ -33,49 +33,60 @@ def main():
     """
 
     parser = init_argparse()
-    parser.add_argument('--spectra_path', metavar='DIR',
-                        default='spectra',
+
+    defaults = {'spectra-path': 'spectra',
+                'calibration-dir': 'calibration',
+                'parameters-file': get_auxiliary_path("parameters.json"),
+                'process-method': 'AMAZED',
+                'output-dir': 'output',
+                'linemeas-parameters-file': get_auxiliary_path("linemeas-parameters.json"),
+                'lineflux': 'on'
+        }
+    defaults.update(get_args_from_file('process_spectra.conf'))
+
+    parser.add_argument('--spectra-path', metavar='DIR',
+                        default=defaults['spectra-path'],
                         help='Path where spectra are stored. '
                         'Relative to workdir.')
-    parser.add_argument('--spectra_listfile', metavar='FILE', required=True,
+    parser.add_argument('--spectra-listfile', metavar='FILE', required=True,
                         help='JSON file holding a list of files of '
                         'astronomical objects.')
-    parser.add_argument('--calibration_dir', metavar='DIR',
-                        default='calibration',
+    parser.add_argument('--calibration-dir', metavar='DIR',
+                        default=defaults['calibration-dir'],
                         help='Specify directory in which calibration files are'
                         ' stored. Relative to workdir.')
-    parser.add_argument('--parameters_file', metavar='FILE',
-                        default=get_auxiliary_path("parameters.json"),
+    parser.add_argument('--parameters-file', metavar='FILE',
+                        default=defaults['parameters-file'],
                         help='Parameters file. Relative to workdir.')
-    parser.add_argument('--template_dir', metavar='DIR',
+    parser.add_argument('--template-dir', metavar='DIR',
                         help='Specify directory in which input templates files'
                         'are stored.')
     parser.add_argument('--linecatalog', metavar='FILE',
                         help='Path to the rest lines catalog file.')
-    parser.add_argument('--zclassifier_dir', metavar='DIR',
+    parser.add_argument('--zclassifier-dir', metavar='DIR',
                         help='Specify directory in which zClassifier files are'
                         ' stored.')
-    parser.add_argument('--process_method', default='AMAZED',
+    parser.add_argument('--process-method',
+                        default=defaults['process-method'],
                         help='Process method to use. Whether DUMMY or AMAZED.')
-    parser.add_argument('--output_dir', metavar='DIR',
-                        default='output',
+    parser.add_argument('--output-dir', metavar='DIR',
+                        default=defaults['output-dir'],
                         help='Directory where all generated files are going to'
                         ' be stored. Relative to workdir.')
-    parser.add_argument('--linemeas_parameters_file', metavar='FILE',
-                        default=get_auxiliary_path("linemeas-parameters.json"),
+    parser.add_argument('--linemeas-parameters-file', metavar='FILE',
+                        default=defaults['linemeas-parameters-file'],
                         help='Parameters file used for line measurement. '
                         'Relative to workdir.')
-    parser.add_argument('--linemeas_linecatalog', metavar='FILE',
+    parser.add_argument('--linemeas-linecatalog', metavar='FILE',
                         help='Path to the rest lines catalog file used for '
                         'line measurement.')
     parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
-                        default='on',
+                        default=defaults['lineflux'],
                         help='Whether to do line flux measurements.'
                         '"on" to do redshift and line flux calculations, '
                         '"off" to disable, '
                         '"only" to skip the redshift part.')
     args = parser.parse_args()
-    get_args_from_file("process_spectra.conf", args)
 
     # Start the main program
     return run(args)
