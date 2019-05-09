@@ -24,20 +24,28 @@ def main():
     """
 
     parser = init_argparse()
-    parser.add_argument('--bunch_size', metavar='SIZE',
+
+    defaults = {'bunch-size': 8,
+                'spectra-path': 'spectra',
+                'bunch-list': 'spectralist.json'}
+    defaults.update(get_args_from_file('pre_process.conf'))
+
+    parser.add_argument('--bunch-size', metavar='SIZE',
+                        default=defaults['bunch-size'],
                         help='Maximum number of spectra per bunch.')
 
     # data input
-    parser.add_argument('--spectra_path', metavar='DIR',
+    parser.add_argument('--spectra-path', metavar='DIR',
+                        default=defaults['spectra-path'],
                         help='Path to spectra to process. '
                         'Relative to workdir.')
 
     # outputs
-    parser.add_argument('--bunch_list', metavar='FILE',
+    parser.add_argument('--bunch-list', metavar='FILE',
+                        default=defaults['bunch-list'],
                         help='List of files of bunch of astronomical objects.')
 
     args = parser.parse_args()
-    get_args_from_file("pre_process.conf", args)
 
     # Start the main program
     return run(args)
