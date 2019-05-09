@@ -41,7 +41,7 @@ def main():
                 'output-dir': 'output',
                 'linemeas-parameters-file': get_auxiliary_path("linemeas-parameters.json"),
                 'lineflux': 'on'
-        }
+    }
     defaults.update(get_args_from_file('process_spectra.conf'))
 
     parser.add_argument('--spectra-path', metavar='DIR',
@@ -59,11 +59,14 @@ def main():
                         default=defaults['parameters-file'],
                         help='Parameters file. Relative to workdir.')
     parser.add_argument('--template-dir', metavar='DIR',
+                        default=defaults['template-dir'],
                         help='Specify directory in which input templates files'
                         'are stored.')
     parser.add_argument('--linecatalog', metavar='FILE',
+                        default=defaults['linecatalog'],
                         help='Path to the rest lines catalog file.')
     parser.add_argument('--zclassifier-dir', metavar='DIR',
+                        default=defaults['zclassifier-dir'],
                         help='Specify directory in which zClassifier files are'
                         ' stored.')
     parser.add_argument('--process-method',
@@ -78,6 +81,7 @@ def main():
                         help='Parameters file used for line measurement. '
                         'Relative to workdir.')
     parser.add_argument('--linemeas-linecatalog', metavar='FILE',
+                        default=defaults['linemeas-linecatalog'],
                         help='Path to the rest lines catalog file used for '
                         'line measurement.')
     parser.add_argument('--lineflux', choices=['on', 'off', 'only'],

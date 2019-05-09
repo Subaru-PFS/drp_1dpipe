@@ -36,17 +36,17 @@ def main():
                         default=defaults['scheduler'],
                         help='The scheduler to use. Either "local" or "pbs".')
     parser.add_argument('--pre-commands', metavar='COMMAND',
-                        default=defaults['pre_commands'],
+                        default=defaults['pre-commands'],
                         help='Commands to run before before process_spectra.')
     parser.add_argument('--spectra-path', metavar='DIR',
-                        default=defaults['spectra_path'],
+                        default=defaults['spectra-path'],
                         help='Base path where to find spectra. '
                         'Relative to workdir.')
     parser.add_argument('--bunch-size', metavar='SIZE',
-                        default=defaults['bunch_size'],
+                        default=defaults['bunch-size'],
                         help='Maximum number of spectra per bunch.')
     parser.add_argument('--notification-url', metavar='URL',
-                        default=defaults['notification_url'],
+                        default=defaults['notification-url'],
                         help='Notification URL.')
     parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
                         default=defaults['lineflux'],
@@ -117,7 +117,7 @@ def run(args):
     # process spectra
     try:
         scheduler.parallel('process_spectra', bunch_list,
-                           'spectra_listfile', 'output_dir',
+                           'spectra-listfile', 'output-dir',
                            args={'workdir': normpath(args.workdir),
                                  'logdir': normpath(args.logdir),
                                  'loglevel': args.loglevel,

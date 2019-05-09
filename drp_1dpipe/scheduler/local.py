@@ -11,7 +11,7 @@ def single(command, args):
     """
     task = [command]
     extra_args = ['--{}={}'.format(k, v)
-                  for k, v in args.items() if k != 'pre_commands']
+                  for k, v in args.items() if k != 'pre-commands']
     task.extend(extra_args)
     subprocess.run(task)
 
@@ -29,7 +29,7 @@ def process_done_factory(notifier, node_id):
 def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     """Run a command on local host
 
-    Warning: pre_commands is not honored
+    Warning: pre-commands is not honored
 
     :param command: Path to command to execute
     :param filelist: JSON file. a list of list of FITS file
@@ -46,7 +46,7 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
 
     extra_args = ['--{}={}'.format(k, v)
                   for k, v in args.items()
-                  if k not in ('pre_commands', seq_arg_name,
+                  if k not in ('pre-commands', seq_arg_name,
                                'notifier')]
 
     # setup pipeline notifier

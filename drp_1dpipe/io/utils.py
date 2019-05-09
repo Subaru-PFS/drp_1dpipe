@@ -115,6 +115,7 @@ def get_args_from_file(file_name):
         args[key.strip()] = value.strip()
     return args
 
+
 def normpath(*args):
     return os.path.normpath(os.path.expanduser(os.path.join(*args)))
 
