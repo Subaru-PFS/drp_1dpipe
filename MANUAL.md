@@ -12,9 +12,9 @@ Pipeline is run with the `drp_1dpipe` command.
 
 #### Synopsis
 ```
-drp_1dpipe [-h] [--workdir WORKDIR] [--logdir LOGDIR] [--spectra_path DIR]
-           [--pre_commands COMMAND] [--loglevel LOGLEVEL]
-		   [--scheduler SCHEDULER] [--bunch_size SIZE]
+drp_1dpipe [-h] [--workdir WORKDIR] [--logdir LOGDIR] [--spectra-path DIR]
+           [--pre-commands COMMAND] [--loglevel LOGLEVEL]
+		   [--scheduler SCHEDULER] [--bunch-size SIZE]
 ```
 #### Optional arguments
 
@@ -36,16 +36,16 @@ The logging level. `CRITICAL`, `ERROR`, `WARNING`, `INFO` or `DEBUG`.
 
 The scheduler to use. Either `local` or `pbs`.
 
-##### `--pre_commands COMMAND`
+##### `--pre-commands COMMAND`
 
 Commands to run before before `process_spectra`. This gives the opportunity for each process to initialize a virtualenv or mount a data directory.
 `COMMAND` is a list of commands given as a python expression.
 
-##### `--spectra_path DIR`
+##### `--spectra-path DIR`
 
 Base path where to find spectra. Relative to workdir.
 
-##### `--bunch_size SIZE`
+##### `--bunch-size SIZE`
 
 Maximum number of spectra per bunch.
 
@@ -69,13 +69,16 @@ Run on a PBS queue, activating a virtualenv on each node before running:
 
 ```sh
 drp_1dpipe --scheduler pbs \
-           --pre_commands "source $HOME/venv/bin/activate"
+           --pre-commands "source $HOME/venv/bin/activate"
 ```
 
 ### Algorithmic parameters
 
+Algorithms are described in [DRP Algorith documentation](https://sumire.pbworks.com/w/file/132378141/LAM-PFS-1D-DRP-Algo-Pipeline_v0.82.pdf "DRP-Algo").
+
 Redshift determination algorithms can be tuned using an optional JSON file.
 Defaults to `drp_1dpipe/io/auxdir/parameters.json`. An example file can be found in `drp_1dpipe/io/auxdir/parameters.json.example`.
+
 
 Parameters are as follow :
 
@@ -89,7 +92,7 @@ Parameters are as follow :
 | `calibrationDir` | | | |
 |||||
 | _**`continuumRemoval`**_ ||| _**Method parameters to remove continuum of data spectra**_ |
-| `  .method` |&bull; `zero`<br>&bull; `median`<br>&bull; `irregularSamplingMedian`<br>&bull; `raw` | `zero`| continuum estimation method|
+| `  .method` |&bull; `zero`<br>&bull; `IrregularSamplingMedian`<br>&bull; | `IrregularSamplingMedian`| continuum estimation method. See also `linemodelsolve.linemodel.continuumcomponent` |
 | `  .medianKernelWidth` |`float` |`400` | relevant only for median (in Angströms)|
 |||||
 |  _**`linemodelsolve.linemodel`**_ ||| _**parameters for linemodel**_ |

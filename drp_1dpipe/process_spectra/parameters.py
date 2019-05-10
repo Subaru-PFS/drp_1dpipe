@@ -14,7 +14,7 @@ default_parameters = {
         }
     },
     'continuumRemoval': {
-        'method': 'zero',
+        'method': 'IrregularSamplingMedian',
         'medianKernelWidth': 400,
         'decompScales': 9,
         'binPath': ''

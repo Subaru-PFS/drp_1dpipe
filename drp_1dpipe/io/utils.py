@@ -83,7 +83,7 @@ def init_logger(process_name, logdir, loglevel):
     # file handler
     file_handler = logging.FileHandler(os.path.join(logdir,
                                                     process_name + '.log'),
-                                                    'w')
+                                       'w')
     file_handler.setLevel(_level)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
