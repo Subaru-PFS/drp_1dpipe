@@ -9,11 +9,12 @@ import os
 import json
 import logging
 from tempfile import NamedTemporaryFile
-from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, init_argparse
-from tempfile import NamedTemporaryFile
+from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, \
+    init_argparse
 
 
 logger = logging.getLogger("pre_process")
+
 
 def main():
     """
@@ -23,20 +24,32 @@ def main():
     """
 
     parser = init_argparse()
-    parser.add_argument('--bunch_size', metavar='SIZE', help='Maximum number of spectra per bunch.')
+
+    defaults = {'bunch-size': 8,
+                'spectra-dir': 'spectra',
+                'bunch-list': 'spectralist.json'}
+    defaults.update(get_args_from_file('pre_process.conf'))
+
+    parser.add_argument('--bunch-size', metavar='SIZE',
+                        default=defaults['bunch-size'],
+                        help='Maximum number of spectra per bunch.')
 
     # data input
-    parser.add_argument('--spectra_path', metavar='DIR', help='Path to spectra to process. Relative to workdir.')
+    parser.add_argument('--spectra-dir', metavar='DIR',
+                        default=defaults['spectra-dir'],
+                        help='Base path where to find spectra. '
+                        'Relative to workdir.')
 
     # outputs
-    parser.add_argument('--bunch_list', metavar='FILE',
+    parser.add_argument('--bunch-list', metavar='FILE',
+                        default=defaults['bunch-list'],
                         help='List of files of bunch of astronomical objects.')
 
     args = parser.parse_args()
-    get_args_from_file("pre_process.conf", args)
 
     # Start the main program
     return run(args)
+
 
 def run(args):
     """
@@ -51,13 +64,14 @@ def run(args):
     # initialize logger
     init_logger("pre_process", args.logdir, args.loglevel)
 
-    spectra_path = normpath(args.workdir, args.spectra_path)
+    spectra_dir = normpath(args.workdir, args.spectra_dir)
     bunch_size = args.bunch_size
 
     # bunch
     bunch_list = []
-    for ao_list in bunch(bunch_size, spectra_path):
-        f = NamedTemporaryFile(prefix='spectralist_', dir=normpath(args.workdir), delete=False,
+    for ao_list in bunch(bunch_size, spectra_dir):
+        f = NamedTemporaryFile(prefix='spectralist_',
+                               dir=normpath(args.workdir), delete=False,
                                mode='w')
         json.dump(ao_list, f)
         bunch_list.append(f.name)
@@ -69,19 +83,21 @@ def run(args):
 
     return 0
 
-def bunch(bunch_size, spectra_path):
+
+def bunch(bunch_size, spectra_dir):
     """
     The "bunch" function.
 
-    Split files located "spectra_path" directory in bunches of "bunch_size" lists.
+    Split files located "spectra_dir" directory in bunches of
+    "bunch_size" lists.
 
     :param bunch_size: The number of source per bunch.
-    :param spectra_path: List of sources in the workdir.
+    :param spectra_dir: List of sources in the workdir.
     :return: a generator with the max number of sources.
     """
 
     _list = []
-    for source in os.listdir(spectra_path):
+    for source in os.listdir(spectra_dir):
         _list.append(source)
         if len(_list) >= int(bunch_size):
             yield _list

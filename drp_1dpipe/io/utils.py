@@ -1,9 +1,8 @@
-import os.path
+import os
 import copy
 import logging
 import time
 import argparse
-from logging.handlers import RotatingFileHandler
 
 
 def init_argparse():
@@ -11,12 +10,18 @@ def init_argparse():
 
     :return: An initialized ArgumentParsel object.
     """
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--workdir', help='The root working directory where data is located.')
-    parser.add_argument('--logdir', help='The logging directory.')
-    parser.add_argument('--loglevel',
-                        help='The logging level. CRITICAL, ERROR, WARNING, INFO or DEBUG.')
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--workdir', default=os.getcwd(),
+                        help='The root working directory where data is '
+                        'located.')
+    parser.add_argument('--logdir',
+                        default=os.path.join(os.getcwd(), 'logdir'),
+                        help='The logging directory.')
+    parser.add_argument('--loglevel', default='WARNING',
+                        help='The logging level. CRITICAL, ERROR, WARNING, '
+                        'INFO or DEBUG.')
     return parser
+
 
 def get_auxiliary_path(file_name):
     """Get the full path of file in auxiliary directory.
@@ -55,6 +60,7 @@ _loglevels = {
     'NOTSET': logging.NOTSET,
 }
 
+
 def init_logger(process_name, logdir, loglevel):
     """Initializes a logger depending on which module calls it.
 
@@ -77,7 +83,7 @@ def init_logger(process_name, logdir, loglevel):
     # file handler
     file_handler = logging.FileHandler(os.path.join(logdir,
                                                     process_name + '.log'),
-                                                    'w')
+                                       'w')
     file_handler.setLevel(_level)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
@@ -88,32 +94,17 @@ def init_logger(process_name, logdir, loglevel):
     logger.addHandler(stream_handler)
 
 
-def get_args_from_file(file_name, args):
+def get_args_from_file(file_name):
     """Get arguments value from configuration file.
 
     :param file_name: name of the configuration file
-    :param args: object (ex. retrieve from argparse module)
 
     Get arguments value from configuration file. Value has to be formatted as
     ``option = string``. To comment use ``#``.
-    The function modifies every ``None`` args attribue.
-    The function add new args attribute.
 
-    :Example:
-
-    In ``my_conf.conf`` file:
-    arg1 = 2
-    arg2 = foo
-
-    class MyCls():
-        arg1=1
-
-    args = MyCls()
-    get_args_from_file("my_conf.conf",args)
-
-    args.arg1 # -> 1
-    args.arg2 # -> foo
+    Return a key, value pairs as a dictionnary.
     """
+    args = {}
     with open(get_conf_path(file_name), 'r') as ff:
         lines = ff.readlines()
     for line in lines:
@@ -121,14 +112,13 @@ def get_args_from_file(file_name, args):
             key, value = line.replace('\n', '').split('#')[0].split("=")
         except ValueError:
             continue
-        try:
-            if getattr(args, key.strip()) is None:
-                setattr(args, key.strip(), value.strip())
-        except AttributeError:
-            setattr(args, key.strip(), value.strip())
+        args[key.strip()] = value.strip()
+    return args
+
 
 def normpath(*args):
     return os.path.normpath(os.path.expanduser(os.path.join(*args)))
+
 
 def wait_semaphores(semaphores, timeout=4.354e17, tick=60):
     """Wait all files are created.
@@ -146,4 +136,3 @@ def wait_semaphores(semaphores, timeout=4.354e17, tick=60):
             del _semaphores[0]
             continue
         time.sleep(tick)
-

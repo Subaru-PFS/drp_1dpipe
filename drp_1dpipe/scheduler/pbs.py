@@ -2,7 +2,6 @@ import os
 import json
 import textwrap
 import subprocess
-import tempfile
 import uuid
 from drp_1dpipe.io.utils import normpath, wait_semaphores
 
@@ -28,18 +27,6 @@ parallel_script_template = textwrap.dedent("""\
             echo "$?" >> {workdir}/{task_id}_${{PBS_ARRAYID}}.done
             """)
 
-def _build_pre_commands(pre_commands):
-    """Build pre-commands string."""
-
-    _cmds = eval(pre_commands)
-    if not isinstance(_cmds, list):
-        raise Exception("pre_commands must be a list of commands")
-    for command in _cmds:
-        if not isinstance(command, list):
-            raise Exception("each command must be a list of words, as `args` in subprocess.run()")
-
-    result = '\n'.join([' '.join([w for w in command]) for command in _cmds])
-    return result
 
 def single(command, args):
     """Run a single command on a PBS cluster.
@@ -51,11 +38,11 @@ def single(command, args):
     task_id = uuid.uuid4().hex
 
     # generate pbs script
-    extra_args = ' '.join(['--{}={}'.format(k,v) for k,v in args.items() if k != 'pre_commands'])
-    pre_commands = _build_pre_commands(args['pre_commands'])
+    extra_args = ' '.join(['--{}={}'.format(k, v)
+                           for k, v in args.items() if k != 'pre-commands'])
 
     script = single_script_template.format(workdir=normpath(args['workdir']),
-                                           pre_commands=pre_commands,
+                                           pre_commands=args['pre-commands'],
                                            command=command,
                                            extra_args=extra_args,
                                            task_id=task_id)
@@ -69,6 +56,7 @@ def single(command, args):
 
     # block until completion
     wait_semaphores([normpath(args['workdir'], '{}.done'.format(task_id))])
+
 
 def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     """Run a command in parallel on a PBS cluster.
@@ -87,30 +75,44 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     tasks = []
     extra_args = ['--{}={}'.format(k, v)
                   for k, v in args.items()
-                  if k not in ('pre_commands', seq_arg_name)]
+                  if k not in ('pre-commands', seq_arg_name, 'notifier')]
 
+    # setup tasks
     with open(filelist, 'r') as f:
         subtasks = json.load(f)
-
     for i, arg_value in enumerate(subtasks):
-        task = [command, '--{arg_name}={arg_value}'.format(arg_name=arg_name, arg_value=arg_value)]
+        task = [command,
+                '--{arg_name}={arg_value}'.format(arg_name=arg_name,
+                                                  arg_value=arg_value)]
         task.extend(extra_args)
         if seq_arg_name:
-            task.append('--{}={}{}'.format(seq_arg_name, args[seq_arg_name], i))
+            task.append('--{}={}{}'.format(seq_arg_name,
+                                           args[seq_arg_name], i))
         tasks.append(task)
 
-    with open(os.path.join(os.path.dirname(__file__), 'pbs_executor.py.in'), 'r') as f:
-        pbs_executor = f.read().format(tasks=tasks)
+    # setup pipeline notifier
+    notifier = args['notifier']
+    notifier.update(command,
+                    children=['{}-{}'.format(command, i)
+                              for i in range(len(subtasks))])
+    for i, arg_value in enumerate(subtasks):
+        notifier.update('{}-{}'.format(command, i), state='WAITING')
+    notifier.update(command, 'RUNNING')
 
+    # generate pbs script
+    with open(os.path.join(os.path.dirname(__file__), 'pbs_executor.py.in'),
+              'r') as f:
+        pbs_executor = f.read().format(tasks=tasks,
+                                       notification_url=(notifier.pipeline_url
+                                                         if notifier.pipeline_url
+                                                         else ''))
     with open(executor_script, 'w') as executor:
         executor.write(pbs_executor)
 
     # generate pbs script
-    pre_commands = _build_pre_commands(args['pre_commands'])
-
     script = parallel_script_template.format(jobs=len(subtasks),
                                              workdir=normpath(args['workdir']),
-                                             pre_commands=pre_commands,
+                                             pre_commands=args['pre-commands'],
                                              executor_script=executor_script,
                                              task_id=task_id)
     pbs_script_name = normpath(args['workdir'], 'pbs_script_{}.sh'.format(task_id))
@@ -125,4 +127,4 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     semaphores = [normpath(args['workdir'], '{}_{}.done'.format(task_id, i))
                   for i in range(1, len(subtasks)+1)]
     wait_semaphores(semaphores)
-
+    notifier.update(command, 'SUCCESS')

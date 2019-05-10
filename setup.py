@@ -9,7 +9,7 @@ if sys.version_info < tuple((int(val) for val in __minimum_python_version__.spli
     sys.exit(1)
 
 NAME = 'drp_1dpipe'
-VERSION = '0.9.0'
+VERSION = '0.12.0'
 
 # Add any necessary entry points
 entry_points = {}
@@ -30,9 +30,7 @@ setup(name=NAME,
       author='The LAM PFS-DRP1D developers',
       license='GPLv3',
       packages=find_packages(),
-      requires=['numpy'],
-      setup_requires=[],
-      install_requires=[],
+      install_requires=['numpy', 'astropy', 'requests'],
       classifiers=[
           "Development Status :: 1 - Planning",
           'Intended Audience :: Science/Research',
@@ -44,9 +42,6 @@ setup(name=NAME,
           'Topic :: Scientific/Engineering :: Physics'
       ],
       include_package_data=True,
-      package_data={
-         'drp_1dpipe': ['io/conf/*', 'io/auxdir/*'],
-         },
       entry_points=entry_points,
       python_requires='>=' + __minimum_python_version__,
       tests_require=['pytest']

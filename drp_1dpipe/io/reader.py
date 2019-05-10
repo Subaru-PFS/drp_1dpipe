@@ -1,7 +1,10 @@
-import fitsio
 import os.path
-from pyamazed.redshift import *
+from astropy.io import fits
+from pyamazed.redshift import (CSpectrumSpectralAxis,
+                               CSpectrumFluxAxis_withError,
+                               CSpectrum)
 import numpy as np
+
 
 def read_spectrum(path):
     """
@@ -10,11 +13,12 @@ def read_spectrum(path):
     :param path: FITS file name
     :rtype: CSpectrum
     """
-    fits = fitsio.FITS(path)
-    obj_id = fits[0].read_header()['PFSVHASH']
-    data = fits['FLUXTBL']
-    spectralaxis = CSpectrumSpectralAxis(data['lambda'][:]*10)
-    signal = CSpectrumFluxAxis(data['flux'][:], np.sqrt(data['fluxVariance'][:]))
-    spectrum = CSpectrum(spectralaxis, signal)
-    spectrum.SetName(os.path.basename(path))
+
+    with fits.open(path) as f:
+        fluxtbl = f['FLUXTBL'].data
+        error = np.sqrt(f['COVAR'].data[:,0])
+        spectralaxis = CSpectrumSpectralAxis(fluxtbl['wavelength'] * 10)
+        signal = CSpectrumFluxAxis_withError(fluxtbl['flux'], error)
+        spectrum = CSpectrum(spectralaxis, signal)
+        spectrum.SetName(os.path.basename(path))
     return spectrum

@@ -1,69 +1,94 @@
-import fitsio
+from astropy.io import fits
 import os.path
-from pyamazed.redshift import *
 import numpy as np
 
 
 def write_candidates(output_dir,
-                     tract, patch, catId, objId, nVisit, pfsVisitHash,
-                     lambda_ranges, redshift, candidates):
+                     catId, tract, patch, objId, expId,
+                     lambda_ranges, redshift, candidates, zpdf, linemeas):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
-    path = "pfsZcandidates-%05d-%s-%03d-%08x-%02d-0x%08x.fits" % (
-        tract, patch, catId, objId, nVisit % 100, pfsVisitHash)
+    path = "pfsZcandidates-%05d-%s-%03d-%08x-%06d.fits" % (
+        tract, patch, catId, objId, expId)
 
-    print("Saving {} redshifts to {}".format(len(candidates), os.path.join(output_dir, path)))
+    print("Saving {} redshifts to {}".format(len(candidates),
+                                             os.path.join(output_dir, path)))
     print("redshifts is", redshift)
-    fits = fitsio.FITS(os.path.join(output_dir, path), 'rw', clobber=True)
+
+    header = [fits.Card('tract', tract, 'Area of the sky'),
+              fits.Card('patch', patch, 'Region within tract'),
+              fits.Card('catId', catId, 'Source of the objId'),
+              fits.Card('objId', objId, 'Unique ID for object'),
+              fits.Card('expId', expId, 'expId')]
+
+    hdr = fits.Header(header)
+    primary = fits.PrimaryHDU(header=hdr)
+    hdul = [primary]
 
     npix = len(lambda_ranges)
-    npdf = 20
 
-    header = [{'name': 'tract', 'value': tract, 'comment': 'Area of the sky'},
-              {'name': 'patch', 'value': patch, 'comment': 'Region within tract'},
-              {'name': 'catId', 'value': catId, 'comment': 'Source of the objId'},
-              {'name': 'objId', 'value': objId, 'comment': 'Unique ID for object'},
-              {'name': 'nVisit', 'value': nVisit, 'comment': 'Number of visits'},
-              {'name': 'pfsVisitHash', 'value': pfsVisitHash, 'comment': 'SHA-1 hash of the visits'}]
-    data = {}
+    # create LAMBDA_SCALE HDU
+    lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
+    hdul.append(fits.BinTableHDU(name='LAMBDA_SCALE', data=lambda_scale))
 
-    #data['PDU'] = np.array([])
-    data['LAMBDA_SCALE'] = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
-    data['ZCANDIDATES'] = np.ndarray((len(candidates),),
-                                     dtype=[('Z', 'f8'), ('Z_ERR', 'f8'), ('ZRANK', 'i4'),
-                                            ('RELIABILITY', 'f8'), ('CLASS', 'S15'),
-                                            ('SUBCLASS', 'S15'), ('ZFIT', 'f8', (npix,))])
+    # data['PDU'] = np.array([])
 
+    # create ZCANDIDATES HDU
+    zcandidates = np.ndarray((len(candidates),),
+                             dtype=[('Z', 'f8'), ('Z_ERR', 'f8'),
+                                    ('ZRANK', 'i4'),
+                                    ('RELIABILITY', 'f8'),
+                                    ('CLASS', 'S15'),
+                                    ('SUBCLASS', 'S15'),
+                                    ('MODELFLUX', 'f8', (npix,))])
     for i, candidate in enumerate(candidates):
-        data['ZCANDIDATES'][i]['Z'] = candidate.redshift
-        data['ZCANDIDATES'][i]['Z_ERR'] = -1
-        data['ZCANDIDATES'][i]['ZRANK'] = candidate.rank
-        data['ZCANDIDATES'][i]['RELIABILITY'] = -1
-        data['ZCANDIDATES'][i]['CLASS'] = ''
-        data['ZCANDIDATES'][i]['SUBCLASS'] = ''
-        data['ZCANDIDATES'][i]['ZFIT'] = np.zeros((npix,))
+        zcandidates[i]['Z'] = candidate.redshift
+        zcandidates[i]['Z_ERR'] = -1
+        zcandidates[i]['ZRANK'] = candidate.rank
+        zcandidates[i]['RELIABILITY'] = candidate.intgProba
+        zcandidates[i]['CLASS'] = ''
+        zcandidates[i]['SUBCLASS'] = ''
+        zcandidates[i]['MODELFLUX'] = np.zeros((npix,))  # TODO : get from linemodel_spc_extrema_0
+    hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
 
-    data['ZPDF'] = np.ndarray((1,),
-                              dtype=[('REDSHIFT', 'f8', (npdf,)), ('DENSITY', 'f8', (npdf,))])
-    data['ZLINES'] = np.ndarray((1,),
-                                dtype=[('LINENAME', 'S15'),
-                                       ('LINEWAVE', 'f8'),
-                                       ('LINEZ', 'f8'),
-                                       ('LINEZ_ERR', 'f8'),
-                                       ('LINESIGMA', 'f8'),
-                                       ('LINESIGMA_ERR', 'f8'),
-                                       ('LINEVEL', 'f8'),
-                                       ('LINEVEL_ERR', 'f8'),
-                                       ('LINEFLUX', 'f8'),
-                                       ('LINEFLUX_ERR', 'f8'),
-                                       ('LINEEW', 'f8'),
-                                       ('LINEEW_ERR', 'f8'),
-                                       ('LINECONTLEVEL', 'f8'),
-                                       ('LINECONTLEVEL_ERR', 'f8')])
-    #fits.write(data['PDU'], extname='PDU', header=header)
-    fits.write(data['LAMBDA_SCALE'], extname='LAMBDA_SCALE')
-    fits.write(data['ZCANDIDATES'], extname='ZCANDIDATES')
-    fits.write(data['ZPDF'], extname='ZPDF')
-    fits.write(data['ZLINES'], extname='ZLINES')
+    # create ZPDF HDU
+    zpdf_hdu = np.ndarray(len(zpdf), buffer=zpdf,
+                          dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
+    hdul.append(fits.BinTableHDU(name='ZPDF', data=zpdf_hdu))
 
-    fits.close()
+    # create ZLINES HDU
+    if linemeas:
+        zlines = np.ndarray((len(linemeas),),
+                            dtype=[('LINENAME', 'S15'),
+                                   ('LINEWAVE', 'f8'),
+                                   ('LINEZ', 'f8'),
+                                   ('LINEZ_ERR', 'f8'),
+                                   ('LINESIGMA', 'f8'),
+                                   ('LINESIGMA_ERR', 'f8'),
+                                   ('LINEVEL', 'f8'),
+                                   ('LINEVEL_ERR', 'f8'),
+                                   ('LINEFLUX', 'f8'),
+                                   ('LINEFLUX_ERR', 'f8'),
+                                   ('LINEEW', 'f8'),
+                                   ('LINEEW_ERR', 'f8'),
+                                   ('LINECONTLEVEL', 'f8'),
+                                   ('LINECONTLEVEL_ERR', 'f8')])
+        for i, lm in enumerate(linemeas):
+            zlines[i]['LINENAME'] = lm.name
+            zlines[i]['LINEWAVE'] = lm.lambda_obs  # TODO: or lambda_rest_beforeOffset ?
+            zlines[i]['LINEZ'] = np.nan  # TODO: what is that ?
+            zlines[i]['LINEZ_ERR'] = np.nan  # TODO: what is that ?
+            zlines[i]['LINESIGMA'] = lm.sigma
+            zlines[i]['LINESIGMA_ERR'] = np.nan  # TODO: what is that ?
+            zlines[i]['LINEVEL'] = lm.velocity
+            zlines[i]['LINEVEL_ERR'] = np.nan  # TODO: what is that
+            zlines[i]['LINEFLUX'] = lm.flux
+            zlines[i]['LINEFLUX_ERR'] = lm.flux_err
+            zlines[i]['LINEEW'] = np.nan  # TODO: what is that
+            zlines[i]['LINEEW_ERR'] = np.nan  # TODO: what is that
+            zlines[i]['LINECONTLEVEL'] = np.nan  # TODO: what is that
+            zlines[i]['LINECONTLEVEL_ERR'] = np.nan  # TODO: what is that
+        hdul.append(fits.BinTableHDU(name='ZLINES', data=zlines))
+
+    fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
+                               overwrite=True)
