@@ -26,7 +26,7 @@ def main():
     parser = init_argparse()
 
     defaults = {'bunch-size': 8,
-                'spectra-path': 'spectra',
+                'spectra-dir': 'spectra',
                 'bunch-list': 'spectralist.json'}
     defaults.update(get_args_from_file('pre_process.conf'))
 
@@ -35,9 +35,9 @@ def main():
                         help='Maximum number of spectra per bunch.')
 
     # data input
-    parser.add_argument('--spectra-path', metavar='DIR',
-                        default=defaults['spectra-path'],
-                        help='Path to spectra to process. '
+    parser.add_argument('--spectra-dir', metavar='DIR',
+                        default=defaults['spectra-dir'],
+                        help='Base path where to find spectra. '
                         'Relative to workdir.')
 
     # outputs
@@ -64,12 +64,12 @@ def run(args):
     # initialize logger
     init_logger("pre_process", args.logdir, args.loglevel)
 
-    spectra_path = normpath(args.workdir, args.spectra_path)
+    spectra_dir = normpath(args.workdir, args.spectra_dir)
     bunch_size = args.bunch_size
 
     # bunch
     bunch_list = []
-    for ao_list in bunch(bunch_size, spectra_path):
+    for ao_list in bunch(bunch_size, spectra_dir):
         f = NamedTemporaryFile(prefix='spectralist_',
                                dir=normpath(args.workdir), delete=False,
                                mode='w')
@@ -84,20 +84,20 @@ def run(args):
     return 0
 
 
-def bunch(bunch_size, spectra_path):
+def bunch(bunch_size, spectra_dir):
     """
     The "bunch" function.
 
-    Split files located "spectra_path" directory in bunches of
+    Split files located "spectra_dir" directory in bunches of
     "bunch_size" lists.
 
     :param bunch_size: The number of source per bunch.
-    :param spectra_path: List of sources in the workdir.
+    :param spectra_dir: List of sources in the workdir.
     :return: a generator with the max number of sources.
     """
 
     _list = []
-    for source in os.listdir(spectra_path):
+    for source in os.listdir(spectra_dir):
         _list.append(source)
         if len(_list) >= int(bunch_size):
             yield _list

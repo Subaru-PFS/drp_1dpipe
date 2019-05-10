@@ -103,7 +103,9 @@ def parallel(command, filelist, arg_name, seq_arg_name=None, args=None):
     with open(os.path.join(os.path.dirname(__file__), 'pbs_executor.py.in'),
               'r') as f:
         pbs_executor = f.read().format(tasks=tasks,
-                                       notification_url=notifier.pipeline_url)
+                                       notification_url=(notifier.pipeline_url
+                                                         if notifier.pipeline_url
+                                                         else ''))
     with open(executor_script, 'w') as executor:
         executor.write(pbs_executor)
 

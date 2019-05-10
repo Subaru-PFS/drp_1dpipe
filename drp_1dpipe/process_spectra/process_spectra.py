@@ -12,10 +12,10 @@ from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
                                  init_argparse, get_auxiliary_path)
 from drp_1dpipe.io.reader import read_spectrum
 from .parameters import default_parameters
-from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
-                                  CParameterStore, CClassifierStore,
-                                  CLogFileHandler, CRayCatalog,
-                                  CTemplateCatalog, get_version)
+from pyamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
+                               CParameterStore, CClassifierStore,
+                               CLogFileHandler, CRayCatalog,
+                               CTemplateCatalog, get_version)
 from drp_1dpipe.process_spectra.results import AmazedResults
 
 logger = logging.getLogger("process_spectra")
@@ -155,7 +155,8 @@ def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
             with open(parameters_file, 'r') as f:
                 _params.update(json.load(f))
         except Exception as e:
-            print("Warning: unable to read parameter file :", e)
+            logger.log(logging.INFO,
+                       f'unable to read parameter file : {e}, using defaults')
     param.FromString(json.dumps(_params))
 
     # setup calibration dir
@@ -190,14 +191,16 @@ def amazed(args):
     param, line_catalog = _setup_pass(normpath(args.calibration_dir),
                                       normpath(args.parameters_file),
                                       normpath(args.linecatalog))
-    medianRemovalMethod = param.Get_String("continuumRemoval.method",
-                                           "IrregularSamplingMedian")
-    opt_medianKernelWidth = param.Get_Float64('continuumRemoval.'
+    medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
+                                           'method', 'IrregularSamplingMedian')
+    opt_medianKernelWidth = param.Get_Float64('templateCatalog.'
+                                              'continuumRemoval.'
                                               'medianKernelWidth')
-    opt_nscales = param.Get_Float64("continuumRemoval.decompScales",
+    opt_nscales = param.Get_Float64('templateCatalog.continuumRemoval.'
+                                    'decompScales',
                                     8.0)
-    dfBinPath = param.Get_String("continuumRemoval.binPath",
-                                 "absolute_path_to_df_binaries_here")
+    dfBinPath = param.Get_String('templateCatalog.continuumRemoval.binPath',
+                                 'absolute_path_to_df_binaries_here')
 
     #
     # Set up param and linecatalog for line measurement pass
@@ -232,7 +235,7 @@ def amazed(args):
 
     for i, spectrum_path in enumerate(spectra_list):
         outdir = normpath(args.workdir, args.output_dir)
-        spectrum = normpath(args.workdir, args.spectra_path, spectrum_path)
+        spectrum = normpath(args.workdir, args.spectra_dir, spectrum_path)
         if args.lineflux != 'only':
             # first step : compute redshift
             _process_spectrum(outdir, i, spectrum, template_catalog,
@@ -253,7 +256,7 @@ def amazed(args):
 
     # create output products
     results = AmazedResults(_output_path(args), normpath(args.workdir,
-                                                         args.spectra_path),
+                                                         args.spectra_dir),
                             args.lineflux in ['only', 'on'])
     param.Save(os.path.join(normpath(args.workdir, args.output_dir),
                             'parameters.json'))

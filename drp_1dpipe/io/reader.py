@@ -1,8 +1,8 @@
 import os.path
 from astropy.io import fits
-from pylibamazed.redshift import (CSpectrumSpectralAxis,
-                                  CSpectrumFluxAxis_withError,
-                                  CSpectrum)
+from pyamazed.redshift import (CSpectrumSpectralAxis,
+                               CSpectrumFluxAxis_withError,
+                               CSpectrum)
 import numpy as np
 
 

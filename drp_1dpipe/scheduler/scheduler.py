@@ -90,7 +90,7 @@ def run(args):
                                                      'type': 'PARALLEL'}
                              })
         except Exception as e:
-            logger.log(logging.WARNING, "Can't initialize notifier. "
+            logger.log(logging.INFO, "Can't initialize notifier. "
                        "Using DummyNotifier. {}".format(e))
             notif = DummyNotifier()
     else:
