@@ -12,10 +12,10 @@ from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
                                  init_argparse, get_auxiliary_path)
 from drp_1dpipe.io.reader import read_spectrum
 from .parameters import default_parameters
-from pyamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
-                               CParameterStore, CClassifierStore,
-                               CLogFileHandler, CRayCatalog,
-                               CTemplateCatalog, get_version)
+from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
+                                  CParameterStore, CClassifierStore,
+                                  CLogFileHandler, CRayCatalog,
+                                  CTemplateCatalog, get_version)
 from drp_1dpipe.process_spectra.results import AmazedResults
 
 logger = logging.getLogger("process_spectra")
