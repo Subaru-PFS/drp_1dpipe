@@ -4,12 +4,13 @@ File: drp_1dpipe/process_spectra/process_spectra.py
 Created on: 01/11/18
 Author: CeSAM
 """
-import os.path
+import os
 import json
 import logging
 import time
 from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
-                                 init_argparse, get_auxiliary_path)
+                                 init_argparse, get_auxiliary_path,
+                                 TemporaryFilesSet)
 from drp_1dpipe.io.reader import read_spectrum
 from .parameters import default_parameters
 from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
@@ -78,7 +79,7 @@ def main():
                         ' be stored. Relative to workdir.')
     parser.add_argument('--linemeas-parameters-file', metavar='FILE',
                         default=defaults['linemeas-parameters-file'],
-                        help='Parameters file used for line measurement. '
+                        help='Parameters file used for line flux measurement. '
                         'Relative to workdir.')
     parser.add_argument('--linemeas-linecatalog', metavar='FILE',
                         default=defaults['linemeas-linecatalog'],
@@ -104,7 +105,7 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
         logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
         return
 
-    proc_id = '{}-{}'.format(spectrum.GetName(), index)
+    proc_id = os.path.join(spectrum.GetName(), str(index))
 
     try:
         ctx = CProcessFlowContext()
@@ -134,14 +135,12 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
         raise Exception("Unhandled save_results {}".format(save_results))
 
 
-_map_loglevel = {'CRITICAL': CLog.nLevel_Critical,
-                 'FATAL': CLog.nLevel_Critical,
-                 'ERROR': CLog.nLevel_Error,
-                 'WARNING': CLog.nLevel_Warning,
-                 'WARN': CLog.nLevel_Warning,
-                 'INFO': CLog.nLevel_Info,
-                 'DEBUG': CLog.nLevel_Debug,
-                 'NOTSET': CLog.nLevel_None}
+_map_loglevel = {logging.CRITICAL: CLog.nLevel_Critical,
+                 logging.ERROR: CLog.nLevel_Error,
+                 logging.WARNING: CLog.nLevel_Warning,
+                 logging.INFO: CLog.nLevel_Info,
+                 logging.DEBUG: CLog.nLevel_Debug,
+                 logging.NOTSET: CLog.nLevel_None}
 
 
 def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
@@ -183,7 +182,7 @@ def amazed(args):
     zlog = CLog()
     logFileHandler = CLogFileHandler(zlog, os.path.join(args.logdir,
                                                         'amazed.log'))
-    logFileHandler.SetLevelMask(_map_loglevel[args.loglevel.upper()])
+    logFileHandler.SetLevelMask(_map_loglevel[args.loglevel])
 
     #
     # Set up param and linecatalog for redshift pass
@@ -233,8 +232,10 @@ def amazed(args):
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise
 
+    outdir = normpath(args.workdir, args.output_dir)
+    os.makedirs(outdir, exist_ok=True)
+
     for i, spectrum_path in enumerate(spectra_list):
-        outdir = normpath(args.workdir, args.output_dir)
         spectrum = normpath(args.workdir, args.spectra_dir, spectrum_path)
         if args.lineflux != 'only':
             # first step : compute redshift
@@ -250,17 +251,23 @@ def amazed(args):
                               linemeas_line_catalog, linemeas_param,
                               classif, 'linemeas')
 
-    # save cpf-redshift version in output dir
-    with open(_output_path(args, 'version.json'), 'w') as f:
-        json.dump({'cpf-redshift-version': get_version()}, f)
+    with TemporaryFilesSet(keep_tempfiles=args.loglevel <= logging.INFO) as tmpcontext:
 
-    # create output products
-    results = AmazedResults(_output_path(args), normpath(args.workdir,
-                                                         args.spectra_dir),
-                            args.lineflux in ['only', 'on'])
-    param.Save(os.path.join(normpath(args.workdir, args.output_dir),
-                            'parameters.json'))
-    results.write()
+        # save cpf-redshift version and parameters file to output dir
+        version_file = _output_path(args, 'version.json')
+        with open(version_file, 'w') as f:
+            json.dump({'cpf-redshift-version': get_version()}, f)
+        parameters_file = os.path.join(normpath(args.workdir, args.output_dir),
+                                       'parameters.json')
+        param.Save(parameters_file)
+        tmpcontext.add_files(version_file, parameters_file)
+
+        # create output products
+        results = AmazedResults(_output_path(args), normpath(args.workdir,
+                                                             args.spectra_dir),
+                                args.lineflux in ['only', 'on'],
+                                tmpcontext=tmpcontext)
+        results.write()
 
 
 def dummy(args):

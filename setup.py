@@ -1,6 +1,7 @@
 import sys
 import os
 from setuptools import setup, find_packages
+from drp_1dpipe import VERSION
 
 __minimum_python_version__ = '3.6.0'
 if sys.version_info < tuple((int(val) for val in __minimum_python_version__.split('.'))):
@@ -9,7 +10,6 @@ if sys.version_info < tuple((int(val) for val in __minimum_python_version__.spli
     sys.exit(1)
 
 NAME = 'drp_1dpipe'
-VERSION = '0.13.0'
 
 # Add any necessary entry points
 entry_points = {}
@@ -44,5 +44,4 @@ setup(name=NAME,
       include_package_data=True,
       entry_points=entry_points,
       python_requires='>=' + __minimum_python_version__,
-      tests_require=['pytest']
-)
+      tests_require=['pytest'])

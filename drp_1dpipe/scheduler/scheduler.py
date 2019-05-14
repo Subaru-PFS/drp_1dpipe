@@ -7,10 +7,13 @@ Author: CeSAM
 
 import uuid
 import logging
-from drp_1dpipe.io.utils import init_logger, get_args_from_file, normpath, \
-    init_argparse
-from drp_1dpipe.scheduler import pbs, local
-from drp_1dpipe.scheduler.notifier import Notifier, DummyNotifier
+from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
+                                 init_argparse, get_auxiliary_path,
+                                 TemporaryFilesSet)
+from .runner import list_runners, get_runner
+from .notifier import Notifier, DummyNotifier
+from drp_1dpipe.scheduler import local, pbs, slurm  # noqa: F401
+
 
 logger = logging.getLogger("scheduler")
 
@@ -29,12 +32,15 @@ def main():
                 'spectra-dir': 'spectra',
                 'bunch-size': 8,
                 'notification-url': '',
+                'parameters-file': get_auxiliary_path("parameters.json"),
+                'linemeas-parameters-file': get_auxiliary_path("linemeas-parameters.json"),
                 'lineflux': 'on'}
     defaults.update(get_args_from_file('drp_1dpipe.conf'))
 
-    parser.add_argument('--scheduler', metavar='SCHEDULER',
+    parser.add_argument('--scheduler',
                         default=defaults['scheduler'],
-                        help='The scheduler to use. Either "local" or "pbs".')
+                        choices=list_runners(),
+                        help='The scheduler to use.')
     parser.add_argument('--pre-commands', metavar='COMMAND',
                         default=defaults['pre-commands'],
                         help='Commands to run before before process_spectra.')
@@ -54,6 +60,13 @@ def main():
                         '"on" to do redshift and line flux calculations, '
                         '"off" to disable line flux, '
                         '"only" to skip the redshift part.')
+    parser.add_argument('--parameters-file', metavar='FILE',
+                        default=defaults['parameters-file'],
+                        help='Parameters file. Relative to workdir.')
+    parser.add_argument('--linemeas-parameters-file', metavar='FILE',
+                        default=defaults['linemeas-parameters-file'],
+                        help='Parameters file used for line flux measurement. '
+                        'Relative to workdir.')
 
     args = parser.parse_args()
 
@@ -69,17 +82,14 @@ def run(args):
     # initialize logger
     init_logger('scheduler', args.logdir, args.loglevel)
 
-    if args.scheduler.lower() == 'pbs':
-        scheduler = pbs
-    elif args.scheduler.lower() == 'local':
-        scheduler = local
-    else:
-        raise 'Unknown scheduler {}'.format(args.scheduler)
+    runner_class = get_runner(args.scheduler)
+    if not runner_class:
+        raise f'Unknown runner {args.scheduler}'
 
     if args.notification_url:
         try:
             notif = Notifier(args.notification_url,
-                             name='pfs-{}'.format(uuid.uuid4()),
+                             name=f'pfs-{uuid.uuid4()}',
                              nodes={
                                  'root': {'type': 'SERIAL',
                                           'children': ['pre_process',
@@ -102,34 +112,41 @@ def run(args):
     notif.update('root', 'RUNNING')
     notif.update('pre_process', 'RUNNING')
 
-    # prepare workdir
-    scheduler.single('pre_process',
-                     args={'workdir': normpath(args.workdir),
-                           'logdir': normpath(args.logdir),
-                           'loglevel': args.loglevel,
-                           'bunch-size': args.bunch_size,
-                           'pre-commands': args.pre_commands,
-                           'spectra-dir': normpath(args.spectra_dir),
-                           'bunch-list': bunch_list})
+    with TemporaryFilesSet(keep_tempfiles=args.loglevel <= logging.INFO) as tmpcontext:
 
-    notif.update('pre_process', 'SUCCESS')
+        runner = runner_class(tmpcontext)
 
-    # process spectra
-    try:
-        scheduler.parallel('process_spectra', bunch_list,
-                           'spectra-listfile', 'output-dir',
-                           args={'workdir': normpath(args.workdir),
-                                 'logdir': normpath(args.logdir),
-                                 'loglevel': args.loglevel,
-                                 'lineflux': args.lineflux,
-                                 'spectra-dir': normpath(args.spectra_dir),
-                                 'pre-commands': args.pre_commands,
-                                 'notifier': notif,
-                                 'output-dir': 'output-'})
-    except Exception as e:
-        logger.log(logging.ERROR, 'Error in process_spectra:', e)
-        notif.update('root', 'ERROR')
-    else:
-        notif.update('root', 'SUCCESS')
+        # prepare workdir
+        runner.single('pre_process',
+                      args={'workdir': normpath(args.workdir),
+                            'logdir': normpath(args.logdir),
+                            'loglevel': args.loglevel,
+                            'bunch-size': args.bunch_size,
+                            'pre-commands': args.pre_commands,
+                            'spectra-dir': normpath(args.spectra_dir),
+                            'bunch-list': bunch_list})
+
+        notif.update('pre_process', 'SUCCESS')
+        tmpcontext.add_files(bunch_list)
+
+        # process spectra
+        try:
+            runner.parallel('process_spectra', bunch_list,
+                            'spectra-listfile', 'output-dir',
+                            args={'workdir': normpath(args.workdir),
+                                  'logdir': normpath(args.logdir),
+                                  'loglevel': args.loglevel,
+                                  'lineflux': args.lineflux,
+                                  'spectra-dir': normpath(args.spectra_dir),
+                                  'pre-commands': args.pre_commands,
+                                  'parameters-file': args.parameters_file,
+                                  'linemeas-parameters-file': args.linemeas_parameters_file,
+                                  'notifier': notif,
+                                  'output-dir': 'output/'})
+        except Exception as e:
+            logger.log(logging.ERROR, 'Error in process_spectra:', e)
+            notif.update('root', 'ERROR')
+        else:
+            notif.update('root', 'SUCCESS')
 
     return 0

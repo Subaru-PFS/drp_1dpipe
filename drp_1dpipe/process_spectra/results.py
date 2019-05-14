@@ -2,6 +2,7 @@ from collections import namedtuple
 import os.path
 from astropy.io import fits
 from drp_1dpipe.io.writer import write_candidates
+from drp_1dpipe.io.utils import TemporaryFilesSet
 import logging
 import numpy as np
 
@@ -27,11 +28,13 @@ class AmazedResults:
     An object representation of an amazed output directory.
     """
 
-    def __init__(self, output_dir, spectrum_dir, lineflux=True):
+    def __init__(self, output_dir, spectrum_dir, lineflux=True,
+                 tmpcontext=None):
         """
         :param output_dir: Amazed output directory
         :param spectrum_dir: Base path to spectrums
         :param lineflux: Whether we have line flux measurements
+        :param tmpcontext: TemporaryFileSet context to use
         """
 
         self.output_dir = output_dir
@@ -42,6 +45,10 @@ class AmazedResults:
         self.zpdf = {}
         self.linemeas = {}
         self.lineflux = lineflux
+        if tmpcontext is None:
+            self.tmpcontext = TemporaryFilesSet()
+        else:
+            self.tmpcontext = tmpcontext
 
         # Start by reading redshifts.csv
         self._read_redshifts_csv()
@@ -79,7 +86,9 @@ class AmazedResults:
         redshift_results is a dict RedshiftResult, keyed by spectrum
         file names.
         """
-        with open(os.path.join(self.output_dir, 'redshift.csv'), 'r') as f:
+        redshift_file = os.path.join(self.output_dir, 'redshift.csv')
+        self.tmpcontext.add_files(redshift_file)
+        with open(redshift_file, 'r') as f:
             for l in f:
                 if not l.strip() or l.startswith('#'):
                     continue
@@ -96,6 +105,8 @@ class AmazedResults:
                     continue
                 else:
                     self.redshift_results[result.spectrum] = result
+                    self.tmpcontext.add_dirs(os.path.join(self.output_dir,
+                                                          result.processingid))
 
     def _read_lambda_ranges(self):
         """Read lambda ranges from spectrum fits files.
@@ -144,6 +155,8 @@ class AmazedResults:
             path = os.path.join('-'.join([self.output_dir, 'lf']),
                                 result.processingid,
                                 'linemodelsolve.linemodel_fit_extrema_0.csv')
+            self.tmpcontext.add_dirs(os.path.join('-'.join([self.output_dir,
+                                                            'lf'])))
             with open(path, 'r') as f:
                 lm = []
                 for l in f:
