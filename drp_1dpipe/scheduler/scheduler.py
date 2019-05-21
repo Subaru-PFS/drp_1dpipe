@@ -13,7 +13,7 @@ from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
 from .runner import list_runners, get_runner
 from .notifier import Notifier, DummyNotifier
 from drp_1dpipe.scheduler import local, pbs, slurm  # noqa: F401
-
+import argparse
 
 logger = logging.getLogger("scheduler")
 
@@ -53,7 +53,8 @@ def main():
                         help='Maximum number of spectra per bunch.')
     parser.add_argument('--notification-url', metavar='URL',
                         default=defaults['notification-url'],
-                        help='Notification URL.')
+                        #help='Notification URL.',
+                        help=argparse.SUPPRESS)
     parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
                         default=defaults['lineflux'],
                         help='Whether to do line flux measurements.'
