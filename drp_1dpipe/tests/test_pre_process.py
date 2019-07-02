@@ -36,8 +36,8 @@ class FakeArgs(object):
         """
         self.workdir = workdir
         self.logdir = workdir
-        self.spectra_path = os.path.join(workdir, 'spectra')
-        os.mkdir(self.spectra_path)
+        self.spectra_dir = os.path.join(workdir, 'spectra')
+        os.mkdir(self.spectra_dir)
         self.bunch_list = os.path.join(workdir, 'bunch_list.json')
         self.loglevel = 'debug'
         self.bunch_size = '4'
@@ -55,7 +55,7 @@ def test_run():
 
     fits_file = []
     for i in range(9):
-        with open(normpath(args.spectra_path, '{}.fits'.format(i)), 'w') as f:
+        with open(normpath(args.spectra_dir, '{}.fits'.format(i)), 'w') as f:
             fits_file.append(os.path.basename(f.name))
 
     result_run = run(args)

@@ -52,21 +52,18 @@ def test_args_from_file():
         cf.write('#arg6 = foo6')
         cf.write('arg7 arg7 = foo7\n')
 
-    class MyCls():
-        arg1 = "2"
-
-    args = MyCls()
-    get_args_from_file(conf_file, args)
-    assert args.arg1 == "2"
-    assert args.arg2 == "foo2 foo2"
-    assert args.arg3 == "foo3"
-    assert args.arg4 == ""
-    with pytest.raises(AttributeError):
-        getattr(args, "arg5")
-    with pytest.raises(AttributeError):
-        getattr(args, "arg6")
-    with pytest.raises(AttributeError):
-        getattr(args, "arg7")
+    args = {'args1': 2}
+    args.update(get_args_from_file(conf_file))
+    assert args['arg1'] == "4"
+    assert args['arg2'] == "foo2 foo2"
+    assert args['arg3'] == "foo3"
+    assert args['arg4'] == ""
+    with pytest.raises(KeyError):
+        args['arg5']
+    with pytest.raises(KeyError):
+        args['arg6']
+    with pytest.raises(KeyError):
+        args['arg7']
     fp1.close()
 
 
