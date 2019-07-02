@@ -9,7 +9,7 @@ if sys.version_info < tuple((int(val) for val in __minimum_python_version__.spli
     sys.exit(1)
 
 NAME = 'drp_1dpipe'
-VERSION = '0.12.0'
+VERSION = '0.12.1'
 
 # Add any necessary entry points
 entry_points = {}
@@ -41,7 +41,7 @@ setup(name=NAME,
           'Topic :: Scientific/Engineering :: Astronomy',
           'Topic :: Scientific/Engineering :: Physics'
       ],
-      include_package_data=True,
+      package_data={'':['io/conf/*', 'io/auxdir/*']},
       entry_points=entry_points,
       python_requires='>=' + __minimum_python_version__,
       tests_require=['pytest']
