@@ -1,5 +1,7 @@
 import requests
 import json
+import uuid
+import logging
 
 
 class DummyNotifier:
@@ -40,3 +42,29 @@ class Notifier:
         requests.put(self.pipeline_url,
                      headers={'content-type': 'application/json'},
                      data=json.dumps([req]))
+
+
+def init_notifier(url):
+
+    logger = logging.getLogger("scheduler")
+    if url:
+        try:
+            notif = Notifier(url,
+                             name=f'pfs-{uuid.uuid4()}',
+                             nodes={
+                                 'root': {'type': 'SERIAL',
+                                          'children': ['pre_process',
+                                                       'process_spectra']},
+                                 'pre_process': {'name': 'pre_process',
+                                                 'type': 'TASK'},
+                                 'process_spectra': {'name': 'process_spectra',
+                                                     'type': 'PARALLEL'}
+                             })
+        except Exception as e:
+            logger.log(logging.INFO, "Can't initialize notifier. "
+                       "Using DummyNotifier. {}".format(e))
+            notif = DummyNotifier()
+    else:
+        notif = DummyNotifier()
+
+    return notif

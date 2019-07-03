@@ -11,7 +11,7 @@ from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
                                  init_argparse, get_auxiliary_path,
                                  TemporaryFilesSet)
 from .runner import list_runners, get_runner
-from .notifier import Notifier, DummyNotifier
+from .notifier import init_notifier
 from drp_1dpipe.scheduler import local, pbs, slurm  # noqa: F401
 import argparse
 
@@ -87,25 +87,7 @@ def run(args):
     if not runner_class:
         raise f'Unknown runner {args.scheduler}'
 
-    if args.notification_url:
-        try:
-            notif = Notifier(args.notification_url,
-                             name=f'pfs-{uuid.uuid4()}',
-                             nodes={
-                                 'root': {'type': 'SERIAL',
-                                          'children': ['pre_process',
-                                                       'process_spectra']},
-                                 'pre_process': {'name': 'pre_process',
-                                                 'type': 'TASK'},
-                                 'process_spectra': {'name': 'process_spectra',
-                                                     'type': 'PARALLEL'}
-                             })
-        except Exception as e:
-            logger.log(logging.INFO, "Can't initialize notifier. "
-                       "Using DummyNotifier. {}".format(e))
-            notif = DummyNotifier()
-    else:
-        notif = DummyNotifier()
+    notif = init_notifier(args.notification_url)
 
     bunch_list = normpath(args.workdir,
                           'list_{}.json'.format(uuid.uuid4().hex))
