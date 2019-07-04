@@ -196,4 +196,4 @@ class TemporaryFilesSet:
             try:
                 shutil.rmtree(d)
             except Exception:
-                print(f"warning: can't delete {f}")
+                print(f"warning: can't delete {d}")
