@@ -74,8 +74,10 @@ class BatchQueue(Runner):
                                                       arg_value=arg_value)]
             task.extend(extra_args)
             if seq_arg_name:
-                task.append('--{}={}{}'.format(seq_arg_name,
-                                               args[seq_arg_name], i))
+                [task.append('--{}={}'.format(
+                  seq_arg,
+                  os.path.join(args[seq_arg], 'B'+str(i)))
+                  ) for seq_arg in seq_arg_name]
             tasks.append(task)
 
         # setup pipeline notifier

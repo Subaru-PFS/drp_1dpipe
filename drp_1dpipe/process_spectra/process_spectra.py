@@ -41,7 +41,8 @@ def main():
                 'process-method': 'AMAZED',
                 'output-dir': 'output',
                 'linemeas-parameters-file': get_auxiliary_path("linemeas-parameters.json"),
-                'lineflux': 'on'
+                'lineflux': 'on',
+                'logdir': 'logdir'
     }
     defaults.update(get_args_from_file('process_spectra.conf'))
 

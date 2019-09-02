@@ -1,6 +1,7 @@
 import concurrent.futures
 import subprocess
 import json
+import os.path
 from .runner import Runner, register_runner
 
 
@@ -64,15 +65,17 @@ class Local(Runner):
 
         # process each task
         futures = []
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(self.concurrency) as executor:
             for i, arg_value in enumerate(subtasks):
                 task = [command,
                         '--{arg_name}={arg_value}'.format(arg_name=arg_name,
                                                           arg_value=arg_value)]
                 task.extend(extra_args)
                 if seq_arg_name:
-                    task.append('--{}={}{}'.format(seq_arg_name,
-                                                   args[seq_arg_name], i))
+                    [task.append('--{}={}'.format(
+                      seq_arg,
+                      os.path.join(args[seq_arg], 'B'+str(i)))
+                      ) for seq_arg in seq_arg_name]
                 f = executor.submit(subprocess.run, task)
                 f.add_done_callback(self.process_done_factory(args['notifier'],
                                                               '{}-{}'.format(command, i)))

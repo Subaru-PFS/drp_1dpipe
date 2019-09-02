@@ -23,10 +23,11 @@ def list_runners():
 
 class Runner:
 
-    def __init__(self, tmpcontext=None):
+    def __init__(self, config, tmpcontext=None):
         """
         :param tmpcontext: TemporaryFileSet context to use
         """
+        self.concurrency = config.concurrency
         if tmpcontext is None:
             self.tmpcontext = TemporaryFilesSet()
         else:

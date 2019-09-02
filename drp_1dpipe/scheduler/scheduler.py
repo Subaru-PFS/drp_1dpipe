@@ -34,7 +34,9 @@ def main():
                 'notification-url': '',
                 'parameters-file': get_auxiliary_path("parameters.json"),
                 'linemeas-parameters-file': get_auxiliary_path("linemeas-parameters.json"),
-                'lineflux': 'on'}
+                'lineflux': 'on',
+                'concurrency': 1,
+                'output-dir':'output'}
     defaults.update(get_args_from_file('drp_1dpipe.conf'))
 
     parser.add_argument('--scheduler',
@@ -48,7 +50,7 @@ def main():
                         default=defaults['spectra-dir'],
                         help='Base path where to find spectra. '
                         'Relative to workdir.')
-    parser.add_argument('--bunch-size', metavar='SIZE',
+    parser.add_argument('--bunch-size', '-n', metavar='SIZE',
                         default=defaults['bunch-size'],
                         help='Maximum number of spectra per bunch.')
     parser.add_argument('--notification-url', metavar='URL',
@@ -68,6 +70,13 @@ def main():
                         default=defaults['linemeas-parameters-file'],
                         help='Parameters file used for line flux measurement. '
                         'Relative to workdir.')
+    parser.add_argument('--concurrency', '-j', type=int,
+                        default=defaults['concurrency'],
+                        help='Concurrency level for parallel run.'
+                        ' -1 means infinity.')
+    parser.add_argument('--output-dir', '-o', metavar='DIR',
+                        default=defaults['output-dir'],
+                        help='Output directory.')
 
     args = parser.parse_args()
 
@@ -97,7 +106,7 @@ def run(args):
 
     with TemporaryFilesSet(keep_tempfiles=args.loglevel <= logging.INFO) as tmpcontext:
 
-        runner = runner_class(tmpcontext)
+        runner = runner_class(args, tmpcontext)
 
         # prepare workdir
         runner.single('pre_process',
@@ -115,7 +124,7 @@ def run(args):
         # process spectra
         try:
             runner.parallel('process_spectra', bunch_list,
-                            'spectra-listfile', 'output-dir',
+                            'spectra-listfile', ['output-dir','logdir'],
                             args={'workdir': normpath(args.workdir),
                                   'logdir': normpath(args.logdir),
                                   'loglevel': args.loglevel,
@@ -125,7 +134,7 @@ def run(args):
                                   'parameters-file': args.parameters_file,
                                   'linemeas-parameters-file': args.linemeas_parameters_file,
                                   'notifier': notif,
-                                  'output-dir': 'output/'})
+                                  'output-dir': args.output_dir})
         except Exception as e:
             logger.log(logging.ERROR, 'Error in process_spectra:', e)
             notif.update('root', 'ERROR')
