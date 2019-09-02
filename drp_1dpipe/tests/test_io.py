@@ -8,7 +8,7 @@ Author: PSF DRP1D developers
 import pytest
 from tempfile import NamedTemporaryFile
 from drp_1dpipe.io.reader import read_spectrum
-from .utils import generate_fake_fits, NROW
+#from .utils import generate_fake_fits, NROW
 
 
 def test_reader():

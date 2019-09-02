@@ -10,7 +10,7 @@ import os
 from collections import namedtuple
 from tempfile import TemporaryDirectory
 from drp_1dpipe.merge_results.merge_results import run
-from .utils import generate_fake_fits
+#from .utils import generate_fake_fits
 
 
 redshift_header = "#Spectrum\tProcessingID\tRedshift\tMerit\tTemplate" \
