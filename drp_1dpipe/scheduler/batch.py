@@ -34,7 +34,7 @@ class BatchQueue(Runner):
         self.tmpcontext.add_files(batch_script_name)
 
         # run batch
-        result = subprocess.run(['sbatch', batch_script_name])
+        result = subprocess.run([self.batch_submitter, batch_script_name])
         assert result.returncode == 0
 
         # block until completion
