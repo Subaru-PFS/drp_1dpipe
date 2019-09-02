@@ -1,0 +1,60 @@
+{
+    "lambdarange": [
+        "3000",
+        "13000"
+    ],
+    "redshiftrange": [
+        "0.0",
+        "5.0"
+    ],
+    "redshiftstep": "0.0001",
+    "redshiftsampling": "log",
+    "calibrationDir": "",
+    "continuumRemoval": {
+        "method": "IrregularSamplingMedian",
+        "medianKernelWidth": "400",
+    },
+    "linemodelsolve": {
+        "linemodel": {
+            "linetypefilter": "no",
+            "lineforcefilter": "no",
+            "instrumentresolution": "4300",
+            "velocityemission": "200",
+            "velocityabsorption": "300",
+            "velocityfit": "yes",
+            "emvelocityfitmin": "10",
+            "emvelocityfitmax": "400",
+            "emvelocityfitstep": "20",
+            "absvelocityfitmin": "150",
+            "absvelocityfitmax": "500",
+            "absvelocityfitstep": "50",
+            "tplratio_ismfit": "no",
+            "continuumcomponent": "tplfit",
+            "continuumfit": {
+                "ismfit": "yes",
+                "igmfit": "yes",
+            },
+            "skipsecondpass": "no",
+            "extremacount": "5",
+            "extremacutprobathreshold": "30",
+            "firstpass": {
+                "tplratio_ismfit": "yes",
+            },
+            "stronglinesprior": "-1",
+            "tplratio": {
+                "priors": {
+                    "betaA": "1",
+                    "betaTE": "1",
+                    "betaZ": "1",
+                    "catalog_dirpath": ""
+                }
+            },
+            "nsigmasupport": "8",
+            "haprior": "-1",
+            "pdf": {
+                "margampcorr": "no",
+                "bestzoption": "maxproba"
+            }
+        }
+    },
+}
