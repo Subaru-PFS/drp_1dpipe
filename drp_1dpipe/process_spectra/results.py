@@ -87,7 +87,7 @@ class AmazedResults:
         file names.
         """
         redshift_file = os.path.join(self.output_dir, 'redshift.csv')
-        self.tmpcontext.add_files(redshift_file)
+        # self.tmpcontext.add_files(redshift_file)
         with open(redshift_file, 'r') as f:
             for l in f:
                 if not l.strip() or l.startswith('#'):

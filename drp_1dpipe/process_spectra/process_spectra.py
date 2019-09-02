@@ -260,7 +260,7 @@ def amazed(args):
         parameters_file = os.path.join(normpath(args.workdir, args.output_dir),
                                        'parameters.json')
         param.Save(parameters_file)
-        tmpcontext.add_files(version_file, parameters_file)
+        tmpcontext.add_files(parameters_file)
 
         # create output products
         results = AmazedResults(_output_path(args), normpath(args.workdir,
