@@ -8,8 +8,8 @@ import os
 import json
 import logging
 import time
-from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
-                                 init_argparse, get_auxiliary_path,
+from drp_1dpipe.io.utils import (init_logger, init_environ, get_args_from_file,
+                                 normpath, init_argparse, get_auxiliary_path,
                                  TemporaryFilesSet)
 from drp_1dpipe.io.reader import read_spectrum
 from .parameters import default_parameters
@@ -213,7 +213,7 @@ def amazed(args):
     classif = CClassifierStore()
 
     if args.zclassifier_dir:
-        zclassifier_dir = normpath(args.workdir, args.zclassifier_dir)
+        zclassifier_dir = normpath(args.zclassifier_dir)
         if not os.path.exists(zclassifier_dir):
             raise FileNotFoundError(f"zclassifier directory does not exist: "
                                     f"{zclassifier_dir}")
@@ -282,6 +282,9 @@ def run(args):
 
     # initialize logger
     init_logger("process_spectra", args.logdir, args.loglevel)
+
+    # set workdir environment
+    init_environ(args.workdir)
 
     if args.process_method.lower() == 'amazed':
         amazed(args)

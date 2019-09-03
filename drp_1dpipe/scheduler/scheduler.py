@@ -7,9 +7,10 @@ Author: CeSAM
 
 import uuid
 import logging
-from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
-                                 init_argparse, get_auxiliary_path,
-                                 TemporaryFilesSet)
+from drp_1dpipe.io.utils import (init_logger, init_environ, get_args_from_file,
+                                 normpath, init_argparse, get_auxiliary_path,
+                                 TemporaryFilesSet, save_config_file,
+                                 AbspathAction)
 from .runner import list_runners, get_runner
 from .notifier import init_notifier
 from drp_1dpipe.scheduler import local, pbs, slurm  # noqa: F401
@@ -91,6 +92,9 @@ def run(args):
 
     # initialize logger
     init_logger('scheduler', args.logdir, args.loglevel)
+
+    # set workdir environment
+    init_environ(args.workdir)
 
     runner_class = get_runner(args.scheduler)
     if not runner_class:

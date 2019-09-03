@@ -3,6 +3,7 @@ import shutil
 import copy
 import logging
 import time
+import datetime
 import argparse
 from drp_1dpipe import VERSION
 
@@ -16,6 +17,16 @@ _loglevels = {
     'DEBUG': logging.DEBUG,
     'NOTSET': logging.NOTSET,
 }
+
+class AbspathAction(argparse.Action):
+    """Force absolute path
+    """
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super(AbspathAction, self).__init__(option_strings, dest, **kwargs)
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, os.path.abspath(values))
 
 
 class LogLevelAction(argparse.Action):
@@ -42,7 +53,7 @@ def init_argparse():
     """
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-v', '--version', action='version', version=VERSION)
-    parser.add_argument('--workdir', default=os.getcwd(),
+    parser.add_argument('--workdir', default=os.getcwd(), action=AbspathAction,
                         help='The root working directory where data is '
                         'located.')
     parser.add_argument('--logdir',
@@ -114,6 +125,14 @@ def init_logger(process_name, logdir, loglevel):
     logger.addHandler(stream_handler)
 
 
+def init_environ(workdir):
+    """Initializes the working environment.
+
+    :param workdir: name of the working directory.
+    """
+    os.environ['WORKDIR']=os.path.normpath(os.path.expanduser(workdir))
+
+
 def get_args_from_file(file_name):
     """Get arguments value from configuration file.
 
@@ -136,8 +155,24 @@ def get_args_from_file(file_name):
     return args
 
 
+def save_config_file(args):
+    """Save the main config file
+
+    :param args: the argparse Namespace object
+    """
+    outdir = normpath(args.workdir, args.output_dir)
+    os.makedirs(outdir, exist_ok=True)
+    with open(normpath(outdir, 'config.conf'), 'w') as ff:
+        dargs=vars(args)
+        ff.write("# Edited on {}\n".format(
+            datetime.datetime.now().isoformat(timespec='seconds'))
+            )
+        for arg in dargs.keys():
+            ff.write("{} = {}\n".format(arg, dargs[arg]))
+
+
 def normpath(*args):
-    return os.path.normpath(os.path.expanduser(os.path.join(*args)))
+    return os.path.normpath(os.path.expanduser(os.path.expandvars(os.path.join(*args))))
 
 
 def wait_semaphores(semaphores, timeout=4.354e17, tick=60):
