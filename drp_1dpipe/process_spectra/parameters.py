@@ -97,9 +97,9 @@ default_parameters = {
             'euclidnhaemittersStrength': -1,
             "tplratio": {
                 "priors": {
-                    "betaA": "1",
-                    "betaTE": "1",
-                    "betaZ": "1",
+                    "betaA": 1,
+                    "betaTE": 1,
+                    "betaZ": 1,
                     "catalog_dirpath": ""
                 },
             },

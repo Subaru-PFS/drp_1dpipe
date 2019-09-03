@@ -40,21 +40,7 @@
             "firstpass": {
                 "tplratio_ismfit": "yes",
             },
-            "stronglinesprior": "-1",
-            "tplratio": {
-                "priors": {
-                    "betaA": "1",
-                    "betaTE": "1",
-                    "betaZ": "1",
-                    "catalog_dirpath": ""
-                }
-            },
-            "nsigmasupport": "8",
-            "haprior": "-1",
-            "pdf": {
-                "margampcorr": "no",
-                "bestzoption": "maxproba"
-            }
+            "stronglinesprior": "-1"
         }
     },
 }
