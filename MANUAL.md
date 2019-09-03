@@ -88,6 +88,12 @@ drp_1dpipe --scheduler pbs \
            --pre-commands "source $HOME/venv/bin/activate"
 ```
 
+Run bunches of 200 spectra on a multi-core machine using 4 cores and store results in the `my-output-dir` directory:
+
+```sh
+drp_1dpipe -n 200 -j 4 -o my-output-dir
+```
+
 ### Algorithmic parameters
 
 Algorithms are described in [DRP Algorith documentation](https://sumire.pbworks.com/w/file/132378141/LAM-PFS-1D-DRP-Algo-Pipeline_v0.82.pdf "DRP-Algo").
