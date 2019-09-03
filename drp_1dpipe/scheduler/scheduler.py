@@ -78,8 +78,18 @@ def main():
     parser.add_argument('--output-dir', '-o', metavar='DIR',
                         default=defaults['output-dir'],
                         help='Output directory.')
+    parser.add_argument('--config', '-c', metavar='FILE', action=AbspathAction,
+                        default=None,
+                        help='Configuration file giving all these command line arguments')
 
     args = parser.parse_args()
+    if args.config:
+        vars(args).update(get_args_from_file(args.config))
+        args = parser.parse_args(namespace=args)
+        args.loglevel=int(args.loglevel)
+        args.concurrency=int(args.concurrency)
+        args.bunch_size=int(args.bunch_size)
+    save_config_file(args)
 
     return run(args)
 
