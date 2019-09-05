@@ -6,6 +6,7 @@ import time
 import datetime
 import argparse
 from drp_1dpipe import VERSION
+from pylibamazed.redshift import get_version
 
 _loglevels = {
     'CRITICAL': logging.CRITICAL,
@@ -51,8 +52,15 @@ def init_argparse():
 
     :return: An initialized ArgumentParsel object.
     """
-    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('-v', '--version', action='version', version=VERSION)
+    parser = argparse.ArgumentParser(
+        prog='drp_1dpipe',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('-v', '--version', action='version',
+                        version='%(prog)s {} (pylibamazed {})'.format(
+                        VERSION,
+                        get_version())
+                        )
     parser.add_argument('--workdir', default=os.getcwd(), action=AbspathAction,
                         help='The root working directory where data is '
                         'located.')
