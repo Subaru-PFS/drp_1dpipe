@@ -1,5 +1,5 @@
 import os.path
-from astropy.io import fits
+from pfs.datamodel.drp import PfsObject
 from pylibamazed.redshift import (CSpectrumSpectralAxis,
                                   CSpectrumFluxAxis_withError,
                                   CSpectrum)
@@ -14,11 +14,12 @@ def read_spectrum(path):
     :rtype: CSpectrum
     """
 
-    with fits.open(path) as f:
-        fluxtbl = f['FLUXTBL'].data
-        error = np.sqrt(f['COVAR'].data[:,0])
-        spectralaxis = CSpectrumSpectralAxis(fluxtbl['wavelength'] * 10)
-        signal = CSpectrumFluxAxis_withError(fluxtbl['flux'], error)
-        spectrum = CSpectrum(spectralaxis, signal)
-        spectrum.SetName(os.path.basename(path))
+    obj = PfsObject.readFits(path)
+    wavelength = obj.wavelength
+    flux = obj.flux
+    error = np.sqrt(obj.covar[0][0:])
+    spectralaxis = CSpectrumSpectralAxis(wavelength * 10)
+    signal = CSpectrumFluxAxis_withError(flux, error)
+    spectrum = CSpectrum(spectralaxis, signal)
+    spectrum.SetName(os.path.basename(path))
     return spectrum
