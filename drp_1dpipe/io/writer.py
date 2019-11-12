@@ -28,10 +28,6 @@ def write_candidates(output_dir,
 
     npix = len(lambda_ranges)
 
-    # create LAMBDA_SCALE HDU
-    lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
-    hdul.append(fits.BinTableHDU(name='LAMBDA_SCALE', data=lambda_scale))
-
     # data['PDU'] = np.array([])
 
     # create ZCANDIDATES HDU
@@ -52,9 +48,13 @@ def write_candidates(output_dir,
         zcandidates[i]['MODELFLUX'] = np.zeros((npix,))  # TODO : get from linemodel_spc_extrema_0
     hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
 
+    # create LAMBDA_SCALE HDU
+    lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
+    hdul.append(fits.BinTableHDU(name='MODELWL', data=lambda_scale))
+
     # create ZPDF HDU
     zpdf_hdu = np.ndarray(len(zpdf), buffer=zpdf,
-                          dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
+                          dtype=[('REDSHIFT', 'f8'), ('PDF', 'f8')])
     hdul.append(fits.BinTableHDU(name='ZPDF', data=zpdf_hdu))
 
     # create ZLINES HDU

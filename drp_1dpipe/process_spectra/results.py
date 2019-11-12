@@ -3,6 +3,7 @@ import os.path
 from astropy.io import fits
 from drp_1dpipe.io.writer import write_candidates
 from drp_1dpipe.io.utils import TemporaryFilesSet
+from pfs.datamodel.drp import PfsObject
 import logging
 import numpy as np
 
@@ -115,8 +116,8 @@ class AmazedResults:
         """
         for spectrum, result in self.redshift_results.items():
             path = os.path.join(self.spectrum_dir, spectrum)
-            hdul = fits.open(path)
-            self.lambda_ranges[spectrum] = hdul['FLUXTBL'].data.field('wavelength')
+            obj = PfsObject.readFits(path)
+            self.lambda_ranges[spectrum] = obj.wavelength
 
     def _read_candidates(self):
         """Read redshift candidates from candidatesresult.csv."""
