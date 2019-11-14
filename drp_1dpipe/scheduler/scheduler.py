@@ -11,8 +11,8 @@ from drp_1dpipe.io.utils import (init_logger, init_environ, get_args_from_file,
                                  normpath, init_argparse, get_auxiliary_path,
                                  TemporaryFilesSet, save_config_file,
                                  AbspathAction)
-from .runner import list_runners, get_runner
-from .notifier import init_notifier
+from drp_1dpipe.scheduler.runner import list_runners, get_runner
+from drp_1dpipe.scheduler.notifier import init_notifier
 from drp_1dpipe.scheduler import local, pbs, slurm  # noqa: F401
 import argparse
 
