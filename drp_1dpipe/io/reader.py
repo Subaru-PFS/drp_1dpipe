@@ -15,10 +15,12 @@ def read_spectrum(path):
     """
 
     obj = PfsObject.readFits(path)
-    wavelength = obj.wavelength
-    flux = obj.flux
-    error = np.sqrt(obj.covar[0][0:])
-    spectralaxis = CSpectrumSpectralAxis(wavelength * 10)
+    mask = obj.mask
+    valid = np.where(mask == 0, True, False)
+    wavelength = np.array(np.extract(valid, obj.wavelength), dtype=np.float32)
+    flux = np.array(np.extract(valid, obj.flux), dtype=np.float32)
+    error = np.array(np.extract(valid, np.sqrt(obj.covar[0][0:])), dtype=np.float32)
+    spectralaxis = CSpectrumSpectralAxis(wavelength * 10.0)
     signal = CSpectrumFluxAxis_withError(flux, error)
     spectrum = CSpectrum(spectralaxis, signal)
     spectrum.SetName(os.path.basename(path))
