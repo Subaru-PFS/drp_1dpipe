@@ -3,6 +3,9 @@ import subprocess
 import json
 import os.path
 from .runner import Runner, register_runner
+import logging
+
+logger = logging.getLogger("scheduler")
 
 
 class Local(Runner):
@@ -76,6 +79,7 @@ class Local(Runner):
                       seq_arg,
                       os.path.join(args[seq_arg], 'B'+str(i)))
                       ) for seq_arg in seq_arg_name]
+                logger.info(" ".join(task))
                 f = executor.submit(subprocess.run, task)
                 f.add_done_callback(self.process_done_factory(args['notifier'],
                                                               '{}-{}'.format(command, i)))

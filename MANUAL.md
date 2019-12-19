@@ -49,7 +49,7 @@ Commands to run before before `process_spectra`. This gives the opportunity for 
 
 Base path where to find spectra. Relative to workdir.
 
-##### `--bunch-size SIZE`
+##### `--bunch-size SIZE, -n SIZE`
 
 Maximum number of spectra per bunch.
 
@@ -65,6 +65,14 @@ Path to parameter file for redshift determination.
 
 Path to parameter file for line measurement.
 
+##### `--concurrency CONCURRENCY, -j CONCURRENCY`
+
+Set concurrency level for parallel run. -1 means infinity (default: 1)
+
+##### `--output-dir DIR, -o DIR`
+
+The output directory (default: output)
+
 ##### `--config FILE`
 
 Configuration file giving all these command line arguments.
@@ -75,7 +83,7 @@ Show the help message and exit.
 
 #### Examples
 
-Run using all defaults arguments values (default values can be found in the `drp_1dpipe/io/conf/scheduler.conf` file in your `drp_1dpipe` install directory):
+Run using all defaults arguments values (see in table below for default values):
 
 ```sh
 drp_1dpipe
@@ -84,8 +92,7 @@ drp_1dpipe
 Run on a PBS queue, activating a virtualenv on each node before running:
 
 ```sh
-drp_1dpipe --scheduler pbs \
-           --pre-commands "source $HOME/venv/bin/activate"
+drp_1dpipe --scheduler pbs --pre-commands "source $HOME/venv/bin/activate"
 ```
 
 Run bunches of 200 spectra on a multi-core machine using 4 cores and store results in the `my-output-dir` directory:
@@ -129,12 +136,12 @@ _**`linemodelsolve.linemodel`**_ : Parameters for linemodel method
 | `  .velocityemission` |`float`| `200`| emission lines velocity (in $km \cdot s^{-1}$)|
 | `  .velocityabsorption` |`float` |`300` | absorption lines velocity (in $km \cdot s^{-1}$)}|
 | `  .velocityfit` |{`yes`,`no`} |`yes` | decide wether the 2nd pass include line width fitting|
-| `  .emvelocityfitmin` |`float` |`10` | tabulation of velocity for line width fitting in $km \cdot s^{-1}$|
-| `  .emvelocityfitmax` |`float` |`400`|
-| `  .emvelocityfitstep` |`float` |`20`|
-| `  .absvelocityfitmin` |`float` |`150`|
-| `  .absvelocityfitmax` |`float` |`500`|
-| `  .absvelocityfitstep` |`float` |`50`|
+| `  .emvelocityfitmin` |`float` |`10` | min velocity for emission line width $km \cdot s^{-1}$|
+| `  .emvelocityfitmax` |`float` |`400`| max velocity for emission line width $km \cdot s^{-1}$|
+| `  .emvelocityfitstep` |`float` |`20`| tabulation of velocity for emission line width fitting in $km \cdot s^{-1}$|
+| `  .absvelocityfitmin` |`float` |`150`| min velocity for absorption line width $km \cdot s^{-1}$|
+| `  .absvelocityfitmax` |`float` |`500`| max velocity for absorption line width $km \cdot s^{-1}$|
+| `  .absvelocityfitstep` |`float` |`50`| tabulation of velocity for absorption line width fitting in $km \cdot s^{-1}$|
 | `  .tplratio_ismfit` |{`yes`,`no`}|`no` | activate fit of ISM extinction _i.e._ Ebv parameter from Calzetti profiles. Parameter scan from 0 to 0.9, step = 0.1. (best value stored in FittedTplshapeIsmCoeff in `linemodelsolve.linemodel_extrema.csv`)|
 | `  .continuumcomponent` |{`fromspectrum`,`tplfit`} | `tplfit`  | select the method for processing the continuum:<br>&bull; `fromspectrum`: remove an estimated continuum (the continuum estmation is then tuned via `continuumRemoval` parameters). The redshift is thus only estimated from the lines.<br>&bull; `tplfit`: fit a set of redshifted template (aka `fullmodel` _i.e._ contiuum model + line model|
 | `  .continuumfit.ismfit` |{`yes`,`no`} |`yes` | activate fit of ISM extinction _i.e._. Ebv parameter from Calzetti profiles. Parameter scan from 0 to 0.9, step = 0.1. (best value stored in FittedTplDustCoeff in `linemodelsolve.linemodel_extrema.csv`)  |

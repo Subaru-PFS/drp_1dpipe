@@ -3,6 +3,7 @@ import os.path
 from astropy.io import fits
 from drp_1dpipe.io.writer import write_candidates
 from drp_1dpipe.io.utils import TemporaryFilesSet
+from pfs.datamodel.drp import PfsObject
 import logging
 import numpy as np
 
@@ -68,10 +69,10 @@ class AmazedResults:
 
     def write(self):
         for spectrum, results in self.redshift_results.items():
-            catId, tract, patch, objId, expId = \
+            catId, tract, patch, objId, nvisit, pfsVisitHash = \
                 self._parse_pfsObject_name(spectrum)
             write_candidates(self.output_dir,
-                             catId, tract, patch, objId, expId,
+                             catId, tract, patch, objId, nvisit, pfsVisitHash,
                              self.lambda_ranges[spectrum],
                              self.redshift_results[spectrum],
                              self.candidates[spectrum],
@@ -115,8 +116,8 @@ class AmazedResults:
         """
         for spectrum, result in self.redshift_results.items():
             path = os.path.join(self.spectrum_dir, spectrum)
-            hdul = fits.open(path)
-            self.lambda_ranges[spectrum] = hdul['FLUXTBL'].data.field('wavelength')
+            obj = PfsObject.readFits(path)
+            self.lambda_ranges[spectrum] = obj.wavelength
 
     def _read_candidates(self):
         """Read redshift candidates from candidatesresult.csv."""
@@ -182,10 +183,10 @@ class AmazedResults:
     def _parse_pfsObject_name(name):
         """Parse a pfsObject file name.
 
-        Template is : pfsObject-%05d-%s-%03d-%08x-%02d-0x%08x.fits
-        pfsObject-%(catId)03d-%(tract)05d-%(patch)s-%(objId)08x-%(expId)06d.fits
+        Template is : pfsObject-%03d-%05d-%s-%016x-%03d-0x%016x.fits
+        pfsObject-%(catId)03d-%(tract)05d-%(patch)s-%(objId)016x-%(nVisit % 1000)03d-0x%(pfsVisitHash)016x.fits
         """
         basename = os.path.splitext(name)[0]
-        head, catId, tract, patch, objId, expId = basename.split('-')
+        head, catId, tract, patch, objId, nvisit, pfsVisitHash = basename.split('-')
         assert head == 'pfsObject'
-        return (int(catId), int(tract), patch, int(objId, 16), int(expId))
+        return (int(catId), int(tract), patch, int(objId, 16), int(nvisit), int(pfsVisitHash, 16))
