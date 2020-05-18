@@ -294,3 +294,7 @@ def run(args):
         raise "Unknown process_method {}".format(args.process_method)
 
     return 0
+
+
+if __name__ == '__main__':
+    main()

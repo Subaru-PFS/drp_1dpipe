@@ -7,6 +7,7 @@ Author: CeSAM
 
 import uuid
 import logging
+from drp_1dpipe import VERSION
 from drp_1dpipe.io.utils import (init_logger, init_environ, get_args_from_file,
                                  normpath, init_argparse, get_auxiliary_path,
                                  TemporaryFilesSet, save_config_file,
@@ -15,6 +16,8 @@ from drp_1dpipe.scheduler.runner import list_runners, get_runner
 from drp_1dpipe.scheduler.notifier import init_notifier
 from drp_1dpipe.scheduler import local, pbs, slurm  # noqa: F401
 import argparse
+import traceback
+
 
 logger = logging.getLogger("scheduler")
 
@@ -103,6 +106,9 @@ def run(args):
     # initialize logger
     init_logger('scheduler', args.logdir, args.loglevel)
 
+    # Launch banner
+    print("Running drp_1dpipe {}".format(VERSION))
+
     # set workdir environment
     init_environ(args.workdir)
 
@@ -123,17 +129,21 @@ def run(args):
         runner = runner_class(args, tmpcontext)
 
         # prepare workdir
-        runner.single('pre_process',
-                      args={'workdir': normpath(args.workdir),
-                            'logdir': normpath(args.logdir),
-                            'loglevel': args.loglevel,
-                            'bunch-size': args.bunch_size,
-                            'pre-commands': args.pre_commands,
-                            'spectra-dir': normpath(args.spectra_dir),
-                            'bunch-list': bunch_list})
-
-        notif.update('pre_process', 'SUCCESS')
-        tmpcontext.add_files(bunch_list)
+        try:
+            runner.single('pre_process',
+                        args={'workdir': normpath(args.workdir),
+                                'logdir': normpath(args.logdir),
+                                'loglevel': args.loglevel,
+                                'bunch-size': args.bunch_size,
+                                'pre-commands': args.pre_commands,
+                                'spectra-dir': normpath(args.spectra_dir),
+                                'bunch-list': bunch_list})
+        except Exception as e:
+            traceback.print_exc()
+            notif.update('root', 'ERROR')
+        else:
+            notif.update('pre_process', 'SUCCESS')
+            tmpcontext.add_files(bunch_list)
 
         # process spectra
         try:
@@ -150,9 +160,13 @@ def run(args):
                                   'notifier': notif,
                                   'output-dir': args.output_dir})
         except Exception as e:
-            logger.log(logging.ERROR, 'Error in process_spectra:', e)
+            traceback.print_exc()
             notif.update('root', 'ERROR')
         else:
             notif.update('root', 'SUCCESS')
 
     return 0
+
+
+if __name__ == '__main__':
+    main()
