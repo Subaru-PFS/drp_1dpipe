@@ -1,2 +1,3 @@
-include io/conf
-include io/auxdir
+include drp_1dpipe/conf/*
+include drp_1dpipe/auxdir/*
+include core/engine/resources/*

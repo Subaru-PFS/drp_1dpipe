@@ -10,8 +10,10 @@ import os.path
 import tempfile
 import threading
 import time
-from drp_1dpipe.io.utils import get_args_from_file
-from drp_1dpipe.io.utils import get_auxiliary_path, get_conf_path, normpath, wait_semaphores
+from drp_1dpipe.core.utils import get_args_from_file, convert_dl_to_ld
+from drp_1dpipe.core.utils import get_auxiliary_path, get_conf_path, normpath, wait_semaphores
+from drp_1dpipe.core.utils import config_update, config_save
+from drp_1dpipe.core.utils import UnconsistencyArgument
 
 
 def test_auxdir():
@@ -81,6 +83,84 @@ def _create_semaphores(semaphores):
         fd.write('foo')
         fd.close()
         time.sleep(4)
+
+def test_convert_dl_to_ld():
+    dl = {"l1":[1,2],"l2":[3,4]}
+    ld = convert_dl_to_ld(dl)
+    assert ld[0]["l1"] == 1
+    assert ld[0]["l2"] == 3
+    assert ld[1]["l1"] == 2
+    assert ld[1]["l2"] == 4
+    dl = {"l1":[1,2],"l2":[3]}
+    with pytest.raises(UnconsistencyArgument):
+        convert_dl_to_ld(dl)
+
+
+def test_config_update():
+    cf0 = {"config":"","a1":"v1.0","a2":"v2.0","a3":"v3.0","a4":"v4.0"}
+    # Test on install conf path
+    cf1 = '{"a1":"v1.1"}'
+    cfl1 = tempfile.NamedTemporaryFile()
+    with open(cfl1.name, 'w') as ff:
+        ff.write(cf1)
+    obj = config_update(cf0, install_conf_path=cfl1.name)
+    assert obj.a1 == "v1.1"
+    assert obj.a2 == "v2.0"
+    assert obj.a3 == "v3.0"
+    assert obj.a4 == "v4.0"
+    # Test on args
+    args = {"a2":"v2.1"}
+    obj = config_update(cf0, args=args)
+    assert obj.a1 == "v1.0"
+    assert obj.a2 == "v2.1"
+    assert obj.a3 == "v3.0"
+    assert obj.a4 == "v4.0"
+    # Test on config args
+    cf_args = '{"a3":"v3.1"}'
+    cfl2 = tempfile.NamedTemporaryFile()
+    with open(cfl2.name, 'w') as ff:
+        ff.write(cf_args)
+    argsc={"config":cfl2.name}
+    obj = config_update(cf0, args=argsc)
+    assert obj.a1 == "v1.0"
+    assert obj.a2 == "v2.0"
+    assert obj.a3 == "v3.1"
+    assert obj.a4 == "v4.0"
+    # Test on environment variable
+    json_str = '{"a4":"v4.1"}'
+    cfl3 = tempfile.NamedTemporaryFile()
+    with open(cfl3.name, 'w') as ff:
+        ff.write(json_str)
+    os.environ['TEST_STARTUP'] = cfl3.name
+    obj = config_update(cf0, environ_var='TEST_STARTUP')
+    assert obj.a1 == "v1.0"
+    assert obj.a2 == "v2.0"
+    assert obj.a3 == "v3.0"
+    assert obj.a4 == "v4.1"
+    # Whole test
+    args.update(argsc)
+    obj = config_update(cf0, args=args, install_conf_path=cfl1.name, environ_var='TEST_STARTUP')
+    assert obj.a1 == "v1.1"
+    assert obj.a2 == "v2.1"
+    assert obj.a3 == "v3.1"
+    assert obj.a4 == "v4.1"
+    del os.environ['TEST_STARTUP']
+    # Test on log level
+    cf0 = {"config":"", "loglevel": "no"}
+    with pytest.raises(KeyError):
+        obj = config_update(cf0)
+    
+
+
+def test_config_save():
+    fd = tempfile.TemporaryDirectory()
+    cf0 = {"k":"v","output_dir":fd.name}
+    cf = config_update(cf0)
+    config_save(cf, 'config.json', indent=None)
+    with open(os.path.join(fd.name, 'config.json')) as ff:
+        line = ff.readline()
+    assert line.replace(" ","") == "{"+'"k":"v","output_dir":"{}"'.format(fd.name)+"}"
+
 
 # def test_wait_semaphores():
 #

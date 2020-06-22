@@ -53,12 +53,9 @@ default_parameters = {
             'haprior': -1,
             'rigidity': 'tplshape',
             'rules': 'all',
-            'tplratio_catalog': ('linecatalogs_tplshapes/linecatalogs_tplshape'
-                                 '_ExtendedTemplatesJan2017v3_20170602_B14C_'
-                                 'v5_emission'),
+            'tplratio_catalog': ('linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v6_emission'),
             'tplratio_ismfit': 'no',
-            'offsets_catalog': ('linecatalogs_offsets/'
-                                'offsetsCatalogs_20170410_m150'),
+            'offsets_catalog': ('linecatalogs_offsets/offsetsCatalogs_20170410_m150'),
             'continuumcomponent': 'tplfit',
             'continuumreestimation': 'no',
             'continuumfit': {
@@ -78,7 +75,7 @@ default_parameters = {
             'extremacutprobathreshold': 30,
             'pdf': {
                 'margampcorr': 'no',
-                'bestzoption': 'maxproba'
+                'bestzoption': 'maxintproba'
             },
             'firstpass': {
                 'fittingmethod': 'individual',

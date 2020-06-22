@@ -2,9 +2,8 @@ import os
 import json
 import subprocess
 import uuid
-from drp_1dpipe.io.utils import normpath, wait_semaphores
-from .runner import Runner
-
+from drp_1dpipe.core.utils import normpath, wait_semaphores, convert_dl_to_ld
+from .runner import Runner, UnconsistencyArgument
 
 class BatchQueue(Runner):
 
@@ -19,11 +18,10 @@ class BatchQueue(Runner):
         task_id = uuid.uuid4().hex
 
         # generate batch script
-        extra_args = ' '.join(['--{}={}'.format(k, v)
-                               for k, v in args.items() if k != 'pre-commands'])
+        extra_args = ' '.join(['--{}={}'.format(k, v) for k, v in args.items()])
 
         script = self.single_script_template.format(workdir=normpath(args['workdir']),
-                                                    pre_commands=args['pre-commands'],
+                                                    pre_commands=self.venv,
                                                     command=command,
                                                     extra_args=extra_args,
                                                     task_id=task_id)
@@ -41,51 +39,64 @@ class BatchQueue(Runner):
         semaphores = [normpath(args['workdir'], '{}.done'.format(task_id))]
         self.tmpcontext.add_files(*semaphores)
         wait_semaphores(semaphores)
+        return batch_script_name
 
-    def parallel(self, command, filelist, arg_name, seq_arg_name=None, args=None):
-        """Run a command in parallel using batch queue.
+    def parallel(self, command, parallel_args=None, args=None):
+        """Execute parallel task for batch runners
 
-        :param command: Path to command to execute
-        :param filelist: JSON file. a list of list of FITS file
-        :param arg_name: command-line argument name that will be given the FITS-list file name
-        :param seq_arg_name: command-line argument that will have appended a sequence index
-        :param args: extra parameters to give to command, as a dictionnary
+        Parameters
+        ----------
+        command : str
+            Path to command to execute
+        parallel_args : dict, optional
+            command line arguments to related to each parallel task, by default None
+        args : dict, optional
+            command line arguments common to all parallel tasks, by default None
         """
-
         task_id = uuid.uuid4().hex
         executor_script = normpath(args['workdir'], 'batch_executor_{}.py'.format(task_id))
         self.tmpcontext.add_files(executor_script)
 
+        # Convert dictionnary list to list of dictionnaries
+        pll_args = convert_dl_to_ld(parallel_args)
+
         # generate batch_executor script
         tasks = []
         extra_args = ['--{}={}'.format(k, v)
-                      for k, v in args.items()
-                      if k not in ('pre-commands', seq_arg_name, 'notifier')]
+                      for k, v in args.items()]
+                    #   if k not in ('pre-commands', seq_arg_name, 'notifier')]
 
         # setup tasks
-        with open(filelist, 'r') as f:
-            subtasks = json.load(f)
-            # register these files for deletion
-            self.tmpcontext.add_files(*subtasks)
+        # with open(filelist, 'r') as f:
+        #     subtasks = json.load(f)
+        #     # register these files for deletion
+        #     self.tmpcontext.add_files(*subtasks)
 
-        for i, arg_value in enumerate(subtasks):
+        for k, v in parallel_args.items():
             task = [command,
-                    '--{arg_name}={arg_value}'.format(arg_name=arg_name,
-                                                      arg_value=arg_value)]
+                    '--{arg_name}={arg_value}'.format(arg_name=k,
+                                                      arg_value=v)]
             task.extend(extra_args)
-            if seq_arg_name:
-                [task.append('--{}={}'.format(
-                  seq_arg,
-                  os.path.join(args[seq_arg], 'B'+str(i)))
-                  ) for seq_arg in seq_arg_name]
             tasks.append(task)
+
+        # for i, arg_value in enumerate(subtasks):
+        #     task = [command,
+        #             '--{arg_name}={arg_value}'.format(arg_name=arg_name,
+        #                                               arg_value=arg_value)]
+        #     task.extend(extra_args)
+        #     if seq_arg_name:
+        #         [task.append('--{}={}'.format(
+        #           seq_arg,
+        #           os.path.join(args[seq_arg], 'B'+str(i)))
+        #           ) for seq_arg in seq_arg_name]
+        #     tasks.append(task)
 
         # setup pipeline notifier
         notifier = args['notifier']
         notifier.update(command,
                         children=['{}-{}'.format(command, i)
-                                  for i in range(len(subtasks))])
-        for i, arg_value in enumerate(subtasks):
+                                  for i in range(ntasks)])
+        for i in range(ntasks):
             notifier.update('{}-{}'.format(command, i), state='WAITING')
         notifier.update(command, 'RUNNING')
 
@@ -100,7 +111,7 @@ class BatchQueue(Runner):
             executor.write(batch_executor)
 
         # generate batch script
-        script = self.parallel_script_template.format(jobs=len(subtasks),
+        script = self.parallel_script_template.format(jobs=ntasks,
                                                       workdir=normpath(args['workdir']),
                                                       pre_commands=args['pre-commands'],
                                                       executor_script=executor_script,
@@ -117,7 +128,7 @@ class BatchQueue(Runner):
 
         # wait all sub-tasks
         semaphores = [normpath(args['workdir'], f'{task_id}_{i}.done')
-                      for i in range(1, len(subtasks)+1)]
+                      for i in range(1, ntasks+1)]
         self.tmpcontext.add_files(*semaphores)
 
         wait_semaphores(semaphores)

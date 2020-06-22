@@ -1,46 +1,70 @@
-"""
-File: drp_1dpipe/tests/test_utils.py
-
-Created on: 31/10/18
-Author: PSF DRP1D developers
-"""
-
 import pytest
 import os
-from collections import namedtuple
-from tempfile import TemporaryDirectory
-from drp_1dpipe.merge_results.merge_results import run
-#from .utils import generate_fake_fits
+import json
+import collections
+import tempfile
+import types
+import glob
+from IPython import embed
+
+from drp_1dpipe.core.utils import normpath, config_update
+from drp_1dpipe.core.config import Config
+
+from drp_1dpipe.merge_results.merge_results import concat_summury_files, main_method
+from drp_1dpipe.merge_results.config import config_defaults
 
 
-redshift_header = "#Spectrum\tProcessingID\tRedshift\tMerit\tTemplate" \
-                  "\tMethod\tDeltaz\tReliability\tsnrHa\tlfHa\tType\n"
+def test_config_update_none():
+    cf0 = config_defaults.copy()
+    for k in cf0.keys():
+        cf0[k] = None
+    cf0['loglevel'] = 'DEBUG'
+    obj = config_update(cf0)
+    with pytest.raises(AttributeError):
+        cfg = obj.config
 
-redshift_template = "file.fits\tprocessing_id-{proc_id}\t{redshift}\t{merit}\t{template}" \
-                    "\tChisquareLogSolve_0.00\t-1\tC6\t-1\tG\n"
 
-def test_run():
+def test_main_method():
+    """
+    The "test_run" function.
 
-    # generate fake result directories
-    pass
-    # TODO: rewrite complete test after including the merge feature
+    This function test the "run" function of "pre_process.py" module.
+    """
 
-    # workdir =  TemporaryDirectory(prefix='pytest_')
-    #
-    #
-    # args = namedtuple('Args', ['workdir', 'logdir', 'loglevel', 'result_dirs', 'spectra_path'])(
-    #     workdir=workdir.name, logdir='logdir', loglevel='debug', spectra_path='spectra',
-    #     result_dirs='output-*')
-    #
-    # os.makedirs(os.path.join(args.workdir, args.spectra_path), exist_ok=True)
-    # generate_fake_fits(fileName=os.path.join(args.workdir, args.spectra_path, 'file.fits'))
-    #
-    # dirs = [TemporaryDirectory(prefix='output-', dir=args.workdir) for i in range(4)]
-    # for i, d in enumerate(dirs):
-    #     f = open(os.path.join(args.workdir, d.name, 'redshift.csv'), 'w')
-    #     f.write(redshift_header)
-    #     f.write(redshift_template.format(proc_id=1, redshift=0.234*i, merit=-0.011*i, template="foo"))
-    #     f.write(redshift_template.format(proc_id=2, redshift=0.321*i, merit=-0.022*i, template="bar"))
+    wd = tempfile.TemporaryDirectory()
+    config = Config(config_defaults)
+    config.workdir = wd.name
+    config.output_dir = wd.name
+    
+    with pytest.raises(FileNotFoundError):
+        main_method(config)
+    
+    bd = os.path.join(config.output_dir, "B0")
+    config.bunch_listfile = os.path.join(bd, 'reduce.json')
+    bdd = os.path.join(bd, 'data')
+    os.makedirs(bdd, exist_ok=True)
 
-    # TODO: actually test something
-    # run(args)
+    list_file = []
+    for i in range(2):
+        with open(normpath(bdd, '{}.file'.format(i)), 'w') as ff:
+            ff.write("/n")
+            list_file.append(ff.name)
+
+    with open(config.bunch_listfile, "w") as ff:
+        json.dump([bd], ff)
+    
+    rstr = "#com\nstr1	str2	1.0	2.0 str3    str4	3.0	str5	4.0	5.0	6.0	7.0	str6"
+    rname = os.path.join(bd, "redshift.csv")
+    with open(rname, "w") as ff:
+        ff.write(rstr)
+
+    result_run = main_method(config)
+    assert result_run == 0
+
+    data_dir = os.path.join(config.output_dir, 'data')
+    assert os.path.exists(data_dir)
+
+    dl = os.listdir(data_dir)
+    assert len(dl) == 2
+    assert "0.file" in dl
+    assert "1.file" in dl
