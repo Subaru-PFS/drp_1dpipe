@@ -2,7 +2,6 @@ import pytest
 import os
 import json
 import tempfile
-from IPython import embed
 import numpy as np
 
 from drp_1dpipe.process_spectra.results import SpectrumResults, RedshiftSummary, StellarSummary, QsoSummary

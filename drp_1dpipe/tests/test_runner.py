@@ -4,8 +4,6 @@ import logging
 import logging.handlers
 import tempfile
 
-from IPython import embed
-
 from drp_1dpipe.core.engine.runner import Runner, register_runner, get_runner, list_runners
 from drp_1dpipe.core.config import Config
 from drp_1dpipe.core.engine.local import Local

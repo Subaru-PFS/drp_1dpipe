@@ -5,7 +5,6 @@ import collections
 import tempfile
 import types
 import glob
-from IPython import embed
 
 from drp_1dpipe.core.utils import normpath, config_update
 from drp_1dpipe.core.config import Config
