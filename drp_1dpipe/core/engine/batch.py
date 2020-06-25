@@ -103,7 +103,7 @@ class BatchQueue(Runner):
         # generate batch script
         with open(os.path.join(os.path.dirname(__file__), 'resources', 'executor.py.in'),
                   'r') as f:
-            batch_executor = f.read().format(tasks=tasks)
+            batch_executor = f.read().format(tasks=tasks, notification_url='')
             # batch_executor = f.read().format(tasks=tasks,
             #                                  notification_url=(notifier.pipeline_url
             #                                                    if notifier.pipeline_url
