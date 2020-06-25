@@ -1,0 +1,11 @@
+{
+  "config": "/Users/pychabau/Work/Subaru-PFS/drp_1dpipe/drp_1dpipe/conf/pre_process.json",
+  "workdir": "/var/folders/1n/7t5m4t5917b7qh8kvsx68wx00000gn/T/tmpn2drepjm",
+  "logdir": "/var/folders/1n/7t5m4t5917b7qh8kvsx68wx00000gn/T/tmpapwu7snz",
+  "loglevel": "INFO",
+  "log_level": 20,
+  "bunch_size": "8",
+  "spectra_dir": "/Users/pychabau/Work/Subaru-PFS/drp_1dpipe/spectra",
+  "bunch_list": "@AUTO@/bunchlist.json",
+  "output_dir": "/Users/pychabau/Work/Subaru-PFS/drp_1dpipe/@AUTO@"
+}

@@ -20,7 +20,7 @@ from drp_1dpipe.core.utils import ( init_environ, get_args_from_file,
                                     normpath, get_auxiliary_path, get_conf_path,
                                     TemporaryFilesSet, config_update, config_save )
 from drp_1dpipe.core.engine.runner import get_runner, list_runners
-from drp_1dpipe.core.engine import local #, pbs, slurm
+from drp_1dpipe.core.engine import local, pbs, slurm
 from drp_1dpipe.core.notifier import init_notifier
 from drp_1dpipe.scheduler.config import config_defaults
 
@@ -44,7 +44,7 @@ def define_specific_program_options():
     parser.add_argument('--scheduler',
                         choices=list_runners(),
                         help='The scheduler to use.')
-    parser.add_argument('--venv', metavar='COMMAND', action=AbspathAction,
+    parser.add_argument('--venv', metavar='DIR', action=AbspathAction,
                         help='Virtual environment path to load before running batch job')
     parser.add_argument('--concurrency', '-j', type=int,
                         help='Concurrency level for local parallel run. -1 means maximum.')
