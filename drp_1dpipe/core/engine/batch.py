@@ -101,7 +101,7 @@ class BatchQueue(Runner):
         # notifier.update(command, 'RUNNING')
 
         # generate batch script
-        with open(os.path.join(os.path.dirname(__file__), 'executor.py.in'),
+        with open(os.path.join(os.path.dirname(__file__), 'resources', 'executor.py.in'),
                   'r') as f:
             batch_executor = f.read().format(tasks=tasks)
             # batch_executor = f.read().format(tasks=tasks,
