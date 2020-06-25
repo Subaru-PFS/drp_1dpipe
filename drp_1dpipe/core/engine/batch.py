@@ -114,7 +114,7 @@ class BatchQueue(Runner):
         # generate batch script
         script = self.parallel_script_template.format(jobs=len(tasks),
                                                       workdir=normpath(self.workdir),
-                                                      pre_commands=self.venv,
+                                                      venv=self.venv,
                                                       executor_script=executor_script,
                                                       task_id=task_id)
         batch_script_name = normpath(self.workdir,
