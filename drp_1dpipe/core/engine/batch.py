@@ -32,13 +32,13 @@ class BatchQueue(Runner):
         self.tmpcontext.add_files(batch_script_name)
 
         # run batch
-        # result = subprocess.run([self.batch_submitter, batch_script_name])
-        # assert result.returncode == 0
+        result = subprocess.run([self.batch_submitter, batch_script_name])
+        assert result.returncode == 0
 
         # block until completion
         semaphores = [normpath(self.workdir, '{}.done'.format(task_id))]
         self.tmpcontext.add_files(*semaphores)
-        # wait_semaphores(semaphores)
+        wait_semaphores(semaphores)
         return batch_script_name
 
     def parallel(self, command, parallel_args=None, args=None):
