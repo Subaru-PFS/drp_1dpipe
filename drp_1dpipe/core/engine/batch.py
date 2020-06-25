@@ -92,21 +92,22 @@ class BatchQueue(Runner):
         #     tasks.append(task)
 
         # setup pipeline notifier
-        notifier = args['notifier']
-        notifier.update(command,
-                        children=['{}-{}'.format(command, i)
-                                  for i in range(ntasks)])
-        for i in range(ntasks):
-            notifier.update('{}-{}'.format(command, i), state='WAITING')
-        notifier.update(command, 'RUNNING')
+        # notifier = args['notifier']
+        # notifier.update(command,
+        #                 children=['{}-{}'.format(command, i)
+        #                           for i in range(ntasks)])
+        # for i in range(ntasks):
+        #     notifier.update('{}-{}'.format(command, i), state='WAITING')
+        # notifier.update(command, 'RUNNING')
 
         # generate batch script
         with open(os.path.join(os.path.dirname(__file__), 'executor.py.in'),
                   'r') as f:
-            batch_executor = f.read().format(tasks=tasks,
-                                             notification_url=(notifier.pipeline_url
-                                                               if notifier.pipeline_url
-                                                               else ''))
+            batch_executor = f.read().format(tasks=tasks)
+            # batch_executor = f.read().format(tasks=tasks,
+            #                                  notification_url=(notifier.pipeline_url
+            #                                                    if notifier.pipeline_url
+            #                                                    else ''))
         with open(executor_script, 'w') as executor:
             executor.write(batch_executor)
 
@@ -132,4 +133,4 @@ class BatchQueue(Runner):
         self.tmpcontext.add_files(*semaphores)
 
         wait_semaphores(semaphores)
-        notifier.update(command, 'SUCCESS')
+        # notifier.update(command, 'SUCCESS')
