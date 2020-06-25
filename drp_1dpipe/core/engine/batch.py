@@ -32,13 +32,13 @@ class BatchQueue(Runner):
         self.tmpcontext.add_files(batch_script_name)
 
         # run batch
-        result = subprocess.run([self.batch_submitter, batch_script_name])
-        assert result.returncode == 0
+        # result = subprocess.run([self.batch_submitter, batch_script_name])
+        # assert result.returncode == 0
 
         # block until completion
         semaphores = [normpath(self.workdir, '{}.done'.format(task_id))]
         self.tmpcontext.add_files(*semaphores)
-        wait_semaphores(semaphores)
+        # wait_semaphores(semaphores)
         return batch_script_name
 
     def parallel(self, command, parallel_args=None, args=None):
@@ -72,13 +72,19 @@ class BatchQueue(Runner):
         #     # register these files for deletion
         #     self.tmpcontext.add_files(*subtasks)
 
-        for k, v in parallel_args.items():
-            task = [command,
-                    '--{arg_name}={arg_value}'.format(arg_name=k,
-                                                      arg_value=v)]
-            task.extend(extra_args)
-            tasks.append(task)
+        # for k, v in pll_args.items():
+        #     task = [command,
+        #             '--{arg_name}={arg_value}'.format(arg_name=k,
+        #                                               arg_value=v)]
+        #     task.extend(extra_args)
+        #     tasks.append(task)
 
+        for i, arg_value in enumerate(pll_args):
+                task = [command]
+                for k, v in arg_value.items():
+                    task.append('--{arg_name}={arg_value}'.format(arg_name=k, arg_value=v))
+                task.extend(extra_args)
+                tasks.append(task)
         # for i, arg_value in enumerate(subtasks):
         #     task = [command,
         #             '--{arg_name}={arg_value}'.format(arg_name=arg_name,
@@ -101,8 +107,7 @@ class BatchQueue(Runner):
         # notifier.update(command, 'RUNNING')
 
         # generate batch script
-        with open(os.path.join(os.path.dirname(__file__), 'resources', 'executor.py.in'),
-                  'r') as f:
+        with open(os.path.join(os.path.dirname(__file__), 'resources', 'executor.py.in'), 'r') as f:
             batch_executor = f.read().format(tasks=tasks, notification_url='')
             # batch_executor = f.read().format(tasks=tasks,
             #                                  notification_url=(notifier.pipeline_url
