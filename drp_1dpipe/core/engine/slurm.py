@@ -1,6 +1,7 @@
 import textwrap
-from .batch import BatchQueue
-from .runner import register_runner
+
+from drp_1dpipe.core.engine.batch import BatchQueue
+from drp_1dpipe.core.engine.runner import register_runner
 
 
 class Slurm(BatchQueue):
@@ -16,7 +17,7 @@ class Slurm(BatchQueue):
                 #SBATCH --mem-per-cpu=1
 
                 cd {workdir}
-                {pre_commands}
+                source {venv}/bin/activate
                 {command} {extra_args} >> out-{task_id}.txt
                 echo "$?" >> {workdir}/{task_id}.done
                 """)
@@ -30,7 +31,7 @@ class Slurm(BatchQueue):
                 #SBATCH --array=1-{jobs}
 
                 cd {workdir}
-                {pre_commands}
+                source {venv}/bin/activate
                 /usr/bin/env python3 {executor_script} ${{SLURM_ARRAY_TASK_ID}} >> out-{task_id}-${{SLURM_ARRAY_TASK_ID}}.txt
                 echo "$?" >> {workdir}/{task_id}_${{SLURM_ARRAY_TASK_ID}}.done
                 """)

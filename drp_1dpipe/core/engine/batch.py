@@ -3,7 +3,7 @@ import json
 import subprocess
 import uuid
 from drp_1dpipe.core.utils import normpath, wait_semaphores, convert_dl_to_ld
-from .runner import Runner, UnconsistencyArgument
+from drp_1dpipe.core.engine.runner import Runner
 
 class BatchQueue(Runner):
 
@@ -20,12 +20,12 @@ class BatchQueue(Runner):
         # generate batch script
         extra_args = ' '.join(['--{}={}'.format(k, v) for k, v in args.items()])
 
-        script = self.single_script_template.format(workdir=normpath(args['workdir']),
-                                                    pre_commands=self.venv,
+        script = self.single_script_template.format(workdir=normpath(self.workdir),
+                                                    venv=self.venv,
                                                     command=command,
                                                     extra_args=extra_args,
                                                     task_id=task_id)
-        batch_script_name = normpath(args['workdir'],
+        batch_script_name = normpath(self.workdir,
                                      'batch_script_{}.sh'.format(task_id))
         with open(batch_script_name, 'w') as batch_script:
             batch_script.write(script)
@@ -36,7 +36,7 @@ class BatchQueue(Runner):
         assert result.returncode == 0
 
         # block until completion
-        semaphores = [normpath(args['workdir'], '{}.done'.format(task_id))]
+        semaphores = [normpath(self.workdir, '{}.done'.format(task_id))]
         self.tmpcontext.add_files(*semaphores)
         wait_semaphores(semaphores)
         return batch_script_name
@@ -54,10 +54,10 @@ class BatchQueue(Runner):
             command line arguments common to all parallel tasks, by default None
         """
         task_id = uuid.uuid4().hex
-        executor_script = normpath(args['workdir'], 'batch_executor_{}.py'.format(task_id))
+        executor_script = normpath(self.workdir, 'batch_executor_{}.py'.format(task_id))
         self.tmpcontext.add_files(executor_script)
 
-        # Convert dictionnary list to list of dictionnaries
+        # Convert dictionnary of list to list of dictionnaries
         pll_args = convert_dl_to_ld(parallel_args)
 
         # generate batch_executor script
@@ -72,13 +72,19 @@ class BatchQueue(Runner):
         #     # register these files for deletion
         #     self.tmpcontext.add_files(*subtasks)
 
-        for k, v in parallel_args.items():
-            task = [command,
-                    '--{arg_name}={arg_value}'.format(arg_name=k,
-                                                      arg_value=v)]
-            task.extend(extra_args)
-            tasks.append(task)
+        # for k, v in pll_args.items():
+        #     task = [command,
+        #             '--{arg_name}={arg_value}'.format(arg_name=k,
+        #                                               arg_value=v)]
+        #     task.extend(extra_args)
+        #     tasks.append(task)
 
+        for i, arg_value in enumerate(pll_args):
+                task = [command]
+                for k, v in arg_value.items():
+                    task.append('--{arg_name}={arg_value}'.format(arg_name=k, arg_value=v))
+                task.extend(extra_args)
+                tasks.append(task)
         # for i, arg_value in enumerate(subtasks):
         #     task = [command,
         #             '--{arg_name}={arg_value}'.format(arg_name=arg_name,
@@ -92,31 +98,32 @@ class BatchQueue(Runner):
         #     tasks.append(task)
 
         # setup pipeline notifier
-        notifier = args['notifier']
-        notifier.update(command,
-                        children=['{}-{}'.format(command, i)
-                                  for i in range(ntasks)])
-        for i in range(ntasks):
-            notifier.update('{}-{}'.format(command, i), state='WAITING')
-        notifier.update(command, 'RUNNING')
+        # notifier = args['notifier']
+        # notifier.update(command,
+        #                 children=['{}-{}'.format(command, i)
+        #                           for i in range(ntasks)])
+        # for i in range(ntasks):
+        #     notifier.update('{}-{}'.format(command, i), state='WAITING')
+        # notifier.update(command, 'RUNNING')
 
         # generate batch script
-        with open(os.path.join(os.path.dirname(__file__), 'executor.py.in'),
-                  'r') as f:
-            batch_executor = f.read().format(tasks=tasks,
-                                             notification_url=(notifier.pipeline_url
-                                                               if notifier.pipeline_url
-                                                               else ''))
+        with open(os.path.join(os.path.dirname(__file__), 'resources', 'executor.py.in'), 'r') as f:
+            batch_executor = f.read().format(tasks=tasks, notification_url='')
+            # batch_executor = f.read().format(tasks=tasks,
+            #                                  notification_url=(notifier.pipeline_url
+            #                                                    if notifier.pipeline_url
+            #                                                    else ''))
         with open(executor_script, 'w') as executor:
             executor.write(batch_executor)
 
         # generate batch script
+        ntasks = len(tasks)
         script = self.parallel_script_template.format(jobs=ntasks,
-                                                      workdir=normpath(args['workdir']),
-                                                      pre_commands=args['pre-commands'],
+                                                      workdir=normpath(self.workdir),
+                                                      venv=self.venv,
                                                       executor_script=executor_script,
                                                       task_id=task_id)
-        batch_script_name = normpath(args['workdir'],
+        batch_script_name = normpath(self.workdir,
                                      f'batch_script_{task_id}.sh')
         with open(batch_script_name, 'w') as batch_script:
             batch_script.write(script)
@@ -127,9 +134,9 @@ class BatchQueue(Runner):
         assert result.returncode == 0
 
         # wait all sub-tasks
-        semaphores = [normpath(args['workdir'], f'{task_id}_{i}.done')
+        semaphores = [normpath(self.workdir, f'{task_id}_{i}.done')
                       for i in range(1, ntasks+1)]
         self.tmpcontext.add_files(*semaphores)
 
         wait_semaphores(semaphores)
-        notifier.update(command, 'SUCCESS')
+        # notifier.update(command, 'SUCCESS')

@@ -5,7 +5,7 @@ import os.path
 import logging
 
 from drp_1dpipe.core.utils import convert_dl_to_ld
-from .runner import Runner, register_runner
+from drp_1dpipe.core.engine.runner import Runner, register_runner
 
 class Local(Runner):
 
