@@ -57,7 +57,7 @@ class BatchQueue(Runner):
         executor_script = normpath(self.workdir, 'batch_executor_{}.py'.format(task_id))
         self.tmpcontext.add_files(executor_script)
 
-        # Convert dictionnary list to list of dictionnaries
+        # Convert dictionnary of list to list of dictionnaries
         pll_args = convert_dl_to_ld(parallel_args)
 
         # generate batch_executor script
@@ -112,7 +112,7 @@ class BatchQueue(Runner):
             executor.write(batch_executor)
 
         # generate batch script
-        script = self.parallel_script_template.format(jobs=ntasks,
+        script = self.parallel_script_template.format(jobs=len(tasks),
                                                       workdir=normpath(self.workdir),
                                                       pre_commands=self.venv,
                                                       executor_script=executor_script,
