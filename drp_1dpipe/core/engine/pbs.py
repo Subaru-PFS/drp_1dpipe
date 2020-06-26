@@ -1,6 +1,6 @@
 import textwrap
-from .batch import BatchQueue
-from .runner import register_runner
+from drp_1dpipe.core.engine.batch import BatchQueue
+from drp_1dpipe.core.engine.runner import register_runner
 
 
 class PBS(BatchQueue):
@@ -12,7 +12,7 @@ class PBS(BatchQueue):
                 #PBS -l nodes=1:ppn=1
                 #PBS -l walltime=00:05:00
                 cd {workdir}
-                {pre_commands}
+                source {venv}/bin/activate
                 {command} {extra_args} >> out-{task_id}.txt
                 echo "$?" >> {workdir}/{task_id}.done
                 """)
@@ -23,7 +23,7 @@ class PBS(BatchQueue):
                 #PBS -l walltime=01:00:00
                 #PBS -t 1-{jobs}
                 cd {workdir}
-                {pre_commands}
+                source {venv}/bin/activate
                 /usr/bin/env python3 {executor_script} ${{PBS_ARRAYID}} >> out-{task_id}-${{PBS_ARRAYID}}.txt
                 echo "$?" >> {workdir}/{task_id}_${{PBS_ARRAYID}}.done
                 """)

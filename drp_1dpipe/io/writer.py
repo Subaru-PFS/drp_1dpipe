@@ -5,7 +5,7 @@ import numpy as np
 
 def write_candidates(output_dir,
                      catId, tract, patch, objId, nVisit, pfsVisitHash,
-                     lambda_ranges, redshift, candidates, zpdf, linemeas):
+                     lambda_ranges, candidates, models, zpdf, linemeas):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
     path = "pfsZcandidates-%03d-%05d-%s-%016x-%03d-0x%016x.fits" % (
@@ -13,8 +13,6 @@ def write_candidates(output_dir,
 
     print("Saving {} redshifts to {}".format(len(candidates),
                                              os.path.join(output_dir, path)))
-    print("redshifts is", redshift)
-
     header = [fits.Card('tract', tract, 'Area of the sky'),
               fits.Card('patch', patch, 'Region within tract'),
               fits.Card('catId', catId, 'Source of the objId'),
@@ -45,7 +43,7 @@ def write_candidates(output_dir,
         zcandidates[i]['RELIABILITY'] = candidate.intgProba
         zcandidates[i]['CLASS'] = ''
         zcandidates[i]['SUBCLASS'] = ''
-        zcandidates[i]['MODELFLUX'] = np.zeros((npix,))  # TODO : get from linemodel_spc_extrema_0
+        zcandidates[i]['MODELFLUX'] = np.array(models[i])
     hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
 
     # create LAMBDA_SCALE HDU
@@ -93,3 +91,5 @@ def write_candidates(output_dir,
 
     fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
                                overwrite=True)
+    
+    return path
