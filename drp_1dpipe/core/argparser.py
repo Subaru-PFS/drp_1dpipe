@@ -58,7 +58,7 @@ def define_global_program_options(parser):
                         help='The logging directory.')
     parser.add_argument('--loglevel',
                     choices=['ERROR', 'WARNING', 'INFO', 'DEBUG'],
-                    action=LogLevelAction,
+                    # action=LogLevelAction,
                     help='The logging level. One of ERROR, WARNING, INFO or DEBUG.')
     parser.add_argument('-v', '--version', action='version',
                         version='%(prog)s {} (pylibamazed {})'.format(VERSION, get_version()))
