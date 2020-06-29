@@ -1,80 +1,139 @@
-"""
-File: drp_1dpipe/merge_results/merge_results.py
-
-Created on: 01/11/18
-Author: CeSAM
-"""
-
-import os.path
-import glob
+import os
 import logging
 from collections import namedtuple
-from drp_1dpipe.io.utils import (init_logger, get_args_from_file,
-                                 normpath, init_argparse)
+import argparse
+import shutil
+import json
 
-logger = logging.getLogger("process_spectra")
+from drp_1dpipe import VERSION
+from drp_1dpipe.core.config import ConfigJson
+from drp_1dpipe.core.logger import init_logger
+from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
+from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
+from drp_1dpipe.merge_results.config import config_defaults
+from drp_1dpipe.process_spectra.results import SpectrumResults, RedshiftSummary, StellarSummary, QsoSummary
+
+logger = logging.getLogger("mergs_results")
+
+
+def define_specific_program_options():
+    """Define specific program options.
+    
+    Return
+    ------
+    :obj:`ArgumentParser`
+        An ArgumentParser object
+    """
+    parser = argparse.ArgumentParser(
+        prog='merge_results',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('--bunch_listfile', metavar='FILE',
+                        help='List of bunch.')
+    parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
+                        help='Output directory.')
+
+    return parser
+
+
+def concat_summury_files():
+    pass
+
+def main_method(config):
+    """main_method
+
+    Parameters
+    ----------
+    config : :obj:`Config`
+        Configuration object
+
+    Returns
+    -------
+    int
+        0 on success
+    """    
+
+    # initialize logger
+    logger = init_logger("merge_results", config.logdir, config.log_level)
+    start_message = "Running merge_results {}".format(VERSION)
+    logger.info(start_message)
+
+    if not os.path.exists(config.bunch_listfile):
+        raise FileNotFoundError("Bunch list file not found : {}".format(config.bunch_listfile))
+    
+    with open(config.bunch_listfile, "r") as ff :
+        bunch_list = json.load(ff)
+    
+    data_dir = os.path.join(config.output_dir, 'data')
+    os.makedirs(data_dir, exist_ok=True)
+    galaxy_summary_list = []
+    stellar_summary_list = []
+    qso_summary_list = []
+    for bunch in bunch_list:
+        if not os.path.exists(bunch):
+            raise FileNotFoundError("Bunch directory not found : {}".format(bunch))
+        bunch_data_dir = os.path.join(bunch, "data")
+        if not os.path.exists(bunch_data_dir):
+            raise FileNotFoundError("Bunch data directory not found : {}".format(bunch_data_dir))
+        to_merge = os.listdir(bunch_data_dir)
+        for pfs_candidate in to_merge:
+            shutil.move(
+                os.path.join(bunch_data_dir, pfs_candidate),
+                os.path.join(data_dir, pfs_candidate))
+
+        try:
+            amazed_results = RedshiftSummary(output_dir=bunch)
+            amazed_results.read()
+            galaxy_summary_list.extend(amazed_results.summary)
+        except FileNotFoundError:
+            raise FileNotFoundError("Redshift summary file not found in {}".format(bunch))
+
+        try:
+            amazed_results = StellarSummary(output_dir=bunch)
+            amazed_results.read()
+            stellar_summary_list.extend(amazed_results.summary)
+        except:
+            pass
+
+        try:
+            amazed_results = QsoSummary(output_dir=bunch)
+            amazed_results.read()
+            qso_summary_list.extend(amazed_results.summary)
+        except:
+            pass
+
+    gsr = RedshiftSummary(output_dir=config.output_dir)
+    gsr.summary = galaxy_summary_list
+    gsr.write()
+    ssr = StellarSummary(output_dir=config.output_dir)
+    ssr.summary = stellar_summary_list
+    ssr.write()
+    qsr = QsoSummary(output_dir=config.output_dir)
+    qsr.summary = qso_summary_list
+    qsr.write()
+    
+    return 0
 
 
 def main():
+    """Merge results entry point
+
+    Return
+    ------
+    int
+        Exit code of the main method
     """
-    merge_results entry point.
-
-    Parse command line arguments, and call the run() function.
-    """
-
-    parser = init_argparse()
-    parser.add_argument('--spectra-dir', metavar='DIR',
-                        help='Base path where to find spectra. '
-                        'Relative to workdir.')
-    parser.add_argument('--result_dirs', metavar='DIR',
-                        help='Shell glob pattern of directories where to '
-                        'find result files. Relative to workdir.')
-
+    parser = define_specific_program_options()
+    define_global_program_options(parser)
     args = parser.parse_args()
-    get_args_from_file("merge_results.conf", args)
-
-    return run(args)
-
-
-RedshiftResult = namedtuple('RedshiftResult', ['spectrum', 'processingid',
-                                               'redshift', 'merit',
-                                               'template', 'method', 'deltaz',
-                                               'reliability', 'snrha', 'lfha',
-                                               'snroII', 'lfoII', 'type_'])
+    config = config_update(
+        config_defaults,
+        args=vars(args),
+        install_conf_path=get_conf_path("merge_results.json")
+        )
+    config_save(config, "merge_results_config.json")
+    return main_method(config)
 
 
-def _list_redshifts(lines):
-    results = []
-    for l in lines:
-        if not l or l.startswith('#'):
-            continue
-        try:
-            result = RedshiftResult(*l.split())
-        except Exception:
-            logger.log(logging.CRITICAL, "Can't parse result : {}".format(l))
-        else:
-            results.append(result)
-    return results
-
-
-def _update_pfsobject(spectra_dir, redshift):
-    with open(os.path.join(spectra_dir, redshift.spectrum)) as f:
-        print("Updating {} with redshift {}".format(f.name, redshift.redshift))
-
-
-def run(args):
-
-    # initialize logger
-    init_logger("merge_results", args.logdir, args.loglevel)
-
-    redshifts = []
-
-    for res_dir in glob.glob(normpath(args.workdir, args.result_dirs)):
-        with open(os.path.join(res_dir, 'redshift.csv'), 'r') as f:
-            redshifts.extend(_list_redshifts([l.strip()
-                                              for l in f.readlines()]))
-
-    for r in redshifts:
-        _update_pfsobject(normpath(args.workdir, args.spectra_dir), r)
-
-    return 0
+if __name__ == '__main__':
+    main()

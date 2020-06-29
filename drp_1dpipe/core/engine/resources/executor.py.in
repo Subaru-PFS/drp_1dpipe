@@ -1,5 +1,5 @@
-# **Template** python script used by pbs scheduler to produce python executor
-# script
+# **Template** python script used by pbs/slurm scheduler to produce
+# python executor script
 #
 
 import sys
@@ -12,7 +12,7 @@ notification_url = '{notification_url}'
 
 if __name__ == '__main__':
     # usage :
-    # pbs_executor N : run task #N
+    # task_executor N : run task #N
 
     print("Running {{}}".format(sys.argv))
     task = tasks[int(sys.argv[1]) - 1]
@@ -45,3 +45,4 @@ if __name__ == '__main__':
 # Local Variables:
 # mode: python
 # End:
+# flake8: noqa

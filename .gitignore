@@ -20,6 +20,11 @@
 *.tar
 *.zip
 
+# Editors files #
+#################
+.idea
+.vscode
+
 # Logs and databases #
 ######################
 *.log

@@ -4,32 +4,27 @@ import numpy as np
 
 
 def write_candidates(output_dir,
-                     catId, tract, patch, objId, expId,
-                     lambda_ranges, redshift, candidates, zpdf, linemeas):
+                     catId, tract, patch, objId, nVisit, pfsVisitHash,
+                     lambda_ranges, candidates, models, zpdf, linemeas):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
-    path = "pfsZcandidates-%05d-%s-%03d-%08x-%06d.fits" % (
-        tract, patch, catId, objId, expId)
+    path = "pfsZcandidates-%03d-%05d-%s-%016x-%03d-0x%016x.fits" % (
+        catId, tract, patch, objId, nVisit % 1000, pfsVisitHash)
 
     print("Saving {} redshifts to {}".format(len(candidates),
                                              os.path.join(output_dir, path)))
-    print("redshifts is", redshift)
-
     header = [fits.Card('tract', tract, 'Area of the sky'),
               fits.Card('patch', patch, 'Region within tract'),
               fits.Card('catId', catId, 'Source of the objId'),
               fits.Card('objId', objId, 'Unique ID for object'),
-              fits.Card('expId', expId, 'expId')]
+              fits.Card('nvisit', nVisit, 'Number of visit'),
+              fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits')]
 
     hdr = fits.Header(header)
     primary = fits.PrimaryHDU(header=hdr)
     hdul = [primary]
 
     npix = len(lambda_ranges)
-
-    # create LAMBDA_SCALE HDU
-    lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
-    hdul.append(fits.BinTableHDU(name='LAMBDA_SCALE', data=lambda_scale))
 
     # data['PDU'] = np.array([])
 
@@ -48,12 +43,16 @@ def write_candidates(output_dir,
         zcandidates[i]['RELIABILITY'] = candidate.intgProba
         zcandidates[i]['CLASS'] = ''
         zcandidates[i]['SUBCLASS'] = ''
-        zcandidates[i]['MODELFLUX'] = np.zeros((npix,))  # TODO : get from linemodel_spc_extrema_0
+        zcandidates[i]['MODELFLUX'] = np.array(models[i])
     hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
+
+    # create LAMBDA_SCALE HDU
+    lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
+    hdul.append(fits.BinTableHDU(name='MODELWL', data=lambda_scale))
 
     # create ZPDF HDU
     zpdf_hdu = np.ndarray(len(zpdf), buffer=zpdf,
-                          dtype=[('REDSHIFT', 'f8'), ('DENSITY', 'f8')])
+                          dtype=[('REDSHIFT', 'f8'), ('PDF', 'f8')])
     hdul.append(fits.BinTableHDU(name='ZPDF', data=zpdf_hdu))
 
     # create ZLINES HDU
@@ -92,3 +91,5 @@ def write_candidates(output_dir,
 
     fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
                                overwrite=True)
+    
+    return path

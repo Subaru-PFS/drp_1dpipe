@@ -1,99 +1,94 @@
-"""
-File: drp_1dpipe/process_spectra/process_spectra.py
-
-Created on: 01/11/18
-Author: CeSAM
-"""
-import os.path
+import os
 import json
 import logging
 import time
-from drp_1dpipe.io.utils import (init_logger, get_args_from_file, normpath,
-                                 init_argparse, get_auxiliary_path)
+import argparse
+import shutil
+import traceback
+
+
+from drp_1dpipe import VERSION
+from drp_1dpipe.core.config import ConfigJson
+from drp_1dpipe.core.logger import init_logger
+from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
+from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
+from drp_1dpipe.process_spectra.config import config_defaults
+
+from drp_1dpipe.core.utils import init_environ, normpath, TemporaryFilesSet
 from drp_1dpipe.io.reader import read_spectrum
-from .parameters import default_parameters
-from pyamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
-                               CParameterStore, CClassifierStore,
-                               CLogFileHandler, CRayCatalog,
-                               CTemplateCatalog, get_version)
-from drp_1dpipe.process_spectra.results import AmazedResults
+from drp_1dpipe.process_spectra.parameters import default_parameters
+from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
+                                  CParameterStore, CClassifierStore,
+                                  CLogFileHandler, CRayCatalog,
+                                  CTemplateCatalog, get_version)
+from drp_1dpipe.process_spectra.results import SpectrumResults
 
 logger = logging.getLogger("process_spectra")
 
+_map_loglevel = {logging.CRITICAL: CLog.nLevel_Critical,
+                 logging.ERROR: CLog.nLevel_Error,
+                 logging.WARNING: CLog.nLevel_Warning,
+                 logging.INFO: CLog.nLevel_Info,
+                 logging.DEBUG: CLog.nLevel_Debug,
+                 logging.NOTSET: CLog.nLevel_None}
 
-def _output_path(args, *path):
-    return normpath(args.workdir, args.output_dir, *path)
 
-
-def main():
+def define_specific_program_options():
+    """Define specific program options.
+    
+    Return
+    ------
+    :obj:`ArgumentParser`
+        An ArgumentParser object
     """
-    process_spectra entry point.
+    parser = argparse.ArgumentParser(
+        prog='process_spectra',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
 
-    Parse command line arguments, and call the run() function.
-    """
-
-    parser = init_argparse()
-
-    defaults = {'spectra-dir': 'spectra',
-                'calibration-dir': 'calibration',
-                'parameters-file': get_auxiliary_path("parameters.json"),
-                'process-method': 'AMAZED',
-                'output-dir': 'output',
-                'linemeas-parameters-file': get_auxiliary_path("linemeas-parameters.json"),
-                'lineflux': 'on'
-    }
-    defaults.update(get_args_from_file('process_spectra.conf'))
-
-    parser.add_argument('--spectra-dir', metavar='DIR',
-                        default=defaults['spectra-dir'],
+    parser.add_argument('--spectra_dir', metavar='DIR', action=AbspathAction,
                         help='Path to spectra directory. '
                         'Relative to workdir.')
-    parser.add_argument('--spectra-listfile', metavar='FILE', required=True,
+    parser.add_argument('--spectra_listfile', metavar='FILE',
                         help='JSON file holding a list of files of '
                         'astronomical objects.')
-    parser.add_argument('--calibration-dir', metavar='DIR',
-                        default=defaults['calibration-dir'],
+    parser.add_argument('--calibration_dir', metavar='DIR', action=AbspathAction,
                         help='Specify directory in which calibration files are'
                         ' stored. Relative to workdir.')
-    parser.add_argument('--parameters-file', metavar='FILE',
-                        default=defaults['parameters-file'],
+    parser.add_argument('--parameters_file', metavar='FILE', action=AbspathAction,
                         help='Parameters file. Relative to workdir.')
-    parser.add_argument('--template-dir', metavar='DIR',
-                        default=defaults['template-dir'],
+    parser.add_argument('--template_dir', metavar='DIR', action=AbspathAction,
                         help='Specify directory in which input templates files'
                         'are stored.')
-    parser.add_argument('--linecatalog', metavar='FILE',
-                        default=defaults['linecatalog'],
+    parser.add_argument('--linecatalog', metavar='FILE', action=AbspathAction,
                         help='Path to the rest lines catalog file.')
-    parser.add_argument('--zclassifier-dir', metavar='DIR',
-                        default=defaults['zclassifier-dir'],
+    parser.add_argument('--zclassifier_dir', metavar='DIR', action=AbspathAction,
                         help='Specify directory in which zClassifier files are'
                         ' stored.')
-    parser.add_argument('--process-method',
-                        default=defaults['process-method'],
+    parser.add_argument('--process_method',
                         help='Process method to use. Whether DUMMY or AMAZED.')
-    parser.add_argument('--output-dir', metavar='DIR',
-                        default=defaults['output-dir'],
+    parser.add_argument('--output_dir', metavar='DIR', action=AbspathAction,
                         help='Directory where all generated files are going to'
                         ' be stored. Relative to workdir.')
-    parser.add_argument('--linemeas-parameters-file', metavar='FILE',
-                        default=defaults['linemeas-parameters-file'],
-                        help='Parameters file used for line measurement. '
+    parser.add_argument('--linemeas_parameters_file', metavar='FILE', action=AbspathAction,
+                        help='Parameters file used for line flux measurement. '
                         'Relative to workdir.')
-    parser.add_argument('--linemeas-linecatalog', metavar='FILE',
-                        default=defaults['linemeas-linecatalog'],
+    parser.add_argument('--linemeas_linecatalog', metavar='FILE', action=AbspathAction,
                         help='Path to the rest lines catalog file used for '
                         'line measurement.')
     parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
-                        default=defaults['lineflux'],
                         help='Whether to do line flux measurements.'
                         '"on" to do redshift and line flux calculations, '
                         '"off" to disable, '
                         '"only" to skip the redshift part.')
-    args = parser.parse_args()
+    parser.add_argument('--continue', action='store_true', dest='continue_',
+                        help='Continue a previous processing.')
 
-    # Start the main program
-    return run(args)
+    return parser
+
+
+def _output_path(args, *path):
+    return normpath(args.workdir, args.output_dir, *path)
 
 
 def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
@@ -101,10 +96,12 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
     try:
         spectrum = read_spectrum(spectrum_path)
     except Exception as e:
+        traceback.print_exc()
         logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
         return
 
-    proc_id = '{}-{}'.format(spectrum.GetName(), index)
+    # proc_id = os.path.join(spectrum.GetName(), str(index))
+    proc_id, ext = os.path.splitext(spectrum.GetName())
 
     try:
         ctx = CProcessFlowContext()
@@ -125,23 +122,13 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
 
     if save_results == 'all':
         ctx.GetDataStore().SaveRedshiftResult(output_dir)
-        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id),
-                                          'all')
+        ctx.GetDataStore().SaveStellarResult(output_dir)
+        ctx.GetDataStore().SaveQsoResult(output_dir)
+        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'all')
     elif save_results == 'linemeas':
-        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id),
-                                          'linemeas')
+        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'linemeas')
     else:
         raise Exception("Unhandled save_results {}".format(save_results))
-
-
-_map_loglevel = {'CRITICAL': CLog.nLevel_Critical,
-                 'FATAL': CLog.nLevel_Critical,
-                 'ERROR': CLog.nLevel_Error,
-                 'WARNING': CLog.nLevel_Warning,
-                 'WARN': CLog.nLevel_Warning,
-                 'INFO': CLog.nLevel_Info,
-                 'DEBUG': CLog.nLevel_Debug,
-                 'NOTSET': CLog.nLevel_None}
 
 
 def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
@@ -177,20 +164,26 @@ def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
     return param, line_catalog
 
 
-def amazed(args):
-    """Run the full-featured amazed client"""
+def amazed(config):
+    """Run the full-featured amazed client
+
+    Parameters
+    ----------
+    config : :obj:`Config`
+        Configuration object
+    """
 
     zlog = CLog()
-    logFileHandler = CLogFileHandler(zlog, os.path.join(args.logdir,
+    logFileHandler = CLogFileHandler(zlog, os.path.join(config.logdir,
                                                         'amazed.log'))
-    logFileHandler.SetLevelMask(_map_loglevel[args.loglevel.upper()])
+    logFileHandler.SetLevelMask(_map_loglevel[config.log_level])
 
     #
     # Set up param and linecatalog for redshift pass
     #
-    param, line_catalog = _setup_pass(normpath(args.calibration_dir),
-                                      normpath(args.parameters_file),
-                                      normpath(args.linecatalog))
+    param, line_catalog = _setup_pass(normpath(config.calibration_dir),
+                                      normpath(config.parameters_file),
+                                      normpath(config.linecatalog))
     medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
                                            'method', 'IrregularSamplingMedian')
     opt_medianKernelWidth = param.Get_Float64('templateCatalog.'
@@ -205,81 +198,168 @@ def amazed(args):
     #
     # Set up param and linecatalog for line measurement pass
     #
-    linemeas_param, linemeas_line_catalog = \
-        _setup_pass(normpath(args.calibration_dir),
-                    normpath(args.linemeas_parameters_file),
-                    normpath(args.linemeas_linecatalog))
+    linemeas_param, linemeas_line_catalog = _setup_pass(normpath(config.calibration_dir),
+                                                        normpath(config.linemeas_parameters_file),
+                                                        normpath(config.linemeas_linecatalog))
 
     classif = CClassifierStore()
 
-    if args.zclassifier_dir:
-        zclassifier_dir = normpath(args.workdir, args.zclassifier_dir)
+    if config.zclassifier_dir:
+        zclassifier_dir = normpath(config.zclassifier_dir)
         if not os.path.exists(zclassifier_dir):
             raise FileNotFoundError(f"zclassifier directory does not exist: "
                                     f"{zclassifier_dir}")
         classif.Load(zclassifier_dir)
 
-    with open(normpath(args.workdir, args.spectra_listfile), 'r') as f:
+    with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
 
     template_catalog = CTemplateCatalog(medianRemovalMethod,
                                         opt_medianKernelWidth,
                                         opt_nscales, dfBinPath)
-    logger.log(logging.INFO, "Loading %s" % args.template_dir)
+    logger.log(logging.INFO, "Loading %s" % config.template_dir)
 
     try:
-        template_catalog.Load(normpath(args.template_dir))
+        template_catalog.Load(normpath(config.template_dir))
     except Exception as e:
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise
 
+    outdir = normpath(config.workdir, config.output_dir)
+    os.makedirs(outdir, exist_ok=True)
+
+    data_dir = os.path.join(outdir, 'data')
+    os.makedirs(data_dir, exist_ok=True)
+
+    outdir_linemeas = None
+    if config.lineflux in ['only', 'on']:
+        outdir_linemeas = '-'.join([outdir, 'lf'])
+        os.makedirs(outdir_linemeas, exist_ok=True)
+
+    products = []
     for i, spectrum_path in enumerate(spectra_list):
-        outdir = normpath(args.workdir, args.output_dir)
-        spectrum = normpath(args.workdir, args.spectra_dir, spectrum_path)
-        if args.lineflux != 'only':
+        spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path)
+        proc_id, ext = os.path.splitext(spectrum_path)
+        spc_out_dir = os.path.join(outdir, proc_id )    
+
+        if config.lineflux != 'only':
             # first step : compute redshift
-            _process_spectrum(outdir, i, spectrum, template_catalog,
-                              line_catalog, param, classif, 'all')
+            to_process = True
+            if os.path.exists(spc_out_dir):
+                if config.continue_:
+                    to_process = False
+                else:
+                    shutil.rmtree(spc_out_dir)
+            if to_process:
+                _process_spectrum(outdir, i, spectrum, template_catalog,
+                                 line_catalog, param, classif, 'all')
 
-        if args.lineflux in ['only', 'on']:
+        if config.lineflux in ['only', 'on']:
             # second step : compute line fluxes
-            linemeas_param.Set_String('linemeascatalog',
-                                      os.path.join(outdir, 'redshift.csv'))
-            _process_spectrum('-'.join([outdir, 'lf']), i, spectrum,
-                              template_catalog,
-                              linemeas_line_catalog, linemeas_param,
-                              classif, 'linemeas')
+            to_process_lin = True
+            spc_out_lin_dir = os.path.join(outdir_linemeas, proc_id)
+            if os.path.exists(spc_out_lin_dir):
+                if config.continue_:
+                    to_process_lin = False
+                else:
+                    shutil.rmtree(spc_out_lin_dir)
+            if to_process_lin:
+                linemeas_param.Set_String('linemeascatalog',
+                                        os.path.join(outdir, 'redshift.csv'))
+                _process_spectrum(outdir_linemeas, i, spectrum,
+                                template_catalog,
+                                linemeas_line_catalog, linemeas_param,
+                                classif, 'linemeas')
+            
+        result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir)
+        products.append(result.write(data_dir))
 
-    # save cpf-redshift version in output dir
-    with open(_output_path(args, 'version.json'), 'w') as f:
-        json.dump({'cpf-redshift-version': get_version()}, f)
+    with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
 
-    # create output products
-    results = AmazedResults(_output_path(args), normpath(args.workdir,
-                                                         args.spectra_dir),
-                            args.lineflux in ['only', 'on'])
-    param.Save(os.path.join(normpath(args.workdir, args.output_dir),
-                            'parameters.json'))
-    results.write()
+        # save amazed version and parameters file to output dir
+        version_file = _output_path(config, 'version.json')
+        with open(version_file, 'w') as f:
+            json.dump({'amazed-version': get_version()}, f)
+        parameters_file = os.path.join(normpath(config.workdir, config.output_dir),
+                                       'parameters.json')
+        param.Save(parameters_file)
+        tmpcontext.add_files(parameters_file)
+
+        # create output products
+        # results = AmazedResults(_output_path(config), normpath(config.workdir,
+        #                                                      config.spectra_dir),
+        #                         config.lineflux in ['only', 'on'],
+        #                         tmpcontext=tmpcontext)
+        # products = results.write()
+
+        # write list of created products
+        with open(os.path.join(config.output_dir, "output.json"), 'w') as ff:
+            json.dump(products, ff)
 
 
-def dummy(args):
-    """A dummy client, for pipeline testing purpose."""
-    logger.log(logging.INFO, "running dummy client {}".format(args))
-    time.sleep(10)
-    print("done")
+def dummy(config):
+    """A dummy client, for pipeline testing purpose.
+
+    Parameters
+    ----------
+    config : :obj:`Config`
+        Configuration object
+    """
+    logger.info("running dummy client {}".format(config))
+    time.sleep(3)
+    logger.info("done")
 
 
-def run(args):
+def main_method(config):
+    """main method for processing spectra.
 
+    Parameters
+    ----------
+    config : :obj:`Config`
+        Configuration object
+
+    Returns
+    -------
+    int
+        0 on success
+    """    
     # initialize logger
-    init_logger("process_spectra", args.logdir, args.loglevel)
+    init_logger("process_spectra", config.logdir, config.log_level)
+    start_message = "Running process_spectra {}".format(VERSION)
+    logger.info(start_message)
 
-    if args.process_method.lower() == 'amazed':
-        amazed(args)
-    elif args.process_method.lower() == 'dummy':
-        dummy(args)
+    # set workdir environment
+    init_environ(config.workdir)
+
+    if config.process_method.lower() == 'amazed':
+        amazed(config)
+    elif config.process_method.lower() == 'dummy':
+        dummy(config)
     else:
-        raise "Unknown process_method {}".format(args.process_method)
+        raise "Unknown process_method {}".format(config.process_method)
 
     return 0
+
+
+def main():
+    """Process Spectra entry point.
+
+    Return
+    ------
+    int
+        Exit code of the main method
+    """
+    parser = define_specific_program_options()
+    define_global_program_options(parser)
+    args = parser.parse_args()
+    config = config_update(
+        config_defaults,
+        args=vars(args),
+        install_conf_path=get_conf_path('process_spectra.json')
+        )
+    config_save(config, "process_spectra_config.json")
+    return main_method(config)
+
+
+if __name__ == '__main__':
+    main()

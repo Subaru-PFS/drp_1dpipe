@@ -37,7 +37,7 @@ default_parameters = {
             'absvelocityfitmax': 500,
             'absvelocityfitstep': 50,
             'lyaforcefit': 'no',
-            'lyaforcedisablefit': 'yes',
+            'lyaforcedisablefit': 'no',
             'lyafit': {
                 'asymfitmin': 0,
                 'asymfitmax': 4,
@@ -49,14 +49,13 @@ default_parameters = {
                 'deltafitmax': 0,
                 'deltafitstep': 1
             },
+            'extremacountB': 0,
+            'haprior': -1,
             'rigidity': 'tplshape',
             'rules': 'all',
-            'tplratio_catalog': ('linecatalogs_tplshapes/linecatalogs_tplshape'
-                                 '_ExtendedTemplatesJan2017v3_20170602_B14C_'
-                                 'v5_emission'),
+            'tplratio_catalog': ('linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v6_emission'),
             'tplratio_ismfit': 'no',
-            'offsets_catalog': ('linecatalogs_offsets/'
-                                'offsetsCatalogs_20170410_m150'),
+            'offsets_catalog': ('linecatalogs_offsets/offsetsCatalogs_20170410_m150'),
             'continuumcomponent': 'tplfit',
             'continuumreestimation': 'no',
             'continuumfit': {
@@ -65,18 +64,23 @@ default_parameters = {
                 'count': 1,
                 'ignorelinesupport': 'no',
                 'priors': {
-                    'beta': 1,
-                    'catalog_reldirpath': ''
+                    'betaA': 1,
+                    'betaTE': 1,
+                    'betaZ': 1,
+                    'catalog_dirpath': ''
                 },
             },
             'skipsecondpass': 'no',
             'extremacount': 5,
             'extremacutprobathreshold': 30,
-            'modelpriorzStrength': -1,
+            'pdf': {
+                'margampcorr': 'no',
+                'bestzoption': 'maxintproba'
+            },
             'firstpass': {
                 'fittingmethod': 'individual',
                 'largegridstep': 0.001,
-                'tplratio_ismfit': 'yes',
+                'tplratio_ismfit': 'no',
                 'multiplecontinuumfit_disable': 'yes',
             },
             'secondpass': {
@@ -88,14 +92,37 @@ default_parameters = {
             'manvelocityfitdzstep': 0.0001,
             'stronglinesprior': -1,
             'euclidnhaemittersStrength': -1,
-            'pdfcombination': 'marg',
-            'saveintermediateresults': 'no',
-        }
+            "tplratio": {
+                "priors": {
+                    "betaA": 1,
+                    "betaTE": 1,
+                    "betaZ": 1,
+                    "catalog_dirpath": ""
+                },
+            },
+            'nsigmasupport': 8,
+            'saveintermediateresults': 'no'
+        },
     },
     'enablestellarsolve': 'no',
     'enableqsosolve': 'no',
     'calibrationDir': '',
     'SaveIntermediateResults': 'default',
     'linemeascatalog': '',
-    'autocorrectinput': 'no'
+    'autocorrectinput': 'no',
+    "qsosolve": {
+        "overlapThreshold": "1",
+        "qsosolve": {
+            "spectrum": {
+                "component": "raw"
+            },
+            "interpolation": "precomputedfinegrid",
+            "extinction": "yes",
+            "dustfit": "no"
+        },
+        "chisquare2solve": {
+            "pdfcombination": "marg",
+            "saveintermediateresults": "no"
+        },
+    },
 }
