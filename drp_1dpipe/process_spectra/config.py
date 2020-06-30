@@ -13,7 +13,7 @@ config_defaults = {
     'spectra_dir': 'spectra',
     'calibration_dir': 'calibration',
     'spectra_listfile': '',
-    'parameters_file': get_auxiliary_path("parameters.json"),
+    'parameters_file': get_auxiliary_path("parameters_stellar_galaxy.json"),
     'template_dir': '',
     'linecatalog': '',
     'zclassifier_dir': '',

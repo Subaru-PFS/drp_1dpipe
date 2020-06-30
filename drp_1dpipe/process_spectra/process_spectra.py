@@ -276,7 +276,7 @@ def amazed(config):
                                 linemeas_line_catalog, linemeas_param,
                                 classif, 'linemeas')
             
-        result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir)
+        result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir, stellar=config.stellar)
         products.append(result.write(data_dir))
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
