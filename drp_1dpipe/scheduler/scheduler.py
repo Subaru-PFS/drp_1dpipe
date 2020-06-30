@@ -67,6 +67,11 @@ def define_specific_program_options():
                         'Relative to workdir.')
     parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
                         help='Output directory.')
+    parser.add_argument('--stellar', choices=['on', 'off', 'only'],
+                        help='Whether to provide stellar results'
+                        '"on" provide stellar results'
+                        '"off" do not provide stellar results'
+                        '"only" provide only stellar results')
 
     return parser
 
@@ -230,6 +235,7 @@ def main_method(config):
                                 'spectra_dir': normpath(config.spectra_dir),
                                 'parameters_file': config.parameters_file,
                                 'linemeas_parameters_file': config.linemeas_parameters_file,
+                                'stellar': config.stellar
                             })
         except Exception as e:
             traceback.print_exc()
@@ -241,10 +247,12 @@ def main_method(config):
         reduce_process_spectra_output(json_bunch_list, config.output_dir, json_reduce)
         try:
             runner.single('merge_results',
-                          args={'workdir': normpath(config.workdir),
+                            args={
+                                'workdir': normpath(config.workdir),
                                 'logdir': normpath(config.logdir),
                                 'output_dir': normpath(config.output_dir),
-                                'bunch_listfile': json_reduce})
+                                'bunch_listfile': json_reduce
+                        })
         except Exception as e:
             traceback.print_exc()
             notifier.update('merge_results', 'ERROR')
