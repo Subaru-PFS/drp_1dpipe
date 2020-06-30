@@ -83,6 +83,11 @@ def define_specific_program_options():
                         '"only" to skip the redshift part.')
     parser.add_argument('--continue', action='store_true', dest='continue_',
                         help='Continue a previous processing.')
+    parser.add_argument('--stellar', choices=['on', 'off', 'only'],
+                        help='Whether to provide stellar results'
+                        '"on" provide stellar results'
+                        '"off" do not provide stellar results'
+                        '"only" provide only stellar results')
 
     return parser
 
@@ -271,7 +276,7 @@ def amazed(config):
                                 linemeas_line_catalog, linemeas_param,
                                 classif, 'linemeas')
             
-        result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir)
+        result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir, stellar=config.stellar)
         products.append(result.write(data_dir))
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
