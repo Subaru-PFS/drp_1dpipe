@@ -31,6 +31,9 @@ LineMeasurement = namedtuple('LineMeasurement',
                               'offset', 'sigma', 'flux', 'flux_err', 'flux_di',
                               'center_cont_flux', 'cont_err'])
 
+StarCandidate = namedtuple('StarCandidate',
+                           ['redshift', 'intgProba', 'evidenceLog', 'template'])
+
 redshift_file_type_map = (str, str, float, float,
                           str, str, float, str,
                           float, float, float, float,
@@ -48,6 +51,8 @@ linemeas_file_type_map = (str, str, str, int, float,
                           float, float, float,
                           float, float, float, float,
                           float)
+
+starCandidate_file_type_map = (float, float, float, str)
 
 redshift_header = ["#Spectrum", "ProcessingID", "Redshift", "Merit", "Template", "Method",
     "Deltaz", "Reliability", "snrHa", "lfHa", "snrOII", "lfOII", "Type"]
@@ -123,7 +128,7 @@ class SpectrumResults:
     """A class for mapping spectrum results
     """
 
-    def __init__(self, spectrum_path=None, output_dir=None, output_lines_dir=None):
+    def __init__(self, spectrum_path=None, output_dir=None, output_lines_dir=None, stellar="on"):
         """Constructor for SpectrumResults
 
         Parameters
@@ -159,6 +164,7 @@ class SpectrumResults:
             if not os.path.exists(output_lines_dir):
                 raise FileNotFoundError("No output lines directory detected for : {}".format(os.path.basename(self.output_dir)))
         self.output_lines_dir = output_lines_dir
+        self.stellar = stellar
 
     def _read_candidates(self):
         """Method used to read candidate file produced by amazed
@@ -284,9 +290,30 @@ class SpectrumResults:
                     continue
             self.linemeas = lm
 
+    def _read_star(self):
+        """Read star result for each spectrum"""
+        path = os.path.join(self.output_dir, 'stellarsolve.stellarresult.csv')
+        if not os.path.exists(path):
+            raise FileNotFoundError("No stellar candidates file detected for : {}".format(os.path.basename(self.output_dir)))
+        with open(path, 'r') as f:
+            num_line = 0
+            for l in f:
+                if not l.strip() or l.startswith('#'):
+                    continue
+                if num_line == 0 :
+                    num_line = 1
+                    continue
+                else:
+                    _r = [f(x) for f, x in zip( starCandidate_file_type_map, l.split())]
+                    self.star_candidate = [StarCandidate(*_r)]
+                    break
+
     def load(self):
         """Method used to load all results produced by amazed for one spectrum
         """
+        # read classification
+        self._read_classification()
+
         # read lambda ranges from spectrum files
         self._read_lambda_ranges()
 
@@ -303,6 +330,14 @@ class SpectrumResults:
         if self.output_lines_dir is not None:
             self._read_lines()
 
+        if self.stellar.strip().lower() == 'only':
+            self._read_star()
+        else:
+            try:
+                self._read_star()
+            except FileNotFoundError:
+                pass
+            
     def write(self, path):
         """Method used to write PFS product
 
@@ -317,14 +352,29 @@ class SpectrumResults:
             Name of product file
         """
         self.load()
+        if self.classification.type == 'G' and self.stellar.strip().lower() != 'only':
+            object_class = 'GALAXY'
+            lambda_scale = self.lambda_ranges
+            candidates = self.candidates
+            models = self.models
+            zpdf = self.zpdf
+            linemeas = (self.linemeas if self.output_lines_dir else None)
+        elif self.classification.type == 'S' or self.stellar.strip().lower() == 'only':
+            object_class = 'STAR'
+            lambda_scale = None
+            candidates = self.star_candidate
+            models = None
+            zpdf = None
+            linemeas = None
         catId, tract, patch, objId, nvisit, pfsVisitHash = self._parse_pfsObject_name(os.path.basename(self.spectrum_path))
         filename = write_candidates(path,
                             catId, tract, patch, objId, nvisit, pfsVisitHash,
-                            self.lambda_ranges,
-                            self.candidates,
-                            self.models,
-                            self.zpdf,
-                            (self.linemeas if self.output_lines_dir else None))
+                            lambda_scale,
+                            candidates,
+                            models,
+                            zpdf,
+                            linemeas,
+                            object_class)
         return filename
 
     @staticmethod
