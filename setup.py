@@ -30,7 +30,7 @@ setup(name=NAME,
       author='The LAM PFS-DRP1D developers',
       license='GPLv3',
       packages=find_packages(),
-      install_requires=['numpy', 'astropy', 'requests', 'pylibamazed'],
+      install_requires=['numpy', 'astropy', 'requests', 'pandas', 'pylibamazed'],
       classifiers=[
           "Development Status :: 1 - Planning",
           'Intended Audience :: Science/Research',
