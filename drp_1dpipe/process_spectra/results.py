@@ -211,13 +211,14 @@ class SpectrumResults:
                         continue
                     model.append(l.split()[1])
             models.append(model)
-        self.models = np.array(models, dtype=float)
+        self.models = np.array(models, dtype=np.float64)
 
     def _read_lambda_ranges(self):
         """Method used to read lambda vector from spectrum
         """
         obj = PfsObject.readFits(self.spectrum_path)
         self.lambda_ranges = obj.wavelength
+        self.mask = obj.mask
 
     def _read_classification(self):
         """Method used to read classification file produced by amazed
@@ -355,6 +356,7 @@ class SpectrumResults:
         if self.classification.type == 'G' and self.stellar.strip().lower() != 'only':
             object_class = 'GALAXY'
             lambda_scale = self.lambda_ranges
+            mask = self.mask
             candidates = self.candidates
             models = self.models
             zpdf = self.zpdf
@@ -362,6 +364,7 @@ class SpectrumResults:
         elif self.classification.type == 'S' or self.stellar.strip().lower() == 'only':
             object_class = 'STAR'
             lambda_scale = None
+            mask = None
             candidates = self.star_candidate
             models = None
             zpdf = None
@@ -370,6 +373,7 @@ class SpectrumResults:
         filename = write_candidates(path,
                             catId, tract, patch, objId, nvisit, pfsVisitHash,
                             lambda_scale,
+                            mask,
                             candidates,
                             models,
                             zpdf,

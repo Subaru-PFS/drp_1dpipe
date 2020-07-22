@@ -4,7 +4,7 @@ import numpy as np
 
 def write_candidates(output_dir,
                      catId, tract, patch, objId, nVisit, pfsVisitHash,
-                     lambda_ranges, candidates, models, zpdf, linemeas, object_class):
+                     lambda_ranges, mask, candidates, models, zpdf, linemeas, object_class):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
     path = "pfsZcandidates-%03d-%05d-%s-%016x-%03d-0x%016x.fits" % (
@@ -43,7 +43,10 @@ def write_candidates(output_dir,
             zcandidates[i]['RELIABILITY'] = candidate.intgProba
             zcandidates[i]['CLASS'] = object_class
             zcandidates[i]['SUBCLASS'] = ''
-            zcandidates[i]['MODELFLUX'] = np.array(models[i])
+            model = np.array(lambda_ranges, dtype=np.float64, copy=True)
+            model.fill(np.nan)
+            np.place(model, mask == 0, models[i])
+            zcandidates[i]['MODELFLUX'] = np.array(model)
         hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
 
         # create LAMBDA_SCALE HDU
