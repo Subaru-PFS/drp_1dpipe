@@ -25,5 +25,5 @@ def test_reader():
 
 def test_writer():
     fd = TemporaryDirectory()
-    fname = write_candidates(fd.name, 0, 1, '1,1', 2, 3, 4, [], [], [], np.array([]), [])
+    fname = write_candidates(fd.name, 0, 1, '1,1', 2, 3, 4, [], [], [], [], np.array([]), [], '')
     assert fname == 'pfsZcandidates-000-00001-1,1-0000000000000002-003-0x0000000000000004.fits'
