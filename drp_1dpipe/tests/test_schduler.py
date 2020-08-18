@@ -88,9 +88,11 @@ def test_auto_dir():
 def test_main_method():
     wd = tempfile.TemporaryDirectory()
     ld = tempfile.TemporaryDirectory()
+    od = tempfile.TemporaryDirectory()
     config = Config(config_defaults)
     config.workdir = wd.name
     config.logdir = ld.name
+    config.output_dir = od.name
     with pytest.raises(FileNotFoundError):
         main_method(config)
     logpath = os.path.join(ld.name, "scheduler.log")
