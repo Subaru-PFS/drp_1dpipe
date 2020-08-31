@@ -54,7 +54,7 @@ default_parameters = {
             'rigidity': 'tplshape',
             'rules': 'all',
             'tplratio_catalog': ('linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v6_emission'),
-            'tplratio_ismfit': 'no',
+            'tplratio_ismfit': 'yes',
             'offsets_catalog': ('linecatalogs_offsets/offsetsCatalogs_20170410_m150'),
             'continuumcomponent': 'tplfit',
             'continuumreestimation': 'no',
