@@ -7,7 +7,7 @@ def write_candidates(output_dir,
                      lambda_ranges, mask, candidates, models, zpdf, linemeas, object_class):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
-    path = "pfsZcandidates-%03d-%05d-%s-%016x-%03d-0x%016x.fits" % (
+    path = "pfsZcandidates-%05d-%05d-%s-%016x-%03d-0x%016x.fits" % (
         catId, tract, patch, objId, nVisit % 1000, pfsVisitHash)
 
     print("Saving {} redshifts to {}".format(len(candidates),
