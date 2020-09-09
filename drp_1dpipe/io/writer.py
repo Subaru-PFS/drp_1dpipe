@@ -28,6 +28,10 @@ def write_candidates(output_dir,
 
         # data['PDU'] = np.array([])
 
+        # create LAMBDA_SCALE HDU
+        lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
+        hdul.append(fits.BinTableHDU(name='MODELWL', data=lambda_scale))
+
         # create ZCANDIDATES HDU
         zcandidates = np.ndarray((len(candidates),),
                                     dtype=[('Z', 'f8'), ('Z_ERR', 'f8'),
@@ -46,12 +50,10 @@ def write_candidates(output_dir,
             model = np.array(lambda_ranges, dtype=np.float64, copy=True)
             model.fill(np.nan)
             np.place(model, mask == 0, models[i])
-            zcandidates[i]['MODELFLUX'] = np.array(model)
+            model = np.multiply(lambda_scale**2, np.array(model)) * (1/3) * 10**14
+            zcandidates[i]['MODELFLUX'] = model
         hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
 
-        # create LAMBDA_SCALE HDU
-        lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
-        hdul.append(fits.BinTableHDU(name='MODELWL', data=lambda_scale))
 
         # create ZPDF HDU
         zpdf_hdu = np.ndarray(len(zpdf), buffer=zpdf,
@@ -84,8 +86,8 @@ def write_candidates(output_dir,
                 zlines[i]['LINESIGMA_ERR'] = np.nan  # TODO: what is that ?
                 zlines[i]['LINEVEL'] = lm.velocity
                 zlines[i]['LINEVEL_ERR'] = np.nan  # TODO: what is that
-                zlines[i]['LINEFLUX'] = lm.flux
-                zlines[i]['LINEFLUX_ERR'] = lm.flux_err
+                zlines[i]['LINEFLUX'] = lm.lambda_obs**2*lm.flux * (1/3) * 10**14
+                zlines[i]['LINEFLUX_ERR'] = lm.lambda_obs**2*lm.flux_err * (1/3) * 10**14
                 zlines[i]['LINEEW'] = np.nan  # TODO: what is that
                 zlines[i]['LINEEW_ERR'] = np.nan  # TODO: what is that
                 zlines[i]['LINECONTLEVEL'] = np.nan  # TODO: what is that
