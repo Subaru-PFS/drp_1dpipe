@@ -22,6 +22,17 @@ from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
                                   CLogFileHandler, CRayCatalog,
                                   CTemplateCatalog, get_version)
 from drp_1dpipe.process_spectra.results import SpectrumResults
+import collections.abc
+
+
+def update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
+
 
 logger = logging.getLogger("process_spectra")
 
@@ -145,7 +156,7 @@ def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
         try:
             # override default parameters with those found in parameters_file
             with open(parameters_file, 'r') as f:
-                _params.update(json.load(f))
+                _params = update(_params, json.load(f))
         except Exception as e:
             logger.log(logging.INFO,
                        f'unable to read parameter file : {e}, using defaults')
