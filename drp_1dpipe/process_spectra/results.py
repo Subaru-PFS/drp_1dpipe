@@ -385,8 +385,8 @@ class SpectrumResults:
     def _parse_pfsObject_name(name):
         """Parse a pfsObject file name.
 
-        Template is : pfsObject-%03d-%05d-%s-%016x-%03d-0x%016x.fits
-        pfsObject-%(catId)03d-%(tract)05d-%(patch)s-%(objId)016x-%(nVisit % 1000)03d-0x%(pfsVisitHash)016x.fits
+        Template is : pfsObject-%05d-%05d-%s-%016x-%03d-0x%016x.fits
+        pfsObject-%(catId)05d-%(tract)05d-%(patch)s-%(objId)016x-%(nVisit % 1000)03d-0x%(pfsVisitHash)016x.fits
         """
         basename = os.path.splitext(name)[0]
         head, catId, tract, patch, objId, nvisit, pfsVisitHash = basename.split('-')
