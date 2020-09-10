@@ -66,7 +66,7 @@ def define_specific_program_options():
     parser.add_argument('--calibration_dir', metavar='DIR', action=AbspathAction,
                         help='Specify directory in which calibration files are'
                         ' stored. Relative to workdir.')
-    parser.add_argument('--parameters_file', metavar='FILE', action=AbspathAction,
+    parser.add_argument('--parameters_file', metavar='FILE',
                         help='Parameters file. Relative to workdir.')
     parser.add_argument('--template_dir', metavar='DIR', action=AbspathAction,
                         help='Specify directory in which input templates files'
@@ -81,7 +81,7 @@ def define_specific_program_options():
     parser.add_argument('--output_dir', metavar='DIR', action=AbspathAction,
                         help='Directory where all generated files are going to'
                         ' be stored. Relative to workdir.')
-    parser.add_argument('--linemeas_parameters_file', metavar='FILE', action=AbspathAction,
+    parser.add_argument('--linemeas_parameters_file', metavar='FILE',
                         help='Parameters file used for line flux measurement. '
                         'Relative to workdir.')
     parser.add_argument('--linemeas_linecatalog', metavar='FILE', action=AbspathAction,
@@ -147,11 +147,18 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
         raise Exception("Unhandled save_results {}".format(save_results))
 
 
-def _setup_pass(calibration_dir, parameters_file, line_catalog_file):
+def _setup_pass(calibration_dir, default_parameters_file, parameters_file, line_catalog_file):
 
     # setup parameter store
     param = CParameterStore()
     _params = default_parameters.copy()
+    try:
+        # override default parameters with those found in parameters_file
+        with open(default_parameters_file, 'r') as f:
+            _params = update(_params, json.load(f))
+    except Exception as e:
+        logger.log(logging.ERROR,
+                   f'unable to read default parameter file : {e}')
     if parameters_file:
         try:
             # override default parameters with those found in parameters_file
@@ -197,8 +204,13 @@ def amazed(config):
     #
     # Set up param and linecatalog for redshift pass
     #
+    parameters_file = None
+    if config.parameters_file:
+        parameters_file = normpath(config.parameters_file)
+
     param, line_catalog = _setup_pass(normpath(config.calibration_dir),
-                                      normpath(config.parameters_file),
+                                      normpath(config.default_parameters_file),
+                                      parameters_file,
                                       normpath(config.linecatalog))
     medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
                                            'method', 'IrregularSamplingMedian')
@@ -214,8 +226,13 @@ def amazed(config):
     #
     # Set up param and linecatalog for line measurement pass
     #
+    linemeas_parameters_file = None
+    if config.linemeas_parameters_file:
+        linemeas_parameters_file = normpath(config.linemeas_parameters_file)
+
     linemeas_param, linemeas_line_catalog = _setup_pass(normpath(config.calibration_dir),
-                                                        normpath(config.linemeas_parameters_file),
+                                                        normpath(config.default_linemeas_parameters_file),
+                                                        linemeas_parameters_file,
                                                         normpath(config.linemeas_linecatalog))
 
     classif = CClassifierStore()

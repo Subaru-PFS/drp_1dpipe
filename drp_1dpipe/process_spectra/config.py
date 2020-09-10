@@ -13,15 +13,17 @@ config_defaults = {
     'spectra_dir': 'spectra',
     'calibration_dir': 'calibration',
     'spectra_listfile': '',
-    'parameters_file': get_auxiliary_path("parameters_stellar_galaxy.json"),
+    'default_parameters_file': get_auxiliary_path("parameters_stellar_galaxy.json"),
     'template_dir': '',
     'linecatalog': '',
     'zclassifier_dir': '',
     'process_method': 'AMAZED',
     'output_dir': 'output',
-    'linemeas_parameters_file': get_auxiliary_path("linemeas-parameters.json"),
+    'default_linemeas_parameters_file': get_auxiliary_path("linemeas-parameters.json"),
     'linemeas_linecatalog': '',
     'lineflux': 'on',
     'continue_': False,
-    'stellar': 'on'
+    'stellar': 'on',
+    'parameters_file': '',
+    'linemeas_parameters_file': ''
     }

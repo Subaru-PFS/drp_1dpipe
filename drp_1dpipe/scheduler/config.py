@@ -18,9 +18,11 @@ config_defaults = {
     'bunch_size': 8,
     'notification_url': '',
     'lineflux': 'on',
-    'parameters_file': get_auxiliary_path("parameters_stellar_galaxy.json"),
-    'linemeas_parameters_file': get_auxiliary_path("linemeas-parameters.json"),
+    'default_parameters_file': get_auxiliary_path("parameters_stellar_galaxy.json"),
+    'default_linemeas_parameters_file': get_auxiliary_path("linemeas-parameters.json"),
     'output_dir':'@AUTO@',
-    'stellar': 'on'
+    'stellar': 'on',
+    'parameters_file': '',
+    'linemeas_parameters_file': ''
     }
 
