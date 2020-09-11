@@ -4,6 +4,8 @@ default_parameters ={
     "redshiftstep": "0.0001",
     "redshiftsampling": "log",
     "method": "linemodel",
+    "template_dir": "templates/BC03_sdss_tremonti21",
+    "linecatalog": "linecatalogs/linecatalogamazedvacuum_D2_noHepsilon_noAbsHt3700A.txt",
     "templateCategoryList": ["emission", "galaxy", "star", "qso"],
     "templateCatalog": {
         "continuumRemoval": {
