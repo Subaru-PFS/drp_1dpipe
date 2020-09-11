@@ -1,4 +1,4 @@
-default_parameters ={
+default_parameters = {
     'lambdarange': [3000, 13000],
     'redshiftrange': [0.01, 6.0],
     'redshiftstep': 0.0001,
@@ -71,7 +71,7 @@ default_parameters ={
                     'betaZ': 1,
                     'catalog_dirpath': ''
                 }
-                },
+            },
             'skipsecondpass': 'no',
             'extremacount': 5,
             'extremacutprobathreshold': -1,
@@ -101,11 +101,11 @@ default_parameters ={
                     'betaZ': 1,
                     'catalog_dirpath': ''
                 }
-                },
+            },
             'nsigmasupport': 8,
             'saveintermediateresults': 'no'
         }
-    },
+        },
     'enablestellarsolve': 'yes',
     'enableqsosolve': 'no',
     'calibrationDir': '',
