@@ -1,4 +1,4 @@
-default_parameters = {
+default_parameters ={
     'lambdarange': [3000, 13000],
     'redshiftrange': [0.01, 6.0],
     'redshiftstep': 0.0001,
