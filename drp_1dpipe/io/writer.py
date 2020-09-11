@@ -50,7 +50,7 @@ def write_candidates(output_dir,
             model = np.array(lambda_ranges, dtype=np.float64, copy=True)
             model.fill(np.nan)
             np.place(model, mask == 0, models[i])
-            model = np.multiply(lambda_scale**2, np.array(model)) * (1/3) * 10**14
+            model = np.multiply(np.array(lambda_ranges)**2, np.array(model)) * (1/3) * 10**14
             zcandidates[i]['MODELFLUX'] = model
         hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
 
