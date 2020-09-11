@@ -42,5 +42,6 @@
             },
             "stronglinesprior": "-1"
         }
-    }
+    },
+    "enablestellarsolve": "no"
 }
