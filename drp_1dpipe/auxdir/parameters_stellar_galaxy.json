@@ -1,6 +1,6 @@
 {
     "lambdarange": ["3000", "13000"],
-    "redshiftrange": ["0.0", "6.0"],
+    "redshiftrange": ["0.01", "6.0"],
     "redshiftstep": "0.0001",
     "redshiftsampling": "log",
     "method": "linemodel",
@@ -28,13 +28,13 @@
             "continuumcomponent": "tplfit",
             "continuumfit": {
                 "ismfit": "yes",
-                "igmfit": "yes",
+                "igmfit": "yes"
             },
             "skipsecondpass": "no",
             "extremacount": "5",
-            "extremacutprobathreshold": "0",
+            "extremacutprobathreshold": "-1",
             "firstpass": {
-                "tplratio_ismfit": "no",
+                "tplratio_ismfit": "no"
             },
             "stronglinesprior": "-1"
         }
