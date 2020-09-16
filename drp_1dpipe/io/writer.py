@@ -86,8 +86,8 @@ def write_candidates(output_dir,
                 zlines[i]['LINESIGMA_ERR'] = np.nan  # TODO: what is that ?
                 zlines[i]['LINEVEL'] = lm.velocity
                 zlines[i]['LINEVEL_ERR'] = np.nan  # TODO: what is that
-                zlines[i]['LINEFLUX'] = lm.lambda_obs**2*lm.flux * (1/3) * 10**14
-                zlines[i]['LINEFLUX_ERR'] = lm.lambda_obs**2*lm.flux_err * (1/3) * 10**14
+                zlines[i]['LINEFLUX'] = lm.lambda_obs**2*lm.flux * (1/2.99792458) * 10**14
+                zlines[i]['LINEFLUX_ERR'] = lm.lambda_obs**2*lm.flux_err * (1/2.99792458) * 10**14
                 zlines[i]['LINEEW'] = np.nan  # TODO: what is that
                 zlines[i]['LINEEW_ERR'] = np.nan  # TODO: what is that
                 zlines[i]['LINECONTLEVEL'] = np.nan  # TODO: what is that

@@ -22,8 +22,8 @@ def read_spectrum(path):
     error = np.array(np.extract(valid, np.sqrt(obj.covar[0][0:])), dtype=np.float32)
 
     # convert from nJy
-    flux = np.multiply(1/wavelength**2, flux)*3/10**14
-    error = np.multiply(1/wavelength**2, error)*3/10**14
+    flux = np.multiply(1/wavelength**2, flux)*2.99792458/10**14
+    error = np.multiply(1/wavelength**2, error)*2.99792458/10**14
 
     spectralaxis = CSpectrumSpectralAxis(wavelength * 10.0)
     signal = CSpectrumFluxAxis_withError(flux, error)
