@@ -17,6 +17,7 @@
         "star",
         "qso"
     ],
+    "linecatalog": "linecatalogs/linecatalogamazedvacuum_D3_noHepsilon-linemeas.txt",
     "templateCatalog": {
         "continuumRemoval": {
             "method": "zero",
@@ -28,7 +29,7 @@
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": "50",
-        "binPath": "~\/amazed_cluster\/gitlab\/amazed\/extern\/df_centos\/",
+        "binPath": "",
         "decompScales": "9"
     },
     "linemodelsolve": {

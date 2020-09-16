@@ -9,11 +9,12 @@
     ],
     "redshiftstep": "0.0001",
     "redshiftsampling": "log",
-    "calibrationDir": "",
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": "400",
     },
+    "template_dir": "templates/BC03_sdss_tremonti21",
+    "linecatalog": "linecatalogs/linecatalogamazedvacuum_D2_noHepsilon_noAbsHt3700A.txt",
     "linemodelsolve": {
         "linemodel": {
             "linetypefilter": "no",
@@ -42,5 +43,5 @@
             },
             "stronglinesprior": "-1"
         }
-    },
+    }
 }
