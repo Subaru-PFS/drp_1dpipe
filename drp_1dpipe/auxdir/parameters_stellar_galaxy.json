@@ -1,19 +1,14 @@
 {
-    "lambdarange": [
-        "3000",
-        "13000"
-    ],
-    "redshiftrange": [
-        "0.0",
-        "5.0"
-    ],
+    "lambdarange": ["3000", "13000"],
+    "redshiftrange": ["0.01", "6.0"],
     "redshiftstep": "0.0001",
     "redshiftsampling": "log",
-    "calibrationDir": "",
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": "400"
     },
+    "template_dir": "templates/BC03_sdss_tremonti21",
+    "linecatalog": "linecatalogs/linecatalogamazedvacuum_D2_noHepsilon_noAbsHt3700A.txt",
     "linemodelsolve": {
         "linemodel": {
             "linetypefilter": "no",
@@ -36,12 +31,11 @@
             },
             "skipsecondpass": "no",
             "extremacount": "5",
-            "extremacutprobathreshold": "30",
+            "extremacutprobathreshold": "-1",
             "firstpass": {
-                "tplratio_ismfit": "yes"
+                "tplratio_ismfit": "no"
             },
             "stronglinesprior": "-1"
         }
-    },
-    "enablestellarsolve": "yes"
+    }
 }

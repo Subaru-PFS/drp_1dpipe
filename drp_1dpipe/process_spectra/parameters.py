@@ -1,9 +1,11 @@
-default_parameters = {
+default_parameters ={
     'lambdarange': [3000, 13000],
-    'redshiftrange': [0.0, 6.0],
+    'redshiftrange': [0.01, 6.0],
     'redshiftstep': 0.0001,
     'redshiftsampling': 'log',
     'method': 'linemodel',
+    'template_dir': 'templates/BC03_sdss_tremonti21',
+    'linecatalog': 'linecatalogs/linecatalogamazedvacuum_D2_noHepsilon_noAbsHt3700A.txt',
     'templateCategoryList': ['emission', 'galaxy', 'star', 'qso'],
     'templateCatalog': {
         'continuumRemoval': {
@@ -53,9 +55,9 @@ default_parameters = {
             'haprior': -1,
             'rigidity': 'tplshape',
             'rules': 'all',
-            'tplratio_catalog': ('linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v6_emission'),
-            'tplratio_ismfit': 'yes',
-            'offsets_catalog': ('linecatalogs_offsets/offsetsCatalogs_20170410_m150'),
+            'tplratio_catalog': 'linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v6_emission',
+            'tplratio_ismfit': 'no',
+            'offsets_catalog': 'linecatalogs_offsets/offsetsCatalogs_20170410_m150',
             'continuumcomponent': 'tplfit',
             'continuumreestimation': 'no',
             'continuumfit': {
@@ -68,11 +70,11 @@ default_parameters = {
                     'betaTE': 1,
                     'betaZ': 1,
                     'catalog_dirpath': ''
-                },
+                }
             },
             'skipsecondpass': 'no',
             'extremacount': 5,
-            'extremacutprobathreshold': 30,
+            'extremacutprobathreshold': -1,
             'pdf': {
                 'margampcorr': 'no',
                 'bestzoption': 'maxintproba'
@@ -81,10 +83,10 @@ default_parameters = {
                 'fittingmethod': 'individual',
                 'largegridstep': 0.001,
                 'tplratio_ismfit': 'no',
-                'multiplecontinuumfit_disable': 'yes',
+                'multiplecontinuumfit_disable': 'yes'
             },
             'secondpass': {
-                'continuumfit': 'retryall',
+                'continuumfit': 'retryall'
             },
             'secondpasslcfittingmethod': -1,
             'manvelocityfitdzmin': -0.0006,
@@ -92,37 +94,54 @@ default_parameters = {
             'manvelocityfitdzstep': 0.0001,
             'stronglinesprior': -1,
             'euclidnhaemittersStrength': -1,
-            "tplratio": {
-                "priors": {
-                    "betaA": 1,
-                    "betaTE": 1,
-                    "betaZ": 1,
-                    "catalog_dirpath": ""
-                },
+            'tplratio': {
+                'priors': {
+                    'betaA': 1,
+                    'betaTE': 1,
+                    'betaZ': 1,
+                    'catalog_dirpath': ''
+                }
             },
             'nsigmasupport': 8,
             'saveintermediateresults': 'no'
-        },
+        }
     },
-    'enablestellarsolve': 'no',
+    'enablestellarsolve': 'yes',
     'enableqsosolve': 'no',
     'calibrationDir': '',
     'SaveIntermediateResults': 'default',
     'linemeascatalog': '',
     'autocorrectinput': 'no',
-    "qsosolve": {
-        "overlapThreshold": "1",
-        "qsosolve": {
-            "spectrum": {
-                "component": "raw"
+    'qsosolve': {
+        'overlapThreshold': 1,
+        'qsosolve': {
+            'spectrum': {
+                'component': 'raw'
             },
-            "interpolation": "precomputedfinegrid",
-            "extinction": "yes",
-            "dustfit": "no"
+            'interpolation': 'precomputedfinegrid',
+            'extinction': 'yes',
+            'dustfit': 'no'
         },
-        "chisquare2solve": {
-            "pdfcombination": "marg",
-            "saveintermediateresults": "no"
-        },
+        'chisquare2solve': {
+            'pdfcombination': 'marg',
+            'saveintermediateresults': 'no'
+        }
     },
+    'stellarsolve': {
+        'overlapThreshold': 1,
+        'starsolve': {
+            'spectrum': {
+                'component': 'nocontinuum'
+            },
+            'interpolation': 'precomputedfinegrid',
+            'extinction': 'no',
+            'dustfit': 'yes'
+        },
+        'chisquare2solve': {
+            'pdfcombination': 'bestchi2',
+            'saveintermediateresults': 'no'
+        }
+    }
+
 }
+

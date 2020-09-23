@@ -68,14 +68,6 @@ def define_specific_program_options():
                         ' stored. Relative to workdir.')
     parser.add_argument('--parameters_file', metavar='FILE',
                         help='Parameters file. Relative to workdir.')
-    parser.add_argument('--template_dir', metavar='DIR', action=AbspathAction,
-                        help='Specify directory in which input templates files'
-                        'are stored.')
-    parser.add_argument('--linecatalog', metavar='FILE', action=AbspathAction,
-                        help='Path to the rest lines catalog file.')
-    parser.add_argument('--zclassifier_dir', metavar='DIR', action=AbspathAction,
-                        help='Specify directory in which zClassifier files are'
-                        ' stored.')
     parser.add_argument('--process_method',
                         help='Process method to use. Whether DUMMY or AMAZED.')
     parser.add_argument('--output_dir', metavar='DIR', action=AbspathAction,
@@ -84,9 +76,6 @@ def define_specific_program_options():
     parser.add_argument('--linemeas_parameters_file', metavar='FILE',
                         help='Parameters file used for line flux measurement. '
                         'Relative to workdir.')
-    parser.add_argument('--linemeas_linecatalog', metavar='FILE', action=AbspathAction,
-                        help='Path to the rest lines catalog file used for '
-                        'line measurement.')
     parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
                         help='Whether to do line flux measurements.'
                         '"on" to do redshift and line flux calculations, '
@@ -147,7 +136,7 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
         raise Exception("Unhandled save_results {}".format(save_results))
 
 
-def _setup_pass(calibration_dir, default_parameters_file, parameters_file, line_catalog_file):
+def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
 
     # setup parameter store
     param = CParameterStore()
@@ -177,6 +166,7 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file, line_
 
     # load line catalog
     line_catalog = CRayCatalog()
+    line_catalog_file = normpath(os.path.join(calibration_dir, _params["linecatalog"]))
     if not os.path.exists(line_catalog_file):
         raise FileNotFoundError(f"Line catalog file not found: "
                                 f"{line_catalog_file}")
@@ -210,8 +200,7 @@ def amazed(config):
 
     param, line_catalog = _setup_pass(normpath(config.calibration_dir),
                                       normpath(config.default_parameters_file),
-                                      parameters_file,
-                                      normpath(config.linecatalog))
+                                      parameters_file)
     medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
                                            'method', 'IrregularSamplingMedian')
     opt_medianKernelWidth = param.Get_Float64('templateCatalog.'
@@ -232,17 +221,9 @@ def amazed(config):
 
     linemeas_param, linemeas_line_catalog = _setup_pass(normpath(config.calibration_dir),
                                                         normpath(config.default_linemeas_parameters_file),
-                                                        linemeas_parameters_file,
-                                                        normpath(config.linemeas_linecatalog))
+                                                        linemeas_parameters_file)
 
     classif = CClassifierStore()
-
-    if config.zclassifier_dir:
-        zclassifier_dir = normpath(config.zclassifier_dir)
-        if not os.path.exists(zclassifier_dir):
-            raise FileNotFoundError(f"zclassifier directory does not exist: "
-                                    f"{zclassifier_dir}")
-        classif.Load(zclassifier_dir)
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
@@ -250,10 +231,11 @@ def amazed(config):
     template_catalog = CTemplateCatalog(medianRemovalMethod,
                                         opt_medianKernelWidth,
                                         opt_nscales, dfBinPath)
-    logger.log(logging.INFO, "Loading %s" % config.template_dir)
+    template_catalog_path = normpath(os.path.join(config.calibration_dir, param.Get_String('template_dir')))
+    logger.log(logging.INFO, "Loading %s" % template_catalog_path)
 
     try:
-        template_catalog.Load(normpath(config.template_dir))
+        template_catalog.Load(template_catalog_path)
     except Exception as e:
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise

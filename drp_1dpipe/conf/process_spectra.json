@@ -1,8 +1,4 @@
 {
     "calibration_dir": "$WORKDIR/calibration",
-    "template_dir": "$WORKDIR/calibration/templates/BC03_sdss_tremonti21",
-    "linecatalog": "$WORKDIR/calibration/linecatalogs/linecatalogamazedvacuum_D2_noHepsilon_noAbsHt3700A.txt",
-    "linemeas_linecatalog": "$WORKDIR/calibration/linecatalogs/linecatalogamazedvacuum_D3_noHepsilon-linemeas.txt",
-    "zclassifier_dir": "$WORKDIR/calibration/reliability/zclassifier_C6A3iS1nD9cS1nS1_20180404",
     "process_method": "amazed"
 }
