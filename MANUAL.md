@@ -152,6 +152,17 @@ _**`linemodelsolve.linemodel`**_ : Parameters for linemodel method
 | `  .firstpass.tplratio_ismfit` |{`yes`,`no`} | `no` | overwrite the `tplratio_ismfit` parameter|
 | `  .stronglinesprior` |`float` |`-1` | strongline prior<br>&bull; `-1`: no prior<br>&bull; otherwise, use this value (positive below 1) as a low probability when no strong line is measured (the measured amplitude is s>0) & probability is set to 1 when a strong line is observed|
 
+## Adding custom templates catalog
+
+1) When adding a new catalog of templates, two directories must be created: calibration/templates/<template_catalog_name>/<object_type> with object_type in {galaxy,star,qso}. Copy the templates in this directory
+
+2) The format is TSV (tab separated values) with '#'  for line comments and no headers
+
+3) The unit of flux is any multiple of erg.s-1.cm-2.angstrom-1
+
+4) Wavelength coverage : assuming input spectrum wavelength coverage as [lambda_min,lambda_max], template wavelength coverage must be at least [lambda_min/(1+1E-3) , lambda_max/(1-1E-3)]
+
+5) Template spectral resolution should be compliant with PFS resolution
 
 ## Outputs
 
