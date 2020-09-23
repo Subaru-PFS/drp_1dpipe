@@ -30,7 +30,7 @@ def write_candidates(output_dir,
 
         # create LAMBDA_SCALE HDU
         lambda_scale = np.array(lambda_ranges, dtype=[('WAVELENGTH', 'f4')])
-        hdul.append(fits.BinTableHDU(name='MODELWL', data=lambda_scale))
+       
 
         # create ZCANDIDATES HDU
         zcandidates = np.ndarray((len(candidates),),
@@ -53,7 +53,7 @@ def write_candidates(output_dir,
             model = np.multiply(np.array(lambda_ranges)**2, np.array(model)) * (1/2.99792458) * 10**14
             zcandidates[i]['MODELFLUX'] = model
         hdul.append(fits.BinTableHDU(name='ZCANDIDATES', data=zcandidates))
-
+ 	hdul.append(fits.BinTableHDU(name='MODELWL', data=lambda_scale))
 
         # create ZPDF HDU
         zpdf_hdu = np.ndarray(len(zpdf), buffer=zpdf,
