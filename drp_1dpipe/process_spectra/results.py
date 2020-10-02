@@ -5,7 +5,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from drp_1dpipe.io.writer import write_candidates
+from drp_1dpipe.io.writer import write_candidates, write_dummy
 from drp_1dpipe.core.utils import TemporaryFilesSet
 
 from pfs.datamodel.drp import PfsObject
@@ -128,7 +128,7 @@ class SpectrumResults:
     """A class for mapping spectrum results
     """
 
-    def __init__(self, spectrum_path=None, output_dir=None, output_lines_dir=None, stellar="on"):
+    def __init__(self, spectrum_path=None, output_dir=None, output_lines_dir=None, stellar="on", dummy=False):
         """Constructor for SpectrumResults
 
         Parameters
@@ -149,22 +149,24 @@ class SpectrumResults:
             * Spectrum file not found
             * output directory line not found
         """
-        if output_dir is None:
-            raise FileNotFoundError("Output directory is None : {}")
-        if not os.path.exists(output_dir):
-            raise FileNotFoundError("No output directory detected for : {}".format(os.path.basename(output_dir)))
-        self.output_dir = output_dir
+        self.dummy = dummy
 
         if spectrum_path is not None:
             if not os.path.exists(spectrum_path):
                 raise FileNotFoundError("No spectrum file detected for : {}".format(os.path.basename(self.output_dir)))
         self.spectrum_path = spectrum_path
 
-        if output_lines_dir is not None:
-            if not os.path.exists(output_lines_dir):
-                raise FileNotFoundError("No output lines directory detected for : {}".format(os.path.basename(self.output_dir)))
-        self.output_lines_dir = output_lines_dir
-        self.stellar = stellar
+        if not dummy:
+            if output_dir is None:
+                raise FileNotFoundError("Output directory is None : {}")
+            if not os.path.exists(output_dir):
+                raise FileNotFoundError("No output directory detected for : {}".format(os.path.basename(output_dir)))
+            self.output_dir = output_dir
+            if output_lines_dir is not None:
+                if not os.path.exists(output_lines_dir):
+                    raise FileNotFoundError("No output lines directory detected for : {}".format(os.path.basename(self.output_dir)))
+            self.output_lines_dir = output_lines_dir
+            self.stellar = stellar
 
     def _read_candidates(self):
         """Method used to read candidate file produced by amazed
@@ -352,34 +354,39 @@ class SpectrumResults:
         `str`
             Name of product file
         """
-        self.load()
-        if self.classification.type == 'G' and self.stellar.strip().lower() != 'only':
-            object_class = 'GALAXY'
-            lambda_scale = self.lambda_ranges
-            mask = self.mask
-            candidates = self.candidates
-            models = self.models
-            zpdf = self.zpdf
-            linemeas = (self.linemeas if self.output_lines_dir else None)
-        elif self.classification.type == 'S' or self.stellar.strip().lower() == 'only':
-            object_class = 'STAR'
-            lambda_scale = None
-            mask = None
-            candidates = self.star_candidate
-            models = None
-            zpdf = None
-            linemeas = None
-        catId, tract, patch, objId, nvisit, pfsVisitHash = self._parse_pfsObject_name(os.path.basename(self.spectrum_path))
-        filename = write_candidates(path,
-                            catId, tract, patch, objId, nvisit, pfsVisitHash,
-                            lambda_scale,
-                            mask,
-                            candidates,
-                            models,
-                            zpdf,
-                            linemeas,
-                            object_class)
-        return filename
+        if not self.dummy:
+            self.load()
+            if self.classification.type == 'G' and self.stellar.strip().lower() != 'only':
+                object_class = 'GALAXY'
+                lambda_scale = self.lambda_ranges
+                mask = self.mask
+                candidates = self.candidates
+                models = self.models
+                zpdf = self.zpdf
+                linemeas = (self.linemeas if self.output_lines_dir else None)
+            elif self.classification.type == 'S' or self.stellar.strip().lower() == 'only':
+                object_class = 'STAR'
+                lambda_scale = None
+                mask = None
+                candidates = self.star_candidate
+                models = None
+                zpdf = None
+                linemeas = None
+            catId, tract, patch, objId, nvisit, pfsVisitHash = self._parse_pfsObject_name(os.path.basename(self.spectrum_path))
+            filename = write_candidates(path,
+                                        catId, tract, patch, objId, nvisit, pfsVisitHash,
+                                        lambda_scale,
+                                        mask,
+                                        candidates,
+                                        models,
+                                        zpdf,
+                                        linemeas,
+                                        object_class)
+            return filename
+        else:
+            catId, tract, patch, objId, nvisit, pfsVisitHash = self._parse_pfsObject_name(
+                os.path.basename(self.spectrum_path))
+            filename = write_dummy(path, catId, tract, patch, objId, nvisit, pfsVisitHash)
 
     @staticmethod
     def _parse_pfsObject_name(name):
