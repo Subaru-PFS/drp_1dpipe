@@ -17,7 +17,8 @@ def write_candidates(output_dir,
               fits.Card('catId', catId, 'Source of the objId'),
               fits.Card('objId', objId, 'Unique ID for object'),
               fits.Card('nvisit', nVisit, 'Number of visit'),
-              fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits')]
+              fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits'),
+              fits.Card('ZWARNING',0,'Quality flag')]
 
     hdr = fits.Header(header)
     primary = fits.PrimaryHDU(header=hdr)
