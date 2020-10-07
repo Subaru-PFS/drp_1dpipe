@@ -86,7 +86,7 @@ def main_method(config):
             amazed_results.read()
             galaxy_summary_list.extend(amazed_results.summary)
         except FileNotFoundError:
-            raise FileNotFoundError("Redshift summary file not found in {}".format(bunch))
+            logger.warning("Redshift summary file not found in {}".format(bunch))
 
         try:
             amazed_results = StellarSummary(output_dir=bunch)

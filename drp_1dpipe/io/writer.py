@@ -118,3 +118,25 @@ def write_candidates(output_dir,
                                overwrite=True)
     
     return path
+
+
+def write_dummy(output_dir,catId, tract, patch, objId, nVisit, pfsVisitHash):
+    """Create a pfsZcandidates FITS file from an amazed output directory."""
+
+    path = "pfsZcandidates-%05d-%05d-%s-%016x-%03d-0x%016x.fits" % (
+        catId, tract, patch, objId, nVisit % 1000, pfsVisitHash)
+
+    header = [fits.Card('tract', tract, 'Area of the sky'),
+              fits.Card('patch', patch, 'Region within tract'),
+              fits.Card('catId', catId, 'Source of the objId'),
+              fits.Card('objId', objId, 'Unique ID for object'),
+              fits.Card('nvisit', nVisit, 'Number of visit'),
+              fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits'),
+              fits.Card('ZWARNING', 1, 'Quality flag')]
+
+    hdr = fits.Header(header)
+    primary = fits.PrimaryHDU(header=hdr)
+    hdul = [primary]
+    fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
+                               overwrite=True)
+    return path

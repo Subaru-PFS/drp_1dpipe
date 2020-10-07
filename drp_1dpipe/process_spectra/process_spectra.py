@@ -15,7 +15,7 @@ from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config
 from drp_1dpipe.process_spectra.config import config_defaults
 
 from drp_1dpipe.core.utils import init_environ, normpath, TemporaryFilesSet
-from drp_1dpipe.io.reader import read_spectrum
+from drp_1dpipe.io.reader import read_spectrum, get_nb_valid_points
 from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
                                   CParameterStore, CClassifierStore,
@@ -98,12 +98,16 @@ def _output_path(args, *path):
 
 def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
                       line_catalog, param, classif, save_results):
+    nb_valid_points = get_nb_valid_points(spectrum_path)
+    if nb_valid_points < 3000:
+        logger.log(logging.WARNING, "Invalid spectrum, only " + str(nb_valid_points) + " valid points, not processed")
+        return False
     try:
         spectrum = read_spectrum(spectrum_path)
     except Exception as e:
         traceback.print_exc()
         logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
-        return
+        return False
 
     # proc_id = os.path.join(spectrum.GetName(), str(index))
     proc_id, ext = os.path.splitext(spectrum.GetName())
@@ -135,6 +139,7 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
     else:
         raise Exception("Unhandled save_results {}".format(save_results))
 
+    return True
 
 def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
 
@@ -255,21 +260,22 @@ def amazed(config):
     for i, spectrum_path in enumerate(spectra_list):
         spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path)
         proc_id, ext = os.path.splitext(spectrum_path)
-        spc_out_dir = os.path.join(outdir, proc_id )    
-
+        spc_out_dir = os.path.join(outdir, proc_id )
+        processed = False
         if config.lineflux != 'only':
             # first step : compute redshift
             to_process = True
+
             if os.path.exists(spc_out_dir):
                 if config.continue_:
                     to_process = False
                 else:
                     shutil.rmtree(spc_out_dir)
             if to_process:
-                _process_spectrum(outdir, i, spectrum, template_catalog,
+                processed = _process_spectrum(outdir, i, spectrum, template_catalog,
                                  line_catalog, param, classif, 'all')
 
-        if config.lineflux in ['only', 'on']:
+        if config.lineflux in ['only', 'on'] and processed:
             # second step : compute line fluxes
             to_process_lin = True
             spc_out_lin_dir = os.path.join(outdir_linemeas, proc_id)
@@ -281,12 +287,14 @@ def amazed(config):
             if to_process_lin:
                 linemeas_param.Set_String('linemeascatalog',
                                         os.path.join(outdir, 'redshift.csv'))
-                _process_spectrum(outdir_linemeas, i, spectrum,
-                                template_catalog,
-                                linemeas_line_catalog, linemeas_param,
-                                classif, 'linemeas')
-            
-        result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir, stellar=config.stellar)
+                processed = _process_spectrum(outdir_linemeas, i, spectrum,
+                                              template_catalog,
+                                              linemeas_line_catalog, linemeas_param,
+                                              classif, 'linemeas')
+        if processed:
+            result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir, stellar=config.stellar)
+        else:
+            result = SpectrumResults(spectrum, dummy=True)
         products.append(result.write(data_dir))
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:

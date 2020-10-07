@@ -30,3 +30,17 @@ def read_spectrum(path):
     spectrum = CSpectrum(spectralaxis, signal)
     spectrum.SetName(os.path.basename(path))
     return spectrum
+
+
+def get_nb_valid_points(path):
+    """
+    Read a pfsObject FITS file and tells if it is valid
+
+    :param path: FITS file name
+    :rtype: CSpectrum
+    """
+
+    obj = PfsObject.readFits(path)
+    mask = obj.mask
+    valid = np.where(mask == 0, True, False)
+    return np.sum(valid)
