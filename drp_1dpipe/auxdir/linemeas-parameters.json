@@ -17,7 +17,7 @@
         "star",
         "qso"
     ],
-    "linecatalog": "linecatalogs/linecatalogamazedvacuum_D3_noHepsilon-linemeas.txt",
+    "linecatalog": "linecatalogs/linecatalogamazedvacuum_F2_noHepsilon-linemeas.txt",
     "templateCatalog": {
         "continuumRemoval": {
             "method": "zero",
