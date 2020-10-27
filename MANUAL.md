@@ -164,3 +164,4 @@ The header contains a quality flag, ZWARNING, with only one digit :
 | **Bit name** | **Binary digit** | **Description** |
 | - | - | - | - |
 |LITTLE_COVERAGE|0|too little wavelength coverage (less than 3000 valid points)|
+|LINE_MEAS_DEACTIVATED|1|Line measurement disabled, line measurement hdu empty|

@@ -7,6 +7,11 @@ def write_candidates(output_dir,
                      lambda_ranges, mask, candidates, models, zpdf, linemeas, object_class):
     """Create a pfsZcandidates FITS file from an amazed output directory."""
 
+    if linemeas is not None :
+        quality_flag = 0
+    else:
+        quality_flag = 2
+    
     path = "pfsZcandidates-%05d-%05d-%s-%016x-%03d-0x%016x.fits" % (
         catId, tract, patch, objId, nVisit % 1000, pfsVisitHash)
 
@@ -18,7 +23,7 @@ def write_candidates(output_dir,
               fits.Card('objId', objId, 'Unique ID for object'),
               fits.Card('nvisit', nVisit, 'Number of visit'),
               fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits'),
-              fits.Card('ZWARNING',0,'Quality flag')]
+              fits.Card('ZWARNING',quality_flag,'Quality flag')]
 
     hdr = fits.Header(header)
     primary = fits.PrimaryHDU(header=hdr)
@@ -94,6 +99,22 @@ def write_candidates(output_dir,
                 zlines[i]['LINECONTLEVEL'] = np.nan  # TODO: what is that
                 zlines[i]['LINECONTLEVEL_ERR'] = np.nan  # TODO: what is that
             hdul.append(fits.BinTableHDU(name='ZLINES', data=zlines))
+        else:
+            hdul.append(fits.BinTableHDU(name='ZLINES',data=np.ndarray((0,),
+                                                                       dtype=[('LINENAME', 'S15'),
+                                                                              ('LINEWAVE', 'f8'),
+                                                                              ('LINEZ', 'f8'),
+                                                                              ('LINEZ_ERR', 'f8'),
+                                                                              ('LINESIGMA', 'f8'),
+                                                                              ('LINESIGMA_ERR', 'f8'),
+                                                                              ('LINEVEL', 'f8'),
+                                                                              ('LINEVEL_ERR', 'f8'),
+                                                                              ('LINEFLUX', 'f8'),
+                                                                              ('LINEFLUX_ERR', 'f8'),
+                                                                              ('LINEEW', 'f8'),
+                                                                              ('LINEEW_ERR', 'f8'),
+                                                                              ('LINECONTLEVEL', 'f8'),
+                                                                              ('LINECONTLEVEL_ERR', 'f8')])))
 
     elif object_class == 'STAR':
 

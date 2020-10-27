@@ -98,16 +98,13 @@ def _output_path(args, *path):
 
 def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
                       line_catalog, param, classif, save_results):
-    nb_valid_points = get_nb_valid_points(spectrum_path)
-    if nb_valid_points < 3000:
-        logger.log(logging.WARNING, "Invalid spectrum, only " + str(nb_valid_points) + " valid points, not processed")
-        return False
+
     try:
         spectrum = read_spectrum(spectrum_path)
     except Exception as e:
         traceback.print_exc()
         logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
-        return False
+        raise
 
     # proc_id = os.path.join(spectrum.GetName(), str(index))
     proc_id, ext = os.path.splitext(spectrum.GetName())
@@ -122,12 +119,14 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
                  classif)
     except Exception as e:
         logger.log(logging.ERROR, "Can't init process flow : {}".format(e))
+        raise
 
     pflow = CProcessFlow()
     try:
         pflow.Process(ctx)
     except Exception as e:
         logger.log(logging.ERROR, "Can't process : {}".format(e))
+        raise
 
     if save_results == 'all':
         ctx.GetDataStore().SaveRedshiftResult(output_dir)
@@ -139,7 +138,6 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
     else:
         raise Exception("Unhandled save_results {}".format(save_results))
 
-    return True
 
 def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
 
@@ -153,6 +151,7 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
     except Exception as e:
         logger.log(logging.ERROR,
                    f'unable to read default parameter file : {e}')
+        raise
     if parameters_file:
         try:
             # override default parameters with those found in parameters_file
@@ -161,6 +160,7 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
         except Exception as e:
             logger.log(logging.INFO,
                        f'unable to read parameter file : {e}, using defaults')
+            raise
     param.FromString(json.dumps(_params))
 
     # setup calibration dir
@@ -259,10 +259,17 @@ def amazed(config):
     products = []
     for i, spectrum_path in enumerate(spectra_list):
         spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path)
+        nb_valid_points = get_nb_valid_points(spectrum)
+        if nb_valid_points < 3000:
+            logger.log(logging.WARNING,
+                       "Invalid spectrum, only " + str(nb_valid_points) + " valid points, not processed")
+            to_process = False
+        else:
+            to_process = True
         proc_id, ext = os.path.splitext(spectrum_path)
         spc_out_dir = os.path.join(outdir, proc_id )
         processed = False
-        if config.lineflux != 'only':
+        if config.lineflux != 'only' and to_process:
             # first step : compute redshift
             to_process = True
 
@@ -272,25 +279,36 @@ def amazed(config):
                 else:
                     shutil.rmtree(spc_out_dir)
             if to_process:
-                processed = _process_spectrum(outdir, i, spectrum, template_catalog,
+                try:
+                    _process_spectrum(outdir, i, spectrum, template_catalog,
                                  line_catalog, param, classif, 'all')
-
+                    processed = True
+                except Exception as e:
+                    logger.log("Could not process spectrum {}".format())
+#        linemeas_processed = False
         if config.lineflux in ['only', 'on'] and processed:
             # second step : compute line fluxes
-            to_process_lin = True
-            spc_out_lin_dir = os.path.join(outdir_linemeas, proc_id)
-            if os.path.exists(spc_out_lin_dir):
-                if config.continue_:
-                    to_process_lin = False
-                else:
-                    shutil.rmtree(spc_out_lin_dir)
-            if to_process_lin:
-                linemeas_param.Set_String('linemeascatalog',
+            try:
+                to_process_lin = True
+                spc_out_lin_dir = os.path.join(outdir_linemeas, proc_id)
+                if os.path.exists(spc_out_lin_dir):
+                    if config.continue_:
+                        to_process_lin = False
+                    else:
+                        shutil.rmtree(spc_out_lin_dir)
+                if to_process_lin:
+                    linemeas_param.Set_String('linemeascatalog',
                                         os.path.join(outdir, 'redshift.csv'))
-                processed = _process_spectrum(outdir_linemeas, i, spectrum,
+                    _process_spectrum(outdir_linemeas, i, spectrum,
                                               template_catalog,
                                               linemeas_line_catalog, linemeas_param,
                                               classif, 'linemeas')
+#                    linemeas_processed = True
+            except Exception as e:
+                logger.log(logging.CRITICAL, "Can't process linemeas : {}".format(e))
+                spc_out_lin_dir = None
+        else:
+            spc_out_lin_dir = None
         if processed:
             result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir, stellar=config.stellar)
         else:
