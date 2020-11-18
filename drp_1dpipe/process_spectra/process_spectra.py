@@ -103,8 +103,7 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
         spectrum = read_spectrum(spectrum_path)
     except Exception as e:
         traceback.print_exc()
-        logger.log(logging.ERROR, "Can't load spectrum : {}".format(e))
-        raise
+        raise Exception("Spectrum loading error: {}".format(e))
 
     # proc_id = os.path.join(spectrum.GetName(), str(index))
     proc_id, ext = os.path.splitext(spectrum.GetName())
@@ -118,23 +117,27 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
                  param,
                  classif)
     except Exception as e:
-        logger.log(logging.ERROR, "Can't init process flow : {}".format(e))
-        raise
+        raise Exception("ProcessFlow init error : {}".format(e))
 
     pflow = CProcessFlow()
     try:
         pflow.Process(ctx)
     except Exception as e:
-        logger.log(logging.ERROR, "Can't process : {}".format(e))
-        raise
+        raise Exception("Processing error : {}".format(e))
 
     if save_results == 'all':
-        ctx.GetDataStore().SaveRedshiftResult(output_dir)
-        ctx.GetDataStore().SaveStellarResult(output_dir)
-        ctx.GetDataStore().SaveQsoResult(output_dir)
-        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'all')
+        try:
+            ctx.GetDataStore().SaveRedshiftResult(output_dir)
+            ctx.GetDataStore().SaveStellarResult(output_dir)
+            ctx.GetDataStore().SaveQsoResult(output_dir)
+            ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'all')
+        except Exception as e:
+            raise Exception("Saving error : {}".format(e))
     elif save_results == 'linemeas':
-        ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'linemeas')
+        try:
+            ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'linemeas')
+        except Exception as e:
+            raise Exception("Saving linemeas error : {}".format(e))
     else:
         raise Exception("Unhandled save_results {}".format(save_results))
 
@@ -284,8 +287,7 @@ def amazed(config):
                                  line_catalog, param, classif, 'all')
                     processed = True
                 except Exception as e:
-                    logger.log("Could not process spectrum {}".format())
-#        linemeas_processed = False
+                    logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
         if config.lineflux in ['only', 'on'] and processed:
             # second step : compute line fluxes
             try:
@@ -303,9 +305,8 @@ def amazed(config):
                                               template_catalog,
                                               linemeas_line_catalog, linemeas_param,
                                               classif, 'linemeas')
-#                    linemeas_processed = True
             except Exception as e:
-                logger.log(logging.CRITICAL, "Can't process linemeas : {}".format(e))
+                logger.log(logging.CRITICAL, "Could not process linemeas: {}".format(e))
                 spc_out_lin_dir = None
         else:
             spc_out_lin_dir = None
