@@ -260,11 +260,6 @@ def main_method(config):
         else:
             notifier.update('merge_results', 'SUCCESS')
 
-        aux_data_list = list_aux_data(json_bunch_list, config.output_dir)
-        for aux_dir in aux_data_list:
-            tmpcontext.add_dirs(aux_dir)
-
-
     return 0
 
 

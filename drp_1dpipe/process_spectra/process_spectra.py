@@ -6,9 +6,9 @@ import argparse
 import shutil
 import traceback
 
+from pylibamazed.ResultStoreOutput import ResultStoreOutput
 
 from drp_1dpipe import VERSION
-from drp_1dpipe.core.config import ConfigJson
 from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
@@ -16,12 +16,12 @@ from drp_1dpipe.process_spectra.config import config_defaults
 
 from drp_1dpipe.core.utils import init_environ, normpath, TemporaryFilesSet
 from drp_1dpipe.io.reader import read_spectrum, get_nb_valid_points
+from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
                                   CParameterStore, CClassifierStore,
                                   CLogFileHandler, CRayCatalog,
                                   CTemplateCatalog, get_version)
-from drp_1dpipe.process_spectra.results import SpectrumResults
 import collections.abc
 
 
@@ -97,7 +97,7 @@ def _output_path(args, *path):
 
 
 def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
-                      line_catalog, param, classif, save_results):
+                      line_catalog, param, classif, save_results,param_dict):
 
     try:
         spectrum = read_spectrum(spectrum_path)
@@ -125,21 +125,14 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
     except Exception as e:
         raise Exception("Processing error : {}".format(e))
 
-    if save_results == 'all':
-        try:
-            ctx.GetDataStore().SaveRedshiftResult(output_dir)
-            ctx.GetDataStore().SaveStellarResult(output_dir)
-            ctx.GetDataStore().SaveQsoResult(output_dir)
-            ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'all')
-        except Exception as e:
-            raise Exception("Saving error : {}".format(e))
-    elif save_results == 'linemeas':
-        try:
-            ctx.GetDataStore().SaveAllResults(os.path.join(output_dir, proc_id), 'linemeas')
-        except Exception as e:
-            raise Exception("Saving linemeas error : {}".format(e))
-    else:
-        raise Exception("Unhandled save_results {}".format(save_results))
+    try:
+        output = ResultStoreOutput(None, ctx.GetResultStore(), param_dict)
+        rc = RedshiftCandidates(output, spectrum_path)
+        rc.write_fits(output_dir)
+    except Exception as e:
+        raise Exception("Failed to write fits result for spectrum "
+                      "{} : {}".format(proc_id, e))
+#        traceback.print_exc()
 
 
 def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
@@ -182,7 +175,7 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
     line_catalog.Load(line_catalog_file)
     line_catalog.ConvertVacuumToAir()
 
-    return param, line_catalog
+    return param, line_catalog, _params
 
 
 def amazed(config):
@@ -206,9 +199,9 @@ def amazed(config):
     if config.parameters_file:
         parameters_file = normpath(config.parameters_file)
 
-    param, line_catalog = _setup_pass(normpath(config.calibration_dir),
-                                      normpath(config.default_parameters_file),
-                                      parameters_file)
+    param, line_catalog, param_dict = _setup_pass(normpath(config.calibration_dir),
+                                                  normpath(config.default_parameters_file),
+                                                  parameters_file)
     medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
                                            'method', 'IrregularSamplingMedian')
     opt_medianKernelWidth = param.Get_Float64('templateCatalog.'
@@ -227,9 +220,9 @@ def amazed(config):
     if config.linemeas_parameters_file:
         linemeas_parameters_file = normpath(config.linemeas_parameters_file)
 
-    linemeas_param, linemeas_line_catalog = _setup_pass(normpath(config.calibration_dir),
-                                                        normpath(config.default_linemeas_parameters_file),
-                                                        linemeas_parameters_file)
+    linemeas_param, linemeas_line_catalog, linemeas_params_dict = _setup_pass(normpath(config.calibration_dir),
+                                                                 normpath(config.default_linemeas_parameters_file),
+                                                                 linemeas_parameters_file)
 
     classif = CClassifierStore()
 
@@ -284,7 +277,7 @@ def amazed(config):
             if to_process:
                 try:
                     _process_spectrum(outdir, i, spectrum, template_catalog,
-                                 line_catalog, param, classif, 'all')
+                                      line_catalog, param, classif, 'all',param_dict)
                     processed = True
                 except Exception as e:
                     logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
@@ -304,17 +297,13 @@ def amazed(config):
                     _process_spectrum(outdir_linemeas, i, spectrum,
                                               template_catalog,
                                               linemeas_line_catalog, linemeas_param,
-                                              classif, 'linemeas')
+                                              classif, 'linemeas',param_dict)
             except Exception as e:
                 logger.log(logging.CRITICAL, "Could not process linemeas: {}".format(e))
                 spc_out_lin_dir = None
         else:
             spc_out_lin_dir = None
-        if processed:
-            result = SpectrumResults(spectrum, spc_out_dir, output_lines_dir=spc_out_lin_dir, stellar=config.stellar)
-        else:
-            result = SpectrumResults(spectrum, dummy=True)
-        products.append(result.write(data_dir))
+#        products.append(result.write(data_dir))
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
 
