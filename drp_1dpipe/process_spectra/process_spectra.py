@@ -276,7 +276,7 @@ def amazed(config):
                     shutil.rmtree(spc_out_dir)
             if to_process:
                 try:
-                    _process_spectrum(outdir, i, spectrum, template_catalog,
+                    _process_spectrum(data_dir, i, spectrum, template_catalog,
                                       line_catalog, param, classif, 'all',param_dict)
                     processed = True
                 except Exception as e:

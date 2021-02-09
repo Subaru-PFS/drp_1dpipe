@@ -66,7 +66,7 @@ def main_method(config):
     for bunch in bunch_list:
         if not os.path.exists(bunch):
             raise FileNotFoundError("Bunch directory not found : {}".format(bunch))
-        bunch_data_dir = bunch
+        bunch_data_dir = os.path.join(bunch,"data")
         if not os.path.exists(bunch_data_dir):
             raise FileNotFoundError("Bunch data directory not found : {}".format(bunch_data_dir))
         to_merge = os.listdir(bunch_data_dir)
