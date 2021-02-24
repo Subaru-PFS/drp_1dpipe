@@ -1,9 +1,6 @@
-import types
 import os
 import numpy as np
-from astropy.io.fits import BinTableHDU, Column
 from pylibamazed.redshift import get_version
-from pylibamazed.ResultStoreOutput import ResultStoreOutput
 from drp_1dpipe import VERSION
 from astropy.io import fits
 from pfs.datamodel.drp import PfsObject
@@ -28,17 +25,16 @@ class RedshiftCandidates:
         self.galaxy_candidates_to_fits(hdul)
         self.object_pdf_to_fits("galaxy", hdul)
         self.object_lines_to_fits("galaxy", hdul)
-        # print("write qso")
-        # self.qso_candidates_to_fits(hdul)
-        # self.object_pdf_to_fits("qso", hdul)
-        # self.object_lines_to_fits("qso", hdul)
+        self.qso_candidates_to_fits(hdul)
+        self.object_pdf_to_fits("qso", hdul)
+        self.object_lines_to_fits("qso", hdul)
         self.star_candidates_to_fits(hdul)
         self.object_pdf_to_fits("star", hdul)
 
         fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
                                    overwrite=True)
 
-    def header_to_fits(self,hdulist):
+    def header_to_fits(self, hdulist):
 
         catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
                 os.path.basename(self.spectrum_path))
@@ -68,6 +64,9 @@ class RedshiftCandidates:
                                     "Probability to be a QSO"),
                           fits.Card('P_STAR',self.drp1d_output.classification["StarProba"],
                                     "Probability to be a star")]
+        hdr = fits.Header(classification)
+        hdu = fits.BinTableHDU(header=hdr)
+        hdulist.append(hdu)
 
     def galaxy_candidates_to_fits(self, hdulist):
         nb_candidates = self.drp1d_output.nb_candidates["galaxy"]
@@ -100,8 +99,11 @@ class RedshiftCandidates:
 
         hdulist.append(fits.BinTableHDU(name='GALAXY_CANDIDATES', data=zcandidates))
 
-    def qso_candidates_to_fits(self,hdulist):
-        nb_candidates =   self.drp1d_output.nb_candidates["qso"]       
+    def qso_candidates_to_fits(self, hdulist):
+        if "qso" in self.drp1d_output.nb_candidates:
+            nb_candidates = self.drp1d_output.nb_candidates["qso"]
+        else:
+            nb_candidates = 0
         npix = len(self.lambda_ranges)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
@@ -157,15 +159,17 @@ class RedshiftCandidates:
         hdulist.append(fits.BinTableHDU(name='STAR_CANDIDATES', data=zcandidates))
 
     def object_pdf_to_fits(self, object_type, hdulist):
-        pdf = self.drp1d_output.pdf[object_type].to_records(index=False)
-        grid_size = self.drp1d_output.pdf[object_type].index.size
+        if object_type in self.drp1d_output.pdf:
+            pdf = self.drp1d_output.pdf[object_type].to_records(index=False)
+            grid_size = self.drp1d_output.pdf[object_type].index.size
+            zpdf_hdu = np.ndarray(grid_size, buffer=pdf,
+                                  dtype=[('ln PDF', 'f8'), ('REDSHIFT', 'f8')])
+        else:
+            zpdf_hdu = None
 
-        zpdf_hdu = np.ndarray(grid_size, buffer=pdf,
-                              dtype=[('ln PDF', 'f8'), ('REDSHIFT', 'f8')])
-        
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+'_PDF', data=zpdf_hdu))
 
-    def object_lines_to_fits(self,object_type,hdulist):
+    def object_lines_to_fits(self, object_type, hdulist):
         zlines = np.ndarray((0,),
                             dtype=[('LINENAME', 'S15'),
                                    ('LINEWAVE', 'f8'),
@@ -181,8 +185,7 @@ class RedshiftCandidates:
                                    ('LINEEW_ERR', 'f8'),
                                    ('LINECONTLEVEL', 'f8'),
                                    ('LINECONTLEVEL_ERR', 'f8')])
-        hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES",data=zlines))        
-        
+        hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES", data=zlines))
     
     @staticmethod
     def _parse_pfsObject_name(name):
