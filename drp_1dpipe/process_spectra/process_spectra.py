@@ -175,7 +175,47 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
     line_catalog.Load(line_catalog_file)
     line_catalog.ConvertVacuumToAir()
 
-    return param, line_catalog, _params
+    medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
+                                           'method', 'IrregularSamplingMedian')
+    opt_medianKernelWidth = param.Get_Float64('templateCatalog.'
+                                              'continuumRemoval.'
+                                              'medianKernelWidth')
+    opt_nscales = param.Get_Float64('templateCatalog.continuumRemoval.'
+                                    'decompScales',
+                                    8.0)
+    dfBinPath = param.Get_String('templateCatalog.continuumRemoval.binPath',
+                                 'absolute_path_to_df_binaries_here')
+    template_catalog = CTemplateCatalog(medianRemovalMethod,
+                                        opt_medianKernelWidth,
+                                        opt_nscales, dfBinPath)
+    template_catalog_path = normpath(os.path.join(calibration_dir, param.Get_String('template_dir')))
+    logger.log(logging.INFO, "Loading %s" % template_catalog_path)
+
+    try:
+        template_catalog.Load(template_catalog_path)
+    except Exception as e:
+        logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
+        raise
+    if _params["enablestellarsolve"] == "yes" or _params["enableqsosolve"] == "yes":
+        qs_config = {}
+        path_file = normpath(calibration_dir, "calibration-config.txt")
+        if not os.path.exists(path_file):
+            raise FileNotFoundError("Template file not found : {}".format(path_file))
+        else:
+            with open(path_file) as ff:
+                for line in ff:
+                    if not line.startswith('#'):
+                        k, v = line.strip().split("=")
+                        qs_config[k] = v
+        # Read Star template catalog
+        if _params["enablestellarsolve"] == "yes":
+            tdir = normpath(calibration_dir, qs_config["star-templates-dir"])
+            template_catalog.Load(tdir)
+        # Read QSO template catalog
+        if _params["enableqsosolve"] == "yes":
+            tdir = normpath(calibration_dir, qs_config["qso-templates-dir"])
+            template_catalog.Load(tdir)
+    return param,_params, line_catalog,template_catalog
 
 
 def amazed(config):
@@ -199,19 +239,10 @@ def amazed(config):
     if config.parameters_file:
         parameters_file = normpath(config.parameters_file)
 
-    param, line_catalog, param_dict = _setup_pass(normpath(config.calibration_dir),
+    param, param_dict, line_catalog, template_catalog = _setup_pass(normpath(config.calibration_dir),
                                                   normpath(config.default_parameters_file),
                                                   parameters_file)
-    medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
-                                           'method', 'IrregularSamplingMedian')
-    opt_medianKernelWidth = param.Get_Float64('templateCatalog.'
-                                              'continuumRemoval.'
-                                              'medianKernelWidth')
-    opt_nscales = param.Get_Float64('templateCatalog.continuumRemoval.'
-                                    'decompScales',
-                                    8.0)
-    dfBinPath = param.Get_String('templateCatalog.continuumRemoval.binPath',
-                                 'absolute_path_to_df_binaries_here')
+
 
     #
     # Set up param and linecatalog for line measurement pass
@@ -220,26 +251,15 @@ def amazed(config):
     if config.linemeas_parameters_file:
         linemeas_parameters_file = normpath(config.linemeas_parameters_file)
 
-    linemeas_param, linemeas_line_catalog, linemeas_params_dict = _setup_pass(normpath(config.calibration_dir),
-                                                                 normpath(config.default_linemeas_parameters_file),
-                                                                 linemeas_parameters_file)
+    linemeas_param, linemeas_params_dict, linemeas_line_catalog, linemeas_template_catalog= \
+        _setup_pass(normpath(config.calibration_dir),
+                    normpath(config.default_linemeas_parameters_file),
+                    linemeas_parameters_file)
 
     classif = CClassifierStore()
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
-
-    template_catalog = CTemplateCatalog(medianRemovalMethod,
-                                        opt_medianKernelWidth,
-                                        opt_nscales, dfBinPath)
-    template_catalog_path = normpath(os.path.join(config.calibration_dir, param.Get_String('template_dir')))
-    logger.log(logging.INFO, "Loading %s" % template_catalog_path)
-
-    try:
-        template_catalog.Load(template_catalog_path)
-    except Exception as e:
-        logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
-        raise
 
     outdir = normpath(config.workdir, config.output_dir)
     os.makedirs(outdir, exist_ok=True)
