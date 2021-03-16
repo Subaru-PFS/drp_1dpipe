@@ -23,6 +23,7 @@ config_defaults = {
     'output_dir':'@AUTO@',
     'stellar': 'on',
     'parameters_file': '',
-    'linemeas_parameters_file': ''
+    'linemeas_parameters_file': '',
+    'get_default_parameters': None
     }
 
