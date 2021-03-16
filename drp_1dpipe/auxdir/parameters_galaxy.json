@@ -1,15 +1,8 @@
 {
-    "lambdarange": [
-        "3000",
-        "13000"
-    ],
-    "redshiftrange": [
-        "0.0",
-        "5.0"
-    ],
+    "lambdarange": ["3000", "13000"],
+    "redshiftrange": ["0.01", "6.0"],
     "redshiftstep": "0.0001",
     "redshiftsampling": "log",
-    "calibrationDir": "",
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": "400"
@@ -21,8 +14,8 @@
             "linetypefilter": "no",
             "lineforcefilter": "no",
             "instrumentresolution": "4300",
-            "velocityemission": "200",
-            "velocityabsorption": "300",
+	    "velocityemission": "100",
+	    "velocityabsorption": "100",
             "velocityfit": "yes",
             "emvelocityfitmin": "10",
             "emvelocityfitmax": "400",
@@ -30,7 +23,7 @@
             "absvelocityfitmin": "150",
             "absvelocityfitmax": "500",
             "absvelocityfitstep": "50",
-            "tplratio_ismfit": "no",
+            "tplratio_ismfit": "yes",
             "continuumcomponent": "tplfit",
             "continuumfit": {
                 "ismfit": "yes",
@@ -38,9 +31,9 @@
             },
             "skipsecondpass": "no",
             "extremacount": "5",
-            "extremacutprobathreshold": "30",
+            "extremacutprobathreshold": "-1",
             "firstpass": {
-                "tplratio_ismfit": "yes"
+                "tplratio_ismfit": "no"
             },
             "stronglinesprior": "-1"
         }

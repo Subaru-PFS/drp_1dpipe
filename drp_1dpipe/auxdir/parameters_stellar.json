@@ -1,5 +1,14 @@
 {
   "template_dir": "templates/BC03_sdss_tremonti21",
   "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
-  "enablestellarsolve": "yes"
+  "enablestellarsolve": "yes",
+    "stellarsolve": {
+        "starsolve": {
+      "redshiftrange": [
+            "-0.003",
+            "0.003" 
+      ],
+      "redshiftstep": "0.00005"
+	}
+    }	
 }
