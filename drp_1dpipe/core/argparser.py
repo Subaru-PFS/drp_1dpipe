@@ -41,6 +41,27 @@ class LogLevelAction(argparse.Action):
                 raise logging.ArgumentError(f'Invalid log level {values}')
 
 
+class ShowParametersAction(argparse.Action):
+
+    def __init__(self, option_strings, dest, nargs=None, **kwargs):
+        if nargs is not None:
+            raise ValueError("nargs not allowed")
+        super(ShowParametersAction, self).__init__(option_strings, dest, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values == 'galaxy+star':
+            params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../auxdir/parameters_stellar_galaxy.json")
+        elif values == 'galaxy':
+            params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../auxdir/parameters_galaxy.json")
+        elif values == 'star':
+            params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../auxdir/parameters_stellar.json")
+        else:
+            raise logging.ArgumentError(f'Invalid parameter confi {values}')
+        setattr(namespace, self.dest, values)
+        with open(params_path, 'r') as f:
+            print(f.read())
+    
+    
 def define_global_program_options(parser):
     """Initilize command line argument parser with common arguments.
 

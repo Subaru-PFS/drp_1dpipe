@@ -14,7 +14,7 @@ import json
 from datetime import datetime
 
 from drp_1dpipe import VERSION
-from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
+from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction, ShowParametersAction
 from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.utils import ( init_environ, get_args_from_file,
                                     normpath, get_auxiliary_path, get_conf_path,
@@ -72,6 +72,9 @@ def define_specific_program_options():
                         '"on" provide stellar results'
                         '"off" do not provide stellar results'
                         '"only" provide only stellar results')
+    parser.add_argument('--get_default_parameters',  action=ShowParametersAction,
+                        choices=["galaxy+star", "galaxy", "star"],
+                        help='Show example parameters ')
 
     return parser
 
@@ -274,6 +277,8 @@ def main():
     parser = define_specific_program_options()
     define_global_program_options(parser)
     args = parser.parse_args()
+    if args.get_default_parameters is not None:
+        return
     config = config_update(
         config_defaults,
         args=vars(args),
