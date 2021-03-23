@@ -37,5 +37,15 @@
             },
             "stronglinesprior": "-1"
         }
+    },
+    "enablestellarsolve": "yes",
+    "stellarsolve": {
+        "starsolve": {
+      "redshiftrange": [
+            "-0.003",
+            "0.003"
+      ],
+      "redshiftstep": "0.00005"
+	}
     }
 }
