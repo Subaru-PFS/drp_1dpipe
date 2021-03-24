@@ -90,9 +90,7 @@ class RedshiftCandidates:
             zcandidates[rank]['SUBCLASS'] = ''
             zcandidates[rank]['CFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "TemplateName")
             zcandidates[rank]['LFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "LinesRatioName")
-            model = np.array(self.lambda_ranges, dtype=np.float64, copy=True)
-            model.fill(np.nan)
-            np.place(model, self.mask == 0, np.array(self.drp1d_output.model["galaxy"][rank]["ModelFlux"]))
+            model = np.array(self.drp1d_output.model["galaxy"][rank]["ModelFlux"])
             model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model) * (1 / 2.99792458) * 10 ** 14)
 #           model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model)) * (1/  2.99792458) * 10 ** 14)
             zcandidates[rank]['MODELFLUX'] = model
@@ -121,9 +119,7 @@ class RedshiftCandidates:
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['Z_PROBA'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftProba")
             zcandidates[rank]['SUBCLASS'] = ''
-
             model = np.array(self.drp1d_output.model["qso"][rank]["ModelFlux"])
-            np.place(model, self.mask == 0, model)
             model = np.multiply(np.array(self.lambda_ranges)**2, np.array(model)) * (1/2.99792458) * 10**14
             zcandidates[rank]['MODELFLUX'] = model
 
@@ -150,9 +146,7 @@ class RedshiftCandidates:
             zcandidates[rank]['SUBCLASS'] = ''
             zcandidates[rank]['TFILE'] = self.drp1d_output.get_candidate_data("star", rank, "ModelTplName")
             # model = np.array(self.lambda_ranges, dtype=np.float64, copy=True)
-            
             model = np.array(self.drp1d_output.model["star"][rank]["ModelFlux"])
-            np.place(model, self.mask == 0, model)
             model = np.multiply(np.array(self.lambda_ranges)**2, np.array(model)) * (1/2.99792458) * 10**14
             zcandidates[rank]['MODELFLUX'] = model
 
@@ -203,8 +197,8 @@ class RedshiftCandidates:
         """Method used to read lambda vector from spectrum
         """
         obj = PfsObject.readFits(self.spectrum_path)
-        self.lambda_ranges = obj.wavelength
-        self.mask = obj.mask
+        valid = np.where(obj.mask == 0, True, False)
+        self.lambda_ranges = obj.wavelength[valid]
 
 #        return {"catId":int(catId),
 #                "tract":int(tract),
