@@ -90,10 +90,7 @@ class RedshiftCandidates:
             zcandidates[rank]['SUBCLASS'] = ''
             zcandidates[rank]['CFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "TemplateName")
             zcandidates[rank]['LFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "LinesRatioName")
-            model = np.array(self.drp1d_output.model["galaxy"][rank]["ModelFlux"])
-            model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model) * (1 / 2.99792458) * 10 ** 14)
-#           model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model)) * (1/  2.99792458) * 10 ** 14)
-            zcandidates[rank]['MODELFLUX'] = model
+            zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("galaxy", rank)
 
         hdulist.append(fits.BinTableHDU(name='GALAXY_CANDIDATES', data=zcandidates))
 
@@ -112,16 +109,13 @@ class RedshiftCandidates:
                                         ('MODELFLUX', 'f8', (npix,))
                                         ])
 
-
         for rank in range(nb_candidates):
             zcandidates[rank]['Z'] = self.drp1d_output.get_candidate_data("qso", rank, "Redshift")
             zcandidates[rank]['Z_ERR'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftError")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['Z_PROBA'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftProba")
             zcandidates[rank]['SUBCLASS'] = ''
-            model = np.array(self.drp1d_output.model["qso"][rank]["ModelFlux"])
-            model = np.multiply(np.array(self.lambda_ranges)**2, np.array(model)) * (1/2.99792458) * 10**14
-            zcandidates[rank]['MODELFLUX'] = model
+            zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("qso", rank)
 
         hdulist.append(fits.BinTableHDU(name='QSO_CANDIDATES', data=zcandidates))
         
@@ -145,10 +139,7 @@ class RedshiftCandidates:
             zcandidates[rank]['T_PROBA'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['SUBCLASS'] = ''
             zcandidates[rank]['TFILE'] = self.drp1d_output.get_candidate_data("star", rank, "ModelTplName")
-            # model = np.array(self.lambda_ranges, dtype=np.float64, copy=True)
-            model = np.array(self.drp1d_output.model["star"][rank]["ModelFlux"])
-            model = np.multiply(np.array(self.lambda_ranges)**2, np.array(model)) * (1/2.99792458) * 10**14
-            zcandidates[rank]['MODELFLUX'] = model
+            zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("star", rank)
 
         hdulist.append(fits.BinTableHDU(name='STAR_CANDIDATES', data=zcandidates))
 
@@ -197,9 +188,16 @@ class RedshiftCandidates:
         """Method used to read lambda vector from spectrum
         """
         obj = PfsObject.readFits(self.spectrum_path)
-        valid = np.where(obj.mask == 0, True, False)
-        self.lambda_ranges = obj.wavelength[valid]
 
+        self.lambda_ranges = obj.wavelength
+        self.mask = obj.mask
+
+    def _get_model_on_lambda_range(self,object_type,rank):
+        model = np.array(self.lambda_ranges, dtype=np.float64, copy=True)
+        model.fill(np.nan)
+        np.place(model, self.mask == 0, self.drp1d_output.model[object_type][rank]["ModelFlux"].to_numpy())
+        model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
+        return model
 #        return {"catId":int(catId),
 #                "tract":int(tract),
 #                "patch":patch,
