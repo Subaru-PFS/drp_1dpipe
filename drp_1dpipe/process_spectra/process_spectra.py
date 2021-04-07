@@ -274,7 +274,7 @@ def amazed(config):
 
     products = []
     for i, spectrum_path in enumerate(spectra_list):
-        spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path)
+        spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path["fits"])
         nb_valid_points = get_nb_valid_points(spectrum)
         if nb_valid_points < 3000:
             logger.log(logging.WARNING,
@@ -282,7 +282,7 @@ def amazed(config):
             to_process = False
         else:
             to_process = True
-        proc_id, ext = os.path.splitext(spectrum_path)
+        proc_id, ext = os.path.splitext(spectrum_path["fits"])
         spc_out_dir = os.path.join(outdir, proc_id )
         processed = False
         if config.lineflux != 'only' and to_process:

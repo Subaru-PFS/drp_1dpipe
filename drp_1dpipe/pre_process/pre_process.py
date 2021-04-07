@@ -8,12 +8,11 @@ Author: PSF DRP1D developers
 import os
 import json
 import logging
-from tempfile import NamedTemporaryFile
+import glob
 import argparse
 
 
 from drp_1dpipe import VERSION
-from drp_1dpipe.core.config import ConfigJson
 from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
@@ -71,8 +70,10 @@ def bunch(bunch_size, spectra_dir):
         A generator woth the max number of sources
     """    
     _list = []
-    for source in os.listdir(spectra_dir):
-        _list.append(source)
+    for source in glob.glob(spectra_dir + "/*.fits"):
+        prefix_length = len(spectra_dir) + len("/pfsObject")
+        _list.append({"fits": source[len(spectra_dir)+1:],
+                      "lsf":  "pfsLsfObject"+source[prefix_length: -5]+".pickle"})
         if len(_list) >= int(bunch_size):
             yield _list
             _list = []
