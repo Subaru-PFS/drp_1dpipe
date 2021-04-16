@@ -55,8 +55,18 @@ class RedshiftCandidates:
         primary = fits.PrimaryHDU(header=hdr)
         hdulist.append(primary)
 
+    def get_classification_type(self):
+        if self.drp1d_output.classification["Type"] == "G":
+            return "GALAXY"
+        elif self.drp1d_output.classification["Type"] == "S":
+            return "STAR"
+        elif self.drp1d_output.classification["Type"] == "Q":
+            return "QSO"
+        else:
+            raise Exception("Unknow classification type " + self.drp1d_output.classification["Type"])
+
     def classification_to_fits(self, hdulist):
-        classification = [fits.Card('CLASS',self.drp1d_output.classification["Type"],
+        classification = [fits.Card('CLASS',self.get_classification_type(),
                                     "Spectro classification: GALAXY, QSO, STAR"),
                           fits.Card('P_GALAXY',self.drp1d_output.classification["GalaxyProba"],
                                     "Probability to be a galaxy"),
@@ -65,7 +75,7 @@ class RedshiftCandidates:
                           fits.Card('P_STAR',self.drp1d_output.classification["StarProba"],
                                     "Probability to be a star")]
         hdr = fits.Header(classification)
-        hdu = fits.BinTableHDU(header=hdr)
+        hdu = fits.BinTableHDU(header=hdr,name="CLASSIFICATION")
         hdulist.append(hdu)
 
     def galaxy_candidates_to_fits(self, hdulist):
@@ -73,13 +83,13 @@ class RedshiftCandidates:
         npix = len(self.lambda_ranges)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
-                                        ('Z', 'f8'),
-                                        ('Z_ERR', 'f8'),
-                                        ('Z_PROBA', 'f8'),
+                                        ('Z', 'f4'),
+                                        ('Z_ERR', 'f4'),
+                                        ('Z_PROBA', 'f4'),
                                         ('SUBCLASS', 'S15'),
                                         ('CFILE','S50'),
                                         ('LFILE','S50'),
-                                        ('MODELFLUX', 'f8', (npix,))
+                                        ('MODELFLUX', 'f4', (npix,))
                                         ])
 
         for rank in range(nb_candidates):
@@ -102,11 +112,11 @@ class RedshiftCandidates:
         npix = len(self.lambda_ranges)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
-                                        ('Z', 'f8'),
-                                        ('Z_ERR', 'f8'),
-                                        ('Z_PROBA', 'f8'),
+                                        ('Z', 'f4'),
+                                        ('Z_ERR', 'f4'),
+                                        ('Z_PROBA', 'f4'),
                                         ('SUBCLASS', 'S15'),
-                                        ('MODELFLUX', 'f8', (npix,))
+                                        ('MODELFLUX', 'f4', (npix,))
                                         ])
 
         for rank in range(nb_candidates):
@@ -124,12 +134,12 @@ class RedshiftCandidates:
         npix = len(self.lambda_ranges)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
-                                        ('V', 'f8'),
-                                        ('V_ERR', 'f8'),
-                                        ('T_PROBA', 'f8'),
+                                        ('V', 'f4'),
+                                        ('V_ERR', 'f4'),
+                                        ('T_PROBA', 'f4'),
                                         ('SUBCLASS', 'S15'),
                                         ('TFILE','S50'),
-                                        ('MODELFLUX', 'f8', (npix,))
+                                        ('MODELFLUX', 'f4', (npix,))
                                         ])        
 
         for rank in range(nb_candidates):
@@ -148,7 +158,7 @@ class RedshiftCandidates:
             pdf = self.drp1d_output.pdf[object_type].to_records(index=False)
             grid_size = self.drp1d_output.pdf[object_type].index.size
             zpdf_hdu = np.ndarray(grid_size, buffer=pdf,
-                                  dtype=[('ln PDF', 'f8'), ('REDSHIFT', 'f8')])
+                                  dtype=[('ln PDF', 'f4'), ('REDSHIFT', 'f4')])
         else:
             zpdf_hdu = None
 
@@ -157,19 +167,19 @@ class RedshiftCandidates:
     def object_lines_to_fits(self, object_type, hdulist):
         zlines = np.ndarray((0,),
                             dtype=[('LINENAME', 'S15'),
-                                   ('LINEWAVE', 'f8'),
-                                   ('LINEZ', 'f8'),
-                                   ('LINEZ_ERR', 'f8'),
-                                   ('LINESIGMA', 'f8'),
-                                   ('LINESIGMA_ERR', 'f8'),
-                                   ('LINEVEL', 'f8'),
-                                   ('LINEVEL_ERR', 'f8'),
-                                   ('LINEFLUX', 'f8'),
-                                   ('LINEFLUX_ERR', 'f8'),
-                                   ('LINEEW', 'f8'),
-                                   ('LINEEW_ERR', 'f8'),
-                                   ('LINECONTLEVEL', 'f8'),
-                                   ('LINECONTLEVEL_ERR', 'f8')])
+                                   ('LINEWAVE', 'f4'),
+                                   ('LINEZ', 'f4'),
+                                   ('LINEZ_ERR', 'f4'),
+                                   ('LINESIGMA', 'f4'),
+                                   ('LINESIGMA_ERR', 'f4'),
+                                   ('LINEVEL', 'f4'),
+                                   ('LINEVEL_ERR', 'f4'),
+                                   ('LINEFLUX', 'f4'),
+                                   ('LINEFLUX_ERR', 'f4'),
+                                   ('LINEEW', 'f4'),
+                                   ('LINEEW_ERR', 'f4'),
+                                   ('LINECONTLEVEL', 'f4'),
+                                   ('LINECONTLEVEL_ERR', 'f4')])
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES", data=zlines))
     
     @staticmethod
