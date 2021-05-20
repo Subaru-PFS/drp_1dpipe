@@ -16,11 +16,12 @@ from drp_1dpipe.process_spectra.config import config_defaults
 
 from drp_1dpipe.core.utils import init_environ, normpath, TemporaryFilesSet
 from drp_1dpipe.io.reader import read_spectrum, get_nb_valid_points
+from drp_1dpipe.io.catalog import DirectoryTemplateCatalog, FitsTemplateCatalog
 from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
-                                  CParameterStore, CClassifierStore,
-                                  CLogFileHandler, CRayCatalog,
+                                   CLogFileHandler, CRayCatalog,
+                                  GlobalException, ParameterException,
                                   CTemplateCatalog, get_version)
 import collections.abc
 
@@ -97,7 +98,7 @@ def _output_path(args, *path):
 
 
 def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
-                      line_catalog, param, classif, save_results,param_dict):
+                      line_catalog, param, save_results):
 
     try:
         spectrum = read_spectrum(spectrum_path)
@@ -111,11 +112,9 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
     try:
         ctx = CProcessFlowContext()
         ctx.Init(spectrum,
-                 proc_id,
                  template_catalog,
                  line_catalog,
-                 param,
-                 classif)
+                 json.dumps(param))
     except Exception as e:
         raise Exception("ProcessFlow init error : {}".format(e))
 
@@ -126,7 +125,7 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
         raise Exception("Processing error : {}".format(e))
 
     try:
-        output = ResultStoreOutput(None, ctx.GetResultStore(), param_dict)
+        output = ResultStoreOutput(None, ctx.GetResultStore(), param)
         rc = RedshiftCandidates(output, spectrum_path)
         rc.write_fits(output_dir)
     except Exception as e:
@@ -138,12 +137,12 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
 def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
 
     # setup parameter store
-    param = CParameterStore()
-    _params = default_parameters.copy()
+
+    params = default_parameters.copy()
     try:
         # override default parameters with those found in parameters_file
         with open(default_parameters_file, 'r') as f:
-            _params = update(_params, json.load(f))
+            params = update(params, json.load(f))
     except Exception as e:
         logger.log(logging.ERROR,
                    f'unable to read default parameter file : {e}')
@@ -152,22 +151,22 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
         try:
             # override default parameters with those found in parameters_file
             with open(parameters_file, 'r') as f:
-                _params = update(_params, json.load(f))
+                params = update(params, json.load(f))
         except Exception as e:
             logger.log(logging.INFO,
                        f'unable to read parameter file : {e}, using defaults')
             raise
-    param.FromString(json.dumps(_params))
+        
 
     # setup calibration dir
     if not os.path.exists(calibration_dir):
         raise FileNotFoundError(f"Calibration directory does not exist: "
                                 f"{calibration_dir}")
-    param.Set_String('calibrationDir', calibration_dir)
+    params['calibrationDir']=calibration_dir
 
     # load line catalog
     line_catalog = CRayCatalog()
-    line_catalog_file = normpath(os.path.join(calibration_dir, _params["linecatalog"]))
+    line_catalog_file = normpath(os.path.join(calibration_dir, params["linecatalog"]))
     if not os.path.exists(line_catalog_file):
         raise FileNotFoundError(f"Line catalog file not found: "
                                 f"{line_catalog_file}")
@@ -175,47 +174,43 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
     line_catalog.Load(line_catalog_file)
     line_catalog.ConvertVacuumToAir()
 
-    medianRemovalMethod = param.Get_String('templateCatalog.continuumRemoval.'
-                                           'method', 'IrregularSamplingMedian')
-    opt_medianKernelWidth = param.Get_Float64('templateCatalog.'
-                                              'continuumRemoval.'
-                                              'medianKernelWidth')
-    opt_nscales = param.Get_Float64('templateCatalog.continuumRemoval.'
-                                    'decompScales',
-                                    8.0)
-    dfBinPath = param.Get_String('templateCatalog.continuumRemoval.binPath',
-                                 'absolute_path_to_df_binaries_here')
-    template_catalog = CTemplateCatalog(medianRemovalMethod,
-                                        opt_medianKernelWidth,
-                                        opt_nscales, dfBinPath)
-    template_catalog_path = normpath(os.path.join(calibration_dir, param.Get_String('template_dir')))
-    logger.log(logging.INFO, "Loading %s" % template_catalog_path)
+    medianRemovalMethod = params['templateCatalog']['continuumRemoval']['method']
+    medianKernelWidth = float(params["templateCatalog"]["continuumRemoval"]["medianKernelWidth"])
+    nscales = float(params["templateCatalog"]["continuumRemoval"]["decompScales"])
+    dfBinPath = params["templateCatalog"]["continuumRemoval"]["binPath"]
+
+    # Load galaxy templates
+    if "template_dir" not in params["galaxy"]:
+        raise Exception("Incomplete parameter file, template_dir entry mandatory")
+    _template_dir = normpath(calibration_dir,  params["galaxy"]["template_dir"])
+
+    if os.path.isfile(_template_dir):
+        # template_dir is actually a file: load templates from FITS
+        template_catalog = FitsTemplateCatalog(medianRemovalMethod,
+                                               medianKernelWidth,
+                                               nscales, dfBinPath)
+    else:
+        # template_dir a directory: load templates from calibration dirs
+        template_catalog = DirectoryTemplateCatalog(medianRemovalMethod,
+                                                    medianKernelWidth,
+                                                    nscales, dfBinPath)
+    logger.log(logging.INFO,"Loading %s" % _template_dir)
 
     try:
-        template_catalog.Load(template_catalog_path)
+        template_catalog.Load(_template_dir)
     except Exception as e:
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise
-    if _params["enablestellarsolve"] == "yes" or _params["enableqsosolve"] == "yes":
-        qs_config = {}
-        path_file = normpath(calibration_dir, "calibration-config.txt")
-        if not os.path.exists(path_file):
-            raise FileNotFoundError("Template file not found : {}".format(path_file))
-        else:
-            with open(path_file) as ff:
-                for line in ff:
-                    if not line.startswith('#'):
-                        k, v = line.strip().split("=")
-                        qs_config[k] = v
-        # Read Star template catalog
-        if _params["enablestellarsolve"] == "yes":
-            tdir = normpath(calibration_dir, qs_config["star-templates-dir"])
-            template_catalog.Load(tdir)
-        # Read QSO template catalog
-        if _params["enableqsosolve"] == "yes":
-            tdir = normpath(calibration_dir, qs_config["qso-templates-dir"])
-            template_catalog.Load(tdir)
-    return param,_params, line_catalog,template_catalog
+
+    if params["enablestellarsolve"] == "yes":
+        tdir = normpath(calibration_dir, params["star"]["template_dir"])
+        template_catalog.Load(tdir)
+    # Read QSO template catalog
+    if params["enableqsosolve"] == "yes":
+        tdir = normpath(calibration_dir, params["qso"]["template_dir"])
+        template_catalog.Load(tdir)
+
+    return params, line_catalog,template_catalog
 
 
 def amazed(config):
@@ -239,7 +234,7 @@ def amazed(config):
     if config.parameters_file:
         parameters_file = normpath(config.parameters_file)
 
-    param, param_dict, line_catalog, template_catalog = _setup_pass(normpath(config.calibration_dir),
+    param, line_catalog, template_catalog = _setup_pass(normpath(config.calibration_dir),
                                                   normpath(config.default_parameters_file),
                                                   parameters_file)
 
@@ -251,12 +246,10 @@ def amazed(config):
     if config.linemeas_parameters_file:
         linemeas_parameters_file = normpath(config.linemeas_parameters_file)
 
-    linemeas_param, linemeas_params_dict, linemeas_line_catalog, linemeas_template_catalog= \
+    linemeas_param, linemeas_line_catalog, linemeas_template_catalog= \
         _setup_pass(normpath(config.calibration_dir),
                     normpath(config.default_linemeas_parameters_file),
                     linemeas_parameters_file)
-
-    classif = CClassifierStore()
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
@@ -297,7 +290,7 @@ def amazed(config):
             if to_process:
                 try:
                     _process_spectrum(data_dir, i, spectrum, template_catalog,
-                                      line_catalog, param, classif, 'all',param_dict)
+                                      line_catalog, param, 'all')
                     processed = True
                 except Exception as e:
                     logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
@@ -317,7 +310,7 @@ def amazed(config):
                     _process_spectrum(outdir_linemeas, i, spectrum,
                                               template_catalog,
                                               linemeas_line_catalog, linemeas_param,
-                                              classif, 'linemeas',param_dict)
+                                              'linemeas')
             except Exception as e:
                 logger.log(logging.CRITICAL, "Could not process linemeas: {}".format(e))
                 spc_out_lin_dir = None
@@ -333,7 +326,8 @@ def amazed(config):
             json.dump({'amazed-version': get_version()}, f)
         parameters_file = os.path.join(normpath(config.workdir, config.output_dir),
                                        'parameters.json')
-        param.Save(parameters_file)
+        with open(parameters_file,'w') as f:
+            json.dump(param,f)
         tmpcontext.add_files(parameters_file)
 
         # create output products

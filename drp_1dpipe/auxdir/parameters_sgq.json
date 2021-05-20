@@ -1,163 +1,152 @@
 {
-  "lambdarange": [
-    "3000",
-    "13000"
-  ],
-  "redshiftrange": [
-    "0.01",
-    "6.0"
-  ],
-    "redshiftstep": "0.0001",
-    "redshiftsampling": "log",
-    "method": "linemodel",
-  "templateCategoryList": [
-    "emission",
-    "galaxy",
-    "star",
-    "qso"
-  ],
+    "lambdarange": [
+        3000,
+        13000
+    ],
     "templateCatalog": {
         "continuumRemoval": {
             "method": "zero",
-            "medianKernelWidth": "75",
+            "medianKernelWidth": 75,
             "decompScales": "8",
             "binPath": ""
         }
     },
+    "ebmv": {
+        "start": 0,
+        "step": 0.1,
+        "count": 10
+    },
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
-        "medianKernelWidth": "400",
+        "medianKernelWidth": 400,
         "decompScales": "9",
         "binPath": ""
     },
-    "linemodelsolve": {
-        "linemodel": {
-            "linetypefilter": "no",
-            "lineforcefilter": "no",
-            "fittingmethod": "individual",
-            "linewidthtype": "combined",
-            "instrumentresolution": "4300",
-	    "velocityemission": "100",
-	    "velocityabsorption": "100",
-            "velocityfit": "yes",
-            "pdfcombination": "marg",
-            "emvelocityfitmin": "10",
-            "emvelocityfitmax": "400",
-            "emvelocityfitstep": "20",
-            "absvelocityfitmin": "150",
-            "absvelocityfitmax": "500",
-            "absvelocityfitstep": "50",
-            "lyaforcefit": "no",
-            "lyaforcedisablefit": "no",
-            "lyafit": {
-                "asymfitmin": "0",
-                "asymfitmax": "4",
-                "asymfitstep": "1",
-                "widthfitmin": "1",
-                "widthfitmax": "4",
-                "widthfitstep": "1",
-                "deltafitmin": "0",
-                "deltafitmax": "0",
-                "deltafitstep": "1"
-            },
-            "extremacountB": "0",
-            "haprior": "-1",
-            "rigidity": "tplshape",
-            "rules": "all",
-            "tplratio_catalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v6_emission",
-      		"tplratio_ismfit": "yes",
-            "offsets_catalog": "linecatalogs_offsets/offsetsCatalogs_20170410_m150",
-            "continuumcomponent": "tplfit",
-            "continuumreestimation": "no",
-            "continuumfit": {
-        "method":"templatefittinglog",
-                "ismfit": "yes",
-                "igmfit": "yes",
-                "count": "1",
-                "ignorelinesupport": "no",
-                "priors": {
-                    "betaA": "1",
-                    "betaTE": "1",
-                    "betaZ": "1",
-                    "catalog_dirpath": ""
-                }
-            },
-            "skipsecondpass": "no",
-            "extremacount": "5",
-            "extremacutprobathreshold": "-1",
-            "pdf": {
-                "margampcorr": "no",
-                "bestzoption": "maxintproba"
-            },
-            "firstpass": {
-                "fittingmethod": "individual",
-        	"largegridstep": "5.e-4",
-                "tplratio_ismfit": "no",
-                "multiplecontinuumfit_disable": "yes"
-            },
-            "secondpass": {
-        	"halfwindowsize":0.001,
-        	"continuumfit": "refitfirstpass"
-            },
-            "secondpasslcfittingmethod": "-1",
-            "manvelocityfitdzmin": "-0.0006",
-            "manvelocityfitdzmax": "0.0006",
-            "manvelocityfitdzstep": "0.0001",
-            "stronglinesprior": "-1",
-            "euclidnhaemittersStrength": "-1",
-            "tplratio": {
-                "priors": {
-                    "betaA": "1",
-                    "betaTE": "1",
-                    "betaZ": "1",
-                    "catalog_dirpath": ""
-                }
-            },
-            "nsigmasupport": "8",
-            "saveintermediateresults": "no"
-        }
-    },
+    "extremaredshiftseparation": 0.01,
     "enablestellarsolve": "yes",
     "enableqsosolve": "no",
     "calibrationDir": "",
     "SaveIntermediateResults": "default",
     "linemeascatalog": "",
     "autocorrectinput": "no",
-    "qsosolve": {
-        "overlapThreshold": "1",
-        "qsosolve": {
+    "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
+    "linecatalog_convert": true,
+    "galaxy": {
+        "redshiftrange": [
+            0.01,
+            6.0
+        ],
+        "redshiftstep": "0.0001",
+        "redshiftsampling": "log",
+        "method": "linemodelsolve",
+        "template_dir": "templates/BC03_sdss_tremonti21",
+        "linemodelsolve": {
+            "linemodel": {
+                "linetypefilter": "no",
+                "lineforcefilter": "no",
+                "fittingmethod": "individual",
+                "linewidthtype": "combined",
+                "instrumentresolution": "4300",
+                "velocityemission": "100",
+                "velocityabsorption": "100",
+                "velocityfit": "yes",
+                "pdfcombination": "marg",
+                "emvelocityfitmin": "10",
+                "emvelocityfitmax": "400",
+                "emvelocityfitstep": "20",
+                "absvelocityfitmin": "150",
+                "absvelocityfitmax": "500",
+                "absvelocityfitstep": "50",
+                "lyaforcefit": "no",
+                "lyaforcedisablefit": "no",
+                "lyafit": {
+                    "asymfitmin": "0",
+                    "asymfitmax": "4",
+                    "asymfitstep": "1",
+                    "widthfitmin": "1",
+                    "widthfitmax": "4",
+                    "widthfitstep": "1",
+                    "deltafitmin": "0",
+                    "deltafitmax": "0",
+                    "deltafitstep": "1"
+                },
+                "extremacountB": "0",
+                "haprior": "-1",
+                "rigidity": "tplshape",
+                "rules": "all",
+                "tplratio_catalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v6_emission",
+                "tplratio_ismfit": "yes",
+                "offsets_catalog": "linecatalogs_offsets/offsetsCatalogs_20170410_m150",
+                "continuumcomponent": "tplfit",
+                "continuumreestimation": "no",
+                "continuumfit": {
+                    "negativethreshold": -5.0,
+                    "fftprocessing": "yes",
+                    "ismfit": "yes",
+                    "igmfit": "yes",
+                    "count": "1",
+                    "ignorelinesupport": "no",
+                    "priors": {
+                        "betaA": "1",
+                        "betaTE": "1",
+                        "betaZ": "1",
+                        "catalog_dirpath": ""
+                    }
+                },
+                "skipsecondpass": "no",
+                "extremacount": "5",
+                "extremacutprobathreshold": "-1",
+                "pdf": {
+                    "margampcorr": "no",
+                    "bestzoption": "maxintproba"
+                },
+                "firstpass": {
+                    "fittingmethod": "individual",
+                    "largegridstepratio": "6",
+                    "tplratio_ismfit": "no",
+                    "multiplecontinuumfit_disable": "yes"
+                },
+                "secondpass": {
+                    "halfwindowsize": 0.001,
+                    "continuumfit": "refitfirstpass"
+                },
+                "secondpasslcfittingmethod": "-1",
+                "stronglinesprior": "-1",
+                "euclidnhaemittersStrength": "-1",
+                "tplratio": {
+                    "priors": {
+                        "betaA": "1",
+                        "betaTE": "1",
+                        "betaZ": "1",
+                        "catalog_dirpath": ""
+                    }
+                },
+                "nsigmasupport": "8",
+                "saveintermediateresults": "no"
+            }
+        }
+    },
+    "star": {
+        "redshiftrange": [
+            "-0.003",
+            "0.003"
+        ],
+        "redshiftstep": "0.00005",
+        "redshiftsampling": "lin",
+        "method": "templatefittingsolve",
+        "template_dir": "templates/Xshooter_stars",
+        "templatefittingsolve": {
+            "fftprocessing": "no",
+            "overlapThreshold": 1,
+            "extremacount": 5,
+            "pdfcombination": "bestchi2",
+            "saveintermediateresults": "no",
             "spectrum": {
                 "component": "raw"
             },
             "interpolation": "precomputedfinegrid",
-            "extinction": "yes",
-            "dustfit": "no"
-        },
-        "chisquare2solve": {
-            "pdfcombination": "marg",
-            "saveintermediateresults": "no"
+            "dustfit": "yes",
+            "extinction": "no"
         }
-    },
-    "stellarsolve": {
-        "overlapThreshold": "1",
-        "starsolve": {
-      "redshiftrange": [
-            "-0.003",
-            "0.003" 
-      ],
-      "redshiftstep": "0.00005",
-            "spectrum": {
-        	"component": "raw" 
-            },
-            "interpolation": "precomputedfinegrid",
-            "dustfit": "yes"
-        },
-    	"templatefittingsolve": {
-            "pdfcombination": "bestchi2",
-            "saveintermediateresults": "no"
-        }
-    },
-  "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
-  "template_dir": "templates/BC03_sdss_tremonti21",
-  "linecatalog_convert": true
+    }
 }
