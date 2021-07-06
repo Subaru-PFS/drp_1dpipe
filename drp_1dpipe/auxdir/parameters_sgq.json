@@ -16,6 +16,12 @@
         "step": 0.1,
         "count": 10
     },
+    "LSFType": "GaussianConstantResolution",
+    "LSF":{
+     "width": "13.",
+     "resolution": "4300",
+     "sourcesize": "0.1"
+    },
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": 400,
@@ -23,25 +29,25 @@
         "binPath": ""
     },
     "extremaredshiftseparation": 0.01,
-    "enablestellarsolve": "yes",
-    "enableqsosolve": "no",
+    "enablestellarsolve":"yes",
+    "enableqsosolve":"yes",
     "calibrationDir": "",
     "SaveIntermediateResults": "default",
     "linemeascatalog": "",
     "autocorrectinput": "no",
-    "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
-    "linecatalog_convert": true,
     "galaxy": {
         "redshiftrange": [
             0.01,
             6.0
         ],
-        "redshiftstep": "0.0001",
+        "redshiftstep": 0.0001,
         "redshiftsampling": "log",
         "method": "linemodelsolve",
         "template_dir": "templates/BC03_sdss_tremonti21",
         "linemodelsolve": {
             "linemodel": {
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
+                "linecatalog_convert": true,
                 "linetypefilter": "no",
                 "lineforcefilter": "no",
                 "fittingmethod": "individual",
@@ -148,5 +154,26 @@
             "dustfit": "yes",
             "extinction": "no"
         }
+    },
+    "qso":
+    {
+	"redshiftrange": ["0.1", "8"],
+	"redshiftstep": "0.001",
+	"redshiftsampling": "log",
+	"template_dir": "templates/qso_sdss_meanqso_comp4/",
+        "method":"templatefittingsolve",
+        "templatefittingsolve": {
+            "fftprocessing":"no",
+            "overlapThreshold":1,
+            "extremacount":5,
+            "pdfcombination": "marg",
+            "saveintermediateresults": "no" , 
+            "spectrum": {
+                "component": "raw" 
+            },
+            "interpolation": "precomputedfinegrid",
+            "dustfit": "yes",
+            "extinction":"yes"   
+	}
     }
 }

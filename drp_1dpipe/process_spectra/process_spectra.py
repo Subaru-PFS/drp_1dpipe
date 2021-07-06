@@ -25,6 +25,7 @@ from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
                                   CTemplateCatalog, get_version)
 import collections.abc
 
+zlog = CLog.GetInstance()
 
 def update(d, u):
     for k, v in u.items():
@@ -97,8 +98,8 @@ def _output_path(args, *path):
     return normpath(args.workdir, args.output_dir, *path)
 
 
-def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
-                      line_catalog, param, save_results):
+def _process_spectrum(output_dir, spectrum_path, template_catalog,
+                      gal_line_catalog, qso_line_catalog, param):
 
     try:
         spectrum = read_spectrum(spectrum_path)
@@ -113,7 +114,8 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
         ctx = CProcessFlowContext()
         ctx.Init(spectrum,
                  template_catalog,
-                 line_catalog,
+                 gal_line_catalog,
+                 qso_line_catalog,
                  json.dumps(param))
     except Exception as e:
         raise Exception("ProcessFlow init error : {}".format(e))
@@ -127,16 +129,25 @@ def _process_spectrum(output_dir, index, spectrum_path, template_catalog,
     try:
         output = ResultStoreOutput(None, ctx.GetResultStore(), param)
         rc = RedshiftCandidates(output, spectrum_path)
+        logger.log(logging.INFO,"write fits")
         rc.write_fits(output_dir)
     except Exception as e:
         raise Exception("Failed to write fits result for spectrum "
                       "{} : {}".format(proc_id, e))
-#        traceback.print_exc()
+
+
+def load_line_catalog(calibration_dir, objectType, linemodel_params):
+    if "linecatalog" not in linemodel_params:
+        raise Exception("Incomplete parameter file, linemodelsolve.linemodel.linecatalog entry mandatory")
+    line_catalog_file = linemodel_params["linecatalog"]
+    line_catalog = CRayCatalog()
+    line_catalog.Load(normpath(calibration_dir, line_catalog_file))
+    line_catalog.ConvertVacuumToAir()
+
+    return line_catalog
 
 
 def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
-
-    # setup parameter store
 
     params = default_parameters.copy()
     try:
@@ -156,7 +167,6 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
             logger.log(logging.INFO,
                        f'unable to read parameter file : {e}, using defaults')
             raise
-        
 
     # setup calibration dir
     if not os.path.exists(calibration_dir):
@@ -165,14 +175,25 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
     params['calibrationDir']=calibration_dir
 
     # load line catalog
-    line_catalog = CRayCatalog()
-    line_catalog_file = normpath(os.path.join(calibration_dir, params["linecatalog"]))
-    if not os.path.exists(line_catalog_file):
-        raise FileNotFoundError(f"Line catalog file not found: "
-                                f"{line_catalog_file}")
-    logger.log(logging.INFO, "Loading %s" % line_catalog_file)
-    line_catalog.Load(line_catalog_file)
-    line_catalog.ConvertVacuumToAir()
+    if "linemodelsolve" in params["galaxy"]:
+        linemodel_params = params["galaxy"]["linemodelsolve"]["linemodel"]
+        gal_line_catalog = load_line_catalog(calibration_dir, "galaxy", linemodel_params)
+    else:
+        gal_line_catalog = CRayCatalog()
+
+    if params["enableqsosolve"] == "yes" and "linemodelsolve" in params["qso"]:
+        linemodel_params = params["qso"]["linemodelsolve"]["linemodel"]
+        qso_line_catalog = load_line_catalog(calibration_dir, "QSO", linemodel_params)
+    else:
+        qso_line_catalog = CRayCatalog()
+    # line_catalog = CRayCatalog()
+    # line_catalog_file = normpath(os.path.join(calibration_dir, params["linecatalog"]))
+    # if not os.path.exists(line_catalog_file):
+    #     raise FileNotFoundError(f"Line catalog file not found: "
+    #                             f"{line_catalog_file}")
+    # logger.log(logging.INFO, "Loading %s" % line_catalog_file)
+    # line_catalog.Load(line_catalog_file)
+    # line_catalog.ConvertVacuumToAir()
 
     medianRemovalMethod = params['templateCatalog']['continuumRemoval']['method']
     medianKernelWidth = float(params["templateCatalog"]["continuumRemoval"]["medianKernelWidth"])
@@ -194,7 +215,7 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
         template_catalog = DirectoryTemplateCatalog(medianRemovalMethod,
                                                     medianKernelWidth,
                                                     nscales, dfBinPath)
-    logger.log(logging.INFO,"Loading %s" % _template_dir)
+    logger.log(logging.INFO, "Loading %s" % _template_dir)
 
     try:
         template_catalog.Load(_template_dir)
@@ -210,7 +231,7 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
         tdir = normpath(calibration_dir, params["qso"]["template_dir"])
         template_catalog.Load(tdir)
 
-    return params, line_catalog,template_catalog
+    return params, gal_line_catalog, qso_line_catalog, template_catalog
 
 
 def amazed(config):
@@ -221,12 +242,9 @@ def amazed(config):
     config : :obj:`Config`
         Configuration object
     """
-
-    zlog = CLog()
-    logFileHandler = CLogFileHandler(zlog, os.path.join(config.logdir,
+    logFileHandler = CLogFileHandler(os.path.join(config.logdir,
                                                         'amazed.log'))
     logFileHandler.SetLevelMask(_map_loglevel[config.log_level])
-
     #
     # Set up param and linecatalog for redshift pass
     #
@@ -234,22 +252,9 @@ def amazed(config):
     if config.parameters_file:
         parameters_file = normpath(config.parameters_file)
 
-    param, line_catalog, template_catalog = _setup_pass(normpath(config.calibration_dir),
+    param, gal_line_catalog, qsol_line_catalog, template_catalog = _setup_pass(normpath(config.calibration_dir),
                                                   normpath(config.default_parameters_file),
                                                   parameters_file)
-
-
-    #
-    # Set up param and linecatalog for line measurement pass
-    #
-    linemeas_parameters_file = None
-    if config.linemeas_parameters_file:
-        linemeas_parameters_file = normpath(config.linemeas_parameters_file)
-
-    linemeas_param, linemeas_line_catalog, linemeas_template_catalog= \
-        _setup_pass(normpath(config.calibration_dir),
-                    normpath(config.default_linemeas_parameters_file),
-                    linemeas_parameters_file)
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
@@ -278,7 +283,7 @@ def amazed(config):
         proc_id, ext = os.path.splitext(spectrum_path["fits"])
         spc_out_dir = os.path.join(outdir, proc_id )
         processed = False
-        if config.lineflux != 'only' and to_process:
+        if to_process:
             # first step : compute redshift
             to_process = True
 
@@ -289,34 +294,11 @@ def amazed(config):
                     shutil.rmtree(spc_out_dir)
             if to_process:
                 try:
-                    _process_spectrum(data_dir, i, spectrum, template_catalog,
-                                      line_catalog, param, 'all')
+                    _process_spectrum(data_dir, spectrum, template_catalog,
+                                      gal_line_catalog,qsol_line_catalog, param)
                     processed = True
                 except Exception as e:
                     logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
-        if config.lineflux in ['only', 'on'] and processed:
-            # second step : compute line fluxes
-            try:
-                to_process_lin = True
-                spc_out_lin_dir = os.path.join(outdir_linemeas, proc_id)
-                if os.path.exists(spc_out_lin_dir):
-                    if config.continue_:
-                        to_process_lin = False
-                    else:
-                        shutil.rmtree(spc_out_lin_dir)
-                if to_process_lin:
-                    linemeas_param.Set_String('linemeascatalog',
-                                        os.path.join(outdir, 'redshift.csv'))
-                    _process_spectrum(outdir_linemeas, i, spectrum,
-                                              template_catalog,
-                                              linemeas_line_catalog, linemeas_param,
-                                              'linemeas')
-            except Exception as e:
-                logger.log(logging.CRITICAL, "Could not process linemeas: {}".format(e))
-                spc_out_lin_dir = None
-        else:
-            spc_out_lin_dir = None
-#        products.append(result.write(data_dir))
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
 
@@ -329,13 +311,6 @@ def amazed(config):
         with open(parameters_file,'w') as f:
             json.dump(param,f)
         tmpcontext.add_files(parameters_file)
-
-        # create output products
-        # results = AmazedResults(_output_path(config), normpath(config.workdir,
-        #                                                      config.spectra_dir),
-        #                         config.lineflux in ['only', 'on'],
-        #                         tmpcontext=tmpcontext)
-        # products = results.write()
 
         # write list of created products
         with open(os.path.join(config.output_dir, "output.json"), 'w') as ff:

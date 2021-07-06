@@ -4,6 +4,10 @@ from pylibamazed.redshift import get_version
 from drp_1dpipe import VERSION
 from astropy.io import fits
 from pfs.datamodel.drp import PfsObject
+from pylibamazed.redshift import CLog
+import logging
+
+logger = logging.getLogger("process_spectra")
 
 
 class RedshiftCandidates:
@@ -19,7 +23,6 @@ class RedshiftCandidates:
         catId, tract, patch, objId, nVisit % 1000, pfsVisitHash)
         hdul = []
         self._read_lambda_ranges()
-        self.drp1d_output.load_all()
         self.header_to_fits(hdul)
         self.classification_to_fits(hdul)
         self.galaxy_candidates_to_fits(hdul)
@@ -56,30 +59,30 @@ class RedshiftCandidates:
         hdulist.append(primary)
 
     def get_classification_type(self):
-        if self.drp1d_output.classification["Type"] == "G":
+        if self.drp1d_output.get_classification()["Type"] == "G":
             return "GALAXY"
-        elif self.drp1d_output.classification["Type"] == "S":
+        elif self.drp1d_output.get_classification()["Type"] == "S":
             return "STAR"
-        elif self.drp1d_output.classification["Type"] == "Q":
+        elif self.drp1d_output.get_classification()["Type"] == "Q":
             return "QSO"
         else:
-            raise Exception("Unknow classification type " + self.drp1d_output.classification["Type"])
+            raise Exception("Unknow classification type " + self.drp1d_output.get_classification()["Type"])
 
     def classification_to_fits(self, hdulist):
-        classification = [fits.Card('CLASS',self.get_classification_type(),
+        classification = [fits.Card('CLASS',self.drp1d_output.get_classification()["Type"],
                                     "Spectro classification: GALAXY, QSO, STAR"),
-                          fits.Card('P_GALAXY',self.drp1d_output.classification["GalaxyProba"],
+                          fits.Card('P_GALAXY',self.drp1d_output.get_classification()["GalaxyProba"],
                                     "Probability to be a galaxy"),
-                          fits.Card('P_QSO',self.drp1d_output.classification["QSOProba"],
+                          fits.Card('P_QSO',self.drp1d_output.get_classification()["QSOProba"],
                                     "Probability to be a QSO"),
-                          fits.Card('P_STAR',self.drp1d_output.classification["StarProba"],
+                          fits.Card('P_STAR',self.drp1d_output.get_classification()["StarProba"],
                                     "Probability to be a star")]
         hdr = fits.Header(classification)
-        hdu = fits.BinTableHDU(header=hdr,name="CLASSIFICATION")
+        hdu = fits.BinTableHDU(header=hdr, name="CLASSIFICATION")
         hdulist.append(hdu)
 
     def galaxy_candidates_to_fits(self, hdulist):
-        nb_candidates = self.drp1d_output.nb_candidates["galaxy"]
+        nb_candidates = self.drp1d_output.get_nb_candidates("galaxy")
         npix = len(self.lambda_ranges)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
@@ -94,19 +97,19 @@ class RedshiftCandidates:
 
         for rank in range(nb_candidates):
             zcandidates[rank]['Z'] = self.drp1d_output.get_candidate_data("galaxy", rank, "Redshift")
-            zcandidates[rank]['Z_ERR'] = self.drp1d_output.get_candidate_data("galaxy", rank, "RedshiftError")
+            zcandidates[rank]['Z_ERR'] = self.drp1d_output.get_candidate_data("galaxy", rank, "RedshiftUncertainty")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['Z_PROBA'] = self.drp1d_output.get_candidate_data("galaxy", rank, "RedshiftProba")
             zcandidates[rank]['SUBCLASS'] = ''
-            zcandidates[rank]['CFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "TemplateName")
+            zcandidates[rank]['CFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "ContinuumName")
             zcandidates[rank]['LFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "LinesRatioName")
             zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("galaxy", rank)
 
         hdulist.append(fits.BinTableHDU(name='GALAXY_CANDIDATES', data=zcandidates))
 
     def qso_candidates_to_fits(self, hdulist):
-        if "qso" in self.drp1d_output.nb_candidates:
-            nb_candidates = self.drp1d_output.nb_candidates["qso"]
+        if "qso" in self.drp1d_output.object_results:
+            nb_candidates = self.drp1d_output.get_nb_candidates("qso")
         else:
             nb_candidates = 0
         npix = len(self.lambda_ranges)
@@ -121,7 +124,7 @@ class RedshiftCandidates:
 
         for rank in range(nb_candidates):
             zcandidates[rank]['Z'] = self.drp1d_output.get_candidate_data("qso", rank, "Redshift")
-            zcandidates[rank]['Z_ERR'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftError")
+            zcandidates[rank]['Z_ERR'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftUncertainty")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['Z_PROBA'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftProba")
             zcandidates[rank]['SUBCLASS'] = ''
@@ -130,7 +133,7 @@ class RedshiftCandidates:
         hdulist.append(fits.BinTableHDU(name='QSO_CANDIDATES', data=zcandidates))
         
     def star_candidates_to_fits(self,hdulist):
-        nb_candidates = self.drp1d_output.nb_candidates["star"]
+        nb_candidates = self.drp1d_output.get_nb_candidates("star")
         npix = len(self.lambda_ranges)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
@@ -144,19 +147,19 @@ class RedshiftCandidates:
 
         for rank in range(nb_candidates):
             zcandidates[rank]['V'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift")
-            zcandidates[rank]['V_ERR'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftError")
+            zcandidates[rank]['V_ERR'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['T_PROBA'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['SUBCLASS'] = ''
-            zcandidates[rank]['TFILE'] = self.drp1d_output.get_candidate_data("star", rank, "ModelTplName")
+            zcandidates[rank]['TFILE'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumName")
             zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("star", rank)
 
         hdulist.append(fits.BinTableHDU(name='STAR_CANDIDATES', data=zcandidates))
 
     def object_pdf_to_fits(self, object_type, hdulist):
-        if object_type in self.drp1d_output.pdf:
-            pdf = self.drp1d_output.pdf[object_type].to_records(index=False)
-            grid_size = self.drp1d_output.pdf[object_type].index.size
+        if object_type in self.drp1d_output.object_results:
+            pdf = self.drp1d_output.object_dataframes[object_type]["pdf"].to_records(index=False)
+            grid_size = self.drp1d_output.object_dataframes[object_type]["pdf"].index.size
             zpdf_hdu = np.ndarray(grid_size, buffer=pdf,
                                   dtype=[('ln PDF', 'f4'), ('REDSHIFT', 'f4')])
         else:
@@ -205,7 +208,7 @@ class RedshiftCandidates:
     def _get_model_on_lambda_range(self,object_type,rank):
         model = np.array(self.lambda_ranges, dtype=np.float64, copy=True)
         model.fill(np.nan)
-        np.place(model, self.mask == 0, self.drp1d_output.model[object_type][rank]["ModelFlux"].to_numpy())
+        np.place(model, self.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
         model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
         return model
 #        return {"catId":int(catId),
