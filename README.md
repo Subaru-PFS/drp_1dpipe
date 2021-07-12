@@ -29,6 +29,7 @@ To run the tests simply run from the `drp_1dpipe` directory:
 ## Getting started
 
 To run the 1d DRP pipeline on a local machine, create a new `workdir` directory including the two subdirectories `spectra` and `calibration`.
+Base directory with spectra examples and calibration directory can be found for each release at https://pfs.ipmu.jp/internal/devarch/lam-drp1d/
 
 	workdir
 		|-- spectra
