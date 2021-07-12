@@ -49,8 +49,9 @@ class ShowParametersAction(argparse.Action):
         super(ShowParametersAction, self).__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if values == 'galaxy+star':
-            params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../auxdir/parameters_stellar_galaxy.json")
+        if values == 'galaxy+star+qso':
+            params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
+                                       "../auxdir/parameters_stellar_galaxy_qso.json")
         elif values == 'galaxy':
             params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../auxdir/parameters_galaxy.json")
         elif values == 'star':

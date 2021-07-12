@@ -75,21 +75,9 @@ def define_specific_program_options():
     parser.add_argument('--output_dir', metavar='DIR', action=AbspathAction,
                         help='Directory where all generated files are going to'
                         ' be stored. Relative to workdir.')
-    parser.add_argument('--linemeas_parameters_file', metavar='FILE',
-                        help='Parameters file used for line flux measurement. '
-                        'Relative to workdir.')
-    parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
-                        help='Whether to do line flux measurements.'
-                        '"on" to do redshift and line flux calculations, '
-                        '"off" to disable, '
-                        '"only" to skip the redshift part.')
     parser.add_argument('--continue', action='store_true', dest='continue_',
                         help='Continue a previous processing.')
-    parser.add_argument('--stellar', choices=['on', 'off', 'only'],
-                        help='Whether to provide stellar results'
-                        '"on" provide stellar results'
-                        '"off" do not provide stellar results'
-                        '"only" provide only stellar results')
+
 
     return parser
 
@@ -128,8 +116,8 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     try:
         output = ResultStoreOutput(None, ctx.GetResultStore(), param)
-        rc = RedshiftCandidates(output, spectrum_path)
-        logger.log(logging.INFO,"write fits")
+        rc = RedshiftCandidates(output, spectrum_path,logger)
+        logger.log(logging.INFO, "write fits")
         rc.write_fits(output_dir)
     except Exception as e:
         raise Exception("Failed to write fits result for spectrum "
@@ -147,17 +135,10 @@ def load_line_catalog(calibration_dir, objectType, linemodel_params):
     return line_catalog
 
 
-def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
+def _setup_pass(calibration_dir, parameters_file):
 
     params = default_parameters.copy()
-    try:
-        # override default parameters with those found in parameters_file
-        with open(default_parameters_file, 'r') as f:
-            params = update(params, json.load(f))
-    except Exception as e:
-        logger.log(logging.ERROR,
-                   f'unable to read default parameter file : {e}')
-        raise
+
     if parameters_file:
         try:
             # override default parameters with those found in parameters_file
@@ -172,7 +153,7 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
     if not os.path.exists(calibration_dir):
         raise FileNotFoundError(f"Calibration directory does not exist: "
                                 f"{calibration_dir}")
-    params['calibrationDir']=calibration_dir
+    params['calibrationDir'] = calibration_dir
 
     # load line catalog
     if "linemodelsolve" in params["galaxy"]:
@@ -186,14 +167,6 @@ def _setup_pass(calibration_dir, default_parameters_file, parameters_file):
         qso_line_catalog = load_line_catalog(calibration_dir, "QSO", linemodel_params)
     else:
         qso_line_catalog = CRayCatalog()
-    # line_catalog = CRayCatalog()
-    # line_catalog_file = normpath(os.path.join(calibration_dir, params["linecatalog"]))
-    # if not os.path.exists(line_catalog_file):
-    #     raise FileNotFoundError(f"Line catalog file not found: "
-    #                             f"{line_catalog_file}")
-    # logger.log(logging.INFO, "Loading %s" % line_catalog_file)
-    # line_catalog.Load(line_catalog_file)
-    # line_catalog.ConvertVacuumToAir()
 
     medianRemovalMethod = params['templateCatalog']['continuumRemoval']['method']
     medianKernelWidth = float(params["templateCatalog"]["continuumRemoval"]["medianKernelWidth"])
@@ -253,9 +226,7 @@ def amazed(config):
         parameters_file = normpath(config.parameters_file)
 
     param, gal_line_catalog, qsol_line_catalog, template_catalog = _setup_pass(normpath(config.calibration_dir),
-                                                  normpath(config.default_parameters_file),
-                                                  parameters_file)
-
+                                                                               parameters_file)
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
 
@@ -264,11 +235,6 @@ def amazed(config):
 
     data_dir = os.path.join(outdir, 'data')
     os.makedirs(data_dir, exist_ok=True)
-
-    outdir_linemeas = None
-    if config.lineflux in ['only', 'on']:
-        outdir_linemeas = '-'.join([outdir, 'lf'])
-        os.makedirs(outdir_linemeas, exist_ok=True)
 
     products = []
     for i, spectrum_path in enumerate(spectra_list):

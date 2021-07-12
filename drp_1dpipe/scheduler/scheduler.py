@@ -55,25 +55,12 @@ def define_specific_program_options():
                         help='Maximum number of spectra per bunch.')
     parser.add_argument('--notification_url', metavar='URL',
                         help=argparse.SUPPRESS)
-    parser.add_argument('--lineflux', choices=['on', 'off', 'only'],
-                        help='Whether to do line flux measurements.'
-                        '"on" to do redshift and line flux calculations, '
-                        '"off" to disable line flux, '
-                        '"only" to skip the redshift part.')
     parser.add_argument('--parameters_file', '-p', metavar='FILE', action=AbspathAction,
                         help='Parameters file. Relative to workdir.')
-    parser.add_argument('--linemeas_parameters_file', metavar='FILE', action=AbspathAction,
-                        help='Parameters file used for line flux measurement. '
-                        'Relative to workdir.')
     parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
                         help='Output directory.')
-    parser.add_argument('--stellar', choices=['on', 'off', 'only'],
-                        help='Whether to provide stellar results'
-                        '"on" provide stellar results'
-                        '"off" do not provide stellar results'
-                        '"only" provide only stellar results')
     parser.add_argument('--get_default_parameters',  action=ShowParametersAction,
-                        choices=["galaxy+star", "galaxy", "star"],
+                        choices=["galaxy+star+qso", "galaxy", "star"],
                         help='Show example parameters ')
 
     return parser
@@ -234,11 +221,8 @@ def main_method(config):
                             },
                             args={
                                 'workdir': normpath(config.workdir),
-                                'lineflux': config.lineflux,
                                 'spectra_dir': normpath(config.spectra_dir),
                                 'parameters_file': config.parameters_file,
-                                'linemeas_parameters_file': config.linemeas_parameters_file,
-                                'stellar': config.stellar
                             })
         except Exception as e:
             traceback.print_exc()

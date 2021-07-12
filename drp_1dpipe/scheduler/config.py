@@ -17,13 +17,9 @@ config_defaults = {
     'spectra_dir': 'spectra',
     'bunch_size': 8,
     'notification_url': '',
-    'lineflux': 'on',
-    'default_parameters_file': get_auxiliary_path("parameters_stellar_galaxy.json"),
-    'default_linemeas_parameters_file': get_auxiliary_path("linemeas-parameters.json"),
     'output_dir':'@AUTO@',
     'stellar': 'on',
     'parameters_file': '',
-    'linemeas_parameters_file': '',
     'get_default_parameters': None
     }
 

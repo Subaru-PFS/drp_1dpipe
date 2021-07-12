@@ -140,7 +140,7 @@
         "redshiftstep": "0.00005",
         "redshiftsampling": "lin",
         "method": "templatefittingsolve",
-        "template_dir": "templates/Xshooter_stars",
+        "template_dir": "templates/Xshooter_stars_v2",
         "templatefittingsolve": {
             "fftprocessing": "no",
             "overlapThreshold": 1,

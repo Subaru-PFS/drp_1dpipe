@@ -7,7 +7,7 @@
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": 400
     },
-    "enablestellarsolve": "no",
+    "enablestellarsolve": "yes",
     "enableqsosolve": "no",
     "galaxy": {
         "redshiftrange": [
@@ -47,5 +47,18 @@
                 "stronglinesprior": "-1"
             }
         }
+    },
+    "star": {
+        "template_dir": "templates/Xshooter_stars_v2",
+        "redshiftrange": [
+            -0.003,
+            0.003
+        ],
+        "redshiftstep": 0.00005
+    },
+    "qso": {
+        "redshiftrange": [0.1,8],
+        "redshiftstep": "0.001",
+        "template_dir": "templates/qso_sdss_meanqso_comp4/"
     }
 }

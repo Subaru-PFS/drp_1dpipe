@@ -1,14 +1,20 @@
 {
-  "template_dir": "templates/BC03_sdss_tremonti21",
-  "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
-  "enablestellarsolve": "yes",
-    "stellarsolve": {
-        "starsolve": {
-      "redshiftrange": [
-            "-0.003",
-            "0.003" 
-      ],
-      "redshiftstep": "0.00005"
-	}
-    }	
+    "lambdarange": [
+        3000,
+        13000
+    ],
+    "continuumRemoval": {
+        "method": "IrregularSamplingMedian",
+        "medianKernelWidth": 400
+    },
+    "enablestellarsolve": "yes",
+    "enableqsosolve": "no",
+    "star": {
+        "template_dir": "templates/Xshooter_stars_v2",
+        "redshiftrange": [
+            -0.003,
+            0.003
+        ],
+        "redshiftstep": 0.00005
+    }
 }

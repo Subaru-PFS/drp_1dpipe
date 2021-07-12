@@ -5,7 +5,6 @@
 "concurrency": 1,
 "venv": "",
 "spectra_dir" : "spectra",
-"lineflux": "on",
 "bunch_size": 8
 }
 
