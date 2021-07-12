@@ -4,17 +4,14 @@ from pylibamazed.redshift import get_version
 from drp_1dpipe import VERSION
 from astropy.io import fits
 from pfs.datamodel.drp import PfsObject
-from pylibamazed.redshift import CLog
-import logging
-
-logger = logging.getLogger("process_spectra")
 
 
 class RedshiftCandidates:
 
-    def __init__(self, drp1d_output, spectrum_path):
+    def __init__(self, drp1d_output, spectrum_path, logger):
         self.drp1d_output = drp1d_output
         self.spectrum_path = spectrum_path
+        self.logger = logger
 
     def write_fits(self, output_dir):
         catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
@@ -69,7 +66,7 @@ class RedshiftCandidates:
             raise Exception("Unknow classification type " + self.drp1d_output.get_classification()["Type"])
 
     def classification_to_fits(self, hdulist):
-        classification = [fits.Card('CLASS',self.drp1d_output.get_classification()["Type"],
+        classification = [fits.Card('CLASS', self.get_classification_type(),
                                     "Spectro classification: GALAXY, QSO, STAR"),
                           fits.Card('P_GALAXY',self.drp1d_output.get_classification()["GalaxyProba"],
                                     "Probability to be a galaxy"),
@@ -160,8 +157,11 @@ class RedshiftCandidates:
         if object_type in self.drp1d_output.object_results:
             pdf = self.drp1d_output.object_dataframes[object_type]["pdf"].to_records(index=False)
             grid_size = self.drp1d_output.object_dataframes[object_type]["pdf"].index.size
+            grid_name = 'REDSHIFT'
+            if object_type == "star":
+                grid_name = 'VELOCITY'
             zpdf_hdu = np.ndarray(grid_size, buffer=pdf,
-                                  dtype=[('ln PDF', 'f4'), ('REDSHIFT', 'f4')])
+                                  dtype=[('ln PDF', 'f4'), (grid_name, 'f4')])
         else:
             zpdf_hdu = None
 
