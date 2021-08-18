@@ -87,7 +87,7 @@ def _output_path(args, *path):
 
 
 def _process_spectrum(output_dir, spectrum_path, template_catalog,
-                      gal_line_catalog, qso_line_catalog, param):
+                      gal_line_catalog, qso_line_catalog, param, user_param):
 
     try:
         spectrum = read_spectrum(spectrum_path)
@@ -116,7 +116,7 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     try:
         output = ResultStoreOutput(None, ctx.GetResultStore(), param)
-        rc = RedshiftCandidates(output, spectrum_path,logger)
+        rc = RedshiftCandidates(output, spectrum_path,logger, user_param)
         logger.log(logging.INFO, "write fits")
         rc.write_fits(output_dir)
     except Exception as e:
@@ -138,12 +138,13 @@ def load_line_catalog(calibration_dir, objectType, linemodel_params):
 def _setup_pass(calibration_dir, parameters_file):
 
     params = default_parameters.copy()
-
+    user_params = None
     if parameters_file:
         try:
             # override default parameters with those found in parameters_file
             with open(parameters_file, 'r') as f:
-                params = update(params, json.load(f))
+                user_params = json.load(f)
+                params = update(params, user_params )
         except Exception as e:
             logger.log(logging.INFO,
                        f'unable to read parameter file : {e}, using defaults')
@@ -204,7 +205,7 @@ def _setup_pass(calibration_dir, parameters_file):
         tdir = normpath(calibration_dir, params["qso"]["template_dir"])
         template_catalog.Load(tdir)
 
-    return params, gal_line_catalog, qso_line_catalog, template_catalog
+    return params, gal_line_catalog, qso_line_catalog, template_catalog, user_params
 
 
 def amazed(config):
@@ -225,7 +226,7 @@ def amazed(config):
     if config.parameters_file:
         parameters_file = normpath(config.parameters_file)
 
-    param, gal_line_catalog, qsol_line_catalog, template_catalog = _setup_pass(normpath(config.calibration_dir),
+    param, gal_line_catalog, qsol_line_catalog, template_catalog, user_param = _setup_pass(normpath(config.calibration_dir),
                                                                                parameters_file)
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
@@ -261,7 +262,7 @@ def amazed(config):
             if to_process:
                 try:
                     _process_spectrum(data_dir, spectrum, template_catalog,
-                                      gal_line_catalog,qsol_line_catalog, param)
+                                      gal_line_catalog,qsol_line_catalog, param, user_param)
                     processed = True
                 except Exception as e:
                     logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))

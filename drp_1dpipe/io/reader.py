@@ -3,6 +3,7 @@ from pfs.datamodel.drp import PfsObject
 from pylibamazed.redshift import (CSpectrumSpectralAxis,
                                   CSpectrumFluxAxis_withError,
                                   CSpectrum)
+from astropy.io import fits
 import numpy as np
 
 
@@ -44,3 +45,14 @@ def get_nb_valid_points(path):
     mask = obj.mask
     valid = np.where(mask == 0, True, False)
     return np.sum(valid)
+
+
+def get_datamodel_version(path):
+    """
+        Read a pfsObject FITS file and tells if it is valid
+
+        :param path: FITS file name
+        :rtype: CSpectrum
+    """
+    f = fits.open(path)
+    return f[1].header["DAMD_VER"]

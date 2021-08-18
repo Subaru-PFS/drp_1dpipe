@@ -4,14 +4,17 @@ from pylibamazed.redshift import get_version
 from drp_1dpipe import VERSION
 from astropy.io import fits
 from pfs.datamodel.drp import PfsObject
+from drp_1dpipe.io.reader import get_datamodel_version
+import json
 
 
 class RedshiftCandidates:
 
-    def __init__(self, drp1d_output, spectrum_path, logger):
+    def __init__(self, drp1d_output, spectrum_path, logger,user_param):
         self.drp1d_output = drp1d_output
         self.spectrum_path = spectrum_path
         self.logger = logger
+        self.user_param = user_param
 
     def write_fits(self, output_dir):
         catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
@@ -47,11 +50,12 @@ class RedshiftCandidates:
                   fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits'),
                   fits.Card('D1D_VER', get_version(), 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
-                  fits.Card('DAMD_VER', "unknown", 'Version of the data model'), #TODO
-                  fits.Card('PAR_FILE', "parameters.json", "Parameters file name"), #TODO
+                  fits.Card('DAMD_VER', get_datamodel_version(self.spectrum_path), 'Version of the data model'),
+                  fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json"),
                   fits.Card('ZWARNING', quality_flag, 'Quality flag')]
 
         hdr = fits.Header(header)
+        #hdr['UPARAM'] = json.dumps(self.user_param)
         primary = fits.PrimaryHDU(header=hdr)
         hdulist.append(primary)
 
@@ -130,7 +134,10 @@ class RedshiftCandidates:
         hdulist.append(fits.BinTableHDU(name='QSO_CANDIDATES', data=zcandidates))
         
     def star_candidates_to_fits(self,hdulist):
-        nb_candidates = self.drp1d_output.get_nb_candidates("star")
+        if "star" in self.drp1d_output.object_results:
+            nb_candidates = self.drp1d_output.get_nb_candidates("star")
+        else:
+            nb_candidates = 0
         npix = len(self.lambda_ranges)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
@@ -140,7 +147,7 @@ class RedshiftCandidates:
                                         ('SUBCLASS', 'S15'),
                                         ('TFILE','S50'),
                                         ('MODELFLUX', 'f4', (npix,))
-                                        ])        
+                                        ])
 
         for rank in range(nb_candidates):
             zcandidates[rank]['V'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift")
