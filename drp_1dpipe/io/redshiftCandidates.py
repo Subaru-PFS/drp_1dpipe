@@ -41,6 +41,7 @@ class RedshiftCandidates:
 
         catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
                 os.path.basename(self.spectrum_path))
+        wl_infos = self._get_pfsObject_wavelength_infos(self.spectrum_path)
         quality_flag = 2 # no linemeas active
         header = [fits.Card('tract', tract, 'Area of the sky'),
                   fits.Card('patch', patch, 'Region within tract'),
@@ -48,6 +49,9 @@ class RedshiftCandidates:
                   fits.Card('objId', objId, 'Unique ID for object'),
                   fits.Card('nvisit', nVisit, 'Number of visit'),
                   fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits'),
+                  fits.Card('CRPIX1',wl_infos["CRPIX1"],'Pixel coordinate of reference point'),
+                  fits.Card('CRVAL1',wl_infos["CRVAL1"],'[m] Coordinate value at reference point'),
+                  fits.Card('CDELT1',wl_infos["CDELT1"],'[m] Coordinate increment at reference point'),
                   fits.Card('D1D_VER', get_version(), 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
                   fits.Card('DAMD_VER', get_datamodel_version(self.spectrum_path), 'Version of the data model'),
@@ -55,7 +59,6 @@ class RedshiftCandidates:
                   fits.Card('ZWARNING', quality_flag, 'Quality flag')]
 
         hdr = fits.Header(header)
-        #hdr['UPARAM'] = json.dumps(self.user_param)
         primary = fits.PrimaryHDU(header=hdr)
         hdulist.append(primary)
 
@@ -218,9 +221,11 @@ class RedshiftCandidates:
         np.place(model, self.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
         model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
         return model
-#        return {"catId":int(catId),
-#                "tract":int(tract),
-#                "patch":patch,
-#                "objId":int(objId, 16),
-#                "nvisit":int(nvisit),
-#                "vHash":int(pfsVisitHash, 16)}
+
+    def _get_pfsObject_wavelength_infos(self, path):
+        f = fits.open(path)
+        return {"CRPIX1": f[1].header["CRPIX1"],
+                "CRVAL1": f[1].header["CRVAL1"],
+                "CDELT1": f[1].header["CDELT1"]}
+                
+                  
