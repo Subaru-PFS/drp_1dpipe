@@ -18,6 +18,7 @@ from drp_1dpipe.core.utils import init_environ, normpath, TemporaryFilesSet
 from drp_1dpipe.io.reader import read_spectrum, get_nb_valid_points
 from drp_1dpipe.io.catalog import DirectoryTemplateCatalog, FitsTemplateCatalog
 from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
+from drp_1dpipe.io.lsf import CreateLSF
 from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
                                    CLogFileHandler, CRayCatalog,
@@ -78,7 +79,6 @@ def define_specific_program_options():
     parser.add_argument('--continue', action='store_true', dest='continue_',
                         help='Continue a previous processing.')
 
-
     return parser
 
 
@@ -100,11 +100,30 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     try:
         ctx = CProcessFlowContext()
+        parameter_store = ctx.LoadParameterStore(json.dumps(param))
+    except GlobalException as e:
+        raise Exception("Can't build parameter Store : {}".format(e.what()))
+    except ParameterException as e:
+        raise Exception("Can't build parameter Store : {}".format(e.what()))
+    except Exception as e:
+        raise Exception("Can't build parameter Store : {}".format(e))
+
+    try:
+        lsf = CreateLSF(param["LSF"]["LSFType"], parameter_store, param["calibrationDir"])
+        spectrum.SetLSF(lsf)
+    except GlobalException as e:
+        raise Exception("Can't create LSF : {}".format(e.what()))
+    except ParameterException as e:
+        raise Exception("Can't create LSF : {}".format(e.what()))
+    except Exception as e:
+        raise Exception("Can't create LSF : {}".format(e))
+
+
+    try:
         ctx.Init(spectrum,
                  template_catalog,
                  gal_line_catalog,
-                 qso_line_catalog,
-                 json.dumps(param))
+                 qso_line_catalog)
     except Exception as e:
         raise Exception("ProcessFlow init error : {}".format(e))
 
