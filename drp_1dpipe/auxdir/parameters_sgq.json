@@ -46,7 +46,7 @@
         "linemodelsolve": {
             "linemodel": {
                 "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
-                "linecatalog_convert": true,
+                "linecatalog_convert": false,
                 "linetypefilter": "no",
                 "lineforcefilter": "no",
                 "fittingmethod": "individual",
@@ -152,24 +152,28 @@
             "dustfit": "yes"
         }
     },
+
     "qso": {
-    "redshiftrange": [0, 8],
-    "redshiftstep": 0.00005,
-    "redshiftsampling": "lin",
-    "method":"templatefittingsolve",
-    "template_dir": "templates/qso_sdss_meanqso_comp4",
-    "templatefittingsolve": {
-      "fftprocessing":"no",
-      "overlapThreshold":1,
-      "extremacount":5,
-      "pdfcombination": "bestchi2",
-      "saveintermediateresults": "no" ,
-      "spectrum": {
-        "component": "raw"
-      },
-      "interpolation": "precomputedfinegrid",
-      "dustfit": "yes",
-      "extinction":"yes"
+        "redshiftrange": [
+            0.1,
+            8
+        ],
+        "redshiftstep": 0.001,
+        "redshiftsampling": "log",
+        "method": "templatefittingsolve",
+        "template_dir": "templates/qso_sdss_meanqso_comp4/",
+        "templatefittingsolve": {
+            "fftprocessing":"no",
+            "overlapThreshold":1,
+            "extremacount":5,
+            "pdfcombination": "marg",
+            "saveintermediateresults": "no" , 
+            "spectrum": {
+                "component": "raw" 
+            },
+            "interpolation": "precomputedfinegrid",
+            "dustfit": "yes",
+            "extinction":"yes"   
+	}
     }
-  }
 }

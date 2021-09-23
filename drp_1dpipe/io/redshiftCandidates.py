@@ -6,6 +6,7 @@ from astropy.io import fits
 from pfs.datamodel.drp import PfsObject
 from drp_1dpipe.io.reader import get_datamodel_version
 import json
+import pandas as pd
 
 
 class RedshiftCandidates:
@@ -15,6 +16,11 @@ class RedshiftCandidates:
         self.spectrum_path = spectrum_path
         self.logger = logger
         self.user_param = user_param
+        self.line_catalog = pd.DataFrame()
+
+    def load_line_catalog(self,linecatalog_path):
+        self.line_catalog = pd.read_csv(linecatalog_path, sep='\t', header=3,float_precision='round_trip', index_col="id")
+        self.line_catalog.rename(columns={"#lambda": "LambdaRest"},inplace=True)
 
     def write_fits(self, output_dir):
         catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
@@ -27,10 +33,10 @@ class RedshiftCandidates:
         self.classification_to_fits(hdul)
         self.galaxy_candidates_to_fits(hdul)
         self.object_pdf_to_fits("galaxy", hdul)
-        self.object_lines_to_fits("galaxy", hdul)
+        self.galaxy_lines_to_fits("galaxy", hdul)
         self.qso_candidates_to_fits(hdul)
         self.object_pdf_to_fits("qso", hdul)
-        self.object_lines_to_fits("qso", hdul)
+        self.qso_lines_to_fits("qso", hdul)
         self.star_candidates_to_fits(hdul)
         self.object_pdf_to_fits("star", hdul)
 
@@ -177,7 +183,77 @@ class RedshiftCandidates:
 
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+'_PDF', data=zpdf_hdu))
 
-    def object_lines_to_fits(self, object_type, hdulist):
+    def galaxy_lines_to_fits(self, object_type, hdulist):
+        fr = self.drp1d_output.get_fitted_rays_by_rank("linemeas", None)
+        fr = fr[fr["LinemeasRaysLambda"] > 0]
+        fr = fr.set_index("LinemeasRaysID")
+        fr = pd.merge(fr, self.line_catalog[["name", "LambdaRest"]], left_index=True, right_index=True)
+        nr = fr.index.size
+        zlines = np.ndarray((fr.index.size,),
+                            dtype=[('LINENAME', 'S15'),
+                                   ('LINEWAVE', 'f4'),
+                                   ('LINEZ', 'f4'),
+                                   ('LINEZ_ERR', 'f4'),
+                                   ('LINESIGMA', 'f4'),
+                                   ('LINESIGMA_ERR', 'f4'),
+                                   ('LINEVEL', 'f4'),
+                                   ('LINEVEL_ERR', 'f4'),
+                                   ('LINEFLUX', 'f4'),
+                                   ('LINEFLUX_ERR', 'f4'),
+                                   ('LINEEW', 'f4'),
+                                   ('LINEEW_ERR', 'f4'),
+                                   ('LINECONTLEVEL', 'f4'),
+                                   ('LINECONTLEVEL_ERR', 'f4')])
+        zi = 0
+        for i in list(fr.index):
+            zlines[zi]['LINENAME'] = fr.at[i, "name"]
+            zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasRaysLambda"]
+            zlines[zi]['LINEZ'] = self.drp1d_output.get_candidate_data("galaxy", 0, "Redshift" )
+            zlines[zi]['LINEZ_ERR'] = self.drp1d_output.get_candidate_data("galaxy", 0, "RedshiftUncertainty")
+            zlines[zi]['LINESIGMA'] = -1
+            zlines[zi]['LINESIGMA_ERR'] = -1
+            zlines[zi]['LINEVEL'] = -1
+            zlines[zi]['LINEVEL_ERR'] = -1
+            zlines[zi]['LINEFLUX'] = fr.at[i, "LinemeasRaysFlux"]
+            zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasRaysFluxError"]
+            zlines[zi]['LINEEW'] = -1
+            zlines[zi]['LINEEW_ERR'] = -1
+            zlines[zi]['LINECONTLEVEL'] = -1
+            zlines[zi]['LINECONTLEVEL_ERR'] = -1
+            zi = zi+1
+
+        # fr['LINEZ']=[self.drp1d_output.get_candidate_data("galaxy", 0, "Redshift") for i in range(nr)]
+        # fr['LINEZ_ERR'] = [self.drp1d_output.get_candidate_data("galaxy", 0, "RedshiftUncertainty")
+        #                for i in range(nr)]
+        # fr["LINESIGMA"] = [-1 for i in range(nr)]
+        # fr["LINESIGMA_ERR"] = [-1 for i in range(nr)]
+        # fr["LINEVEL"] = [-1 for i in range(nr)]
+        # fr["LINEVEL_ERR"] = [-1 for i in range(nr)]
+        # fr["LINEEW"] = [-1 for i in range(nr)]
+        # fr["LINEEW_ERR"] = [-1 for i in range(nr)]
+        # fr["LINECONTLEVEL"] = [-1 for i in range(nr)]
+        # fr["LINECONTLEVEL_ERR"] = [-1 for i in range(nr)]
+        # fr = fr[["name", "LambdaRest", "LINEZ", 'LINEZ_ERR', 'LINESIGMA', 'LINESIGMA_ERR', 'LINEVEL', 'LINEVEL_ERR',
+        #          "LinemeasRaysFlux", "LinemeasRaysFluxError",
+        #          'LINEEW','LINEEW_ERR', 'LINECONTLEVEL', 'LINECONTLEVEL_ERR']]
+        # zlines = np.ndarray(fr.index.size,buffer=fr.to_records(index=False),
+        #                     dtype=[('LINENAME', 'S15'),
+        #                            ('LINEWAVE', 'f4'),
+        #                            ('LINEZ', 'f4'),
+        #                            ('LINEZ_ERR', 'f4'),
+        #                            ('LINESIGMA', 'f4'),
+        #                            ('LINESIGMA_ERR', 'f4'),
+        #                            ('LINEVEL', 'f4'),
+        #                            ('LINEVEL_ERR', 'f4'),
+        #                            ('LINEFLUX', 'f4'),
+        #                            ('LINEFLUX_ERR', 'f4'),
+        #                            ('LINEEW', 'f4'),
+        #                            ('LINEEW_ERR', 'f4'),
+        #                            ('LINECONTLEVEL', 'f4'),
+        #                            ('LINECONTLEVEL_ERR', 'f4')])
+        hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES", data=zlines))
+
+    def qso_lines_to_fits(self, object_type, hdulist):
         zlines = np.ndarray((0,),
                             dtype=[('LINENAME', 'S15'),
                                    ('LINEWAVE', 'f4'),
@@ -193,8 +269,8 @@ class RedshiftCandidates:
                                    ('LINEEW_ERR', 'f4'),
                                    ('LINECONTLEVEL', 'f4'),
                                    ('LINECONTLEVEL_ERR', 'f4')])
-        hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES", data=zlines))
-    
+        hdulist.append(fits.BinTableHDU(name=object_type.upper() + "_LINES", data=zlines))
+
     @staticmethod
     def _parse_pfsObject_name(name):
         """Parse a pfsObject file name.

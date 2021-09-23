@@ -97,7 +97,8 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     # proc_id = os.path.join(spectrum.GetName(), str(index))
     proc_id, ext = os.path.splitext(spectrum.GetName())
-
+    param["enablestellarsolve"] = "no"
+    param["enableqsosolve"] = "no"
     try:
         ctx = CProcessFlowContext()
         parameter_store = ctx.LoadParameterStore(json.dumps(param))
@@ -118,7 +119,6 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
     except Exception as e:
         raise Exception("Can't create LSF : {}".format(e))
 
-
     try:
         ctx.Init(spectrum,
                  template_catalog,
@@ -135,7 +135,37 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     try:
         output = ResultStoreOutput(None, ctx.GetResultStore(), param)
-        rc = RedshiftCandidates(output, spectrum_path,logger, user_param)
+        param["enablelinemeassolve"] = "yes"
+        param["enablegalaxysolve"] = "no"
+        param["enablestellarsolve"] = "no"
+        param["enableqsosolve"] = "no"
+        param["linemeas"]["redshiftref"] = output.get_attribute("galaxy","model_parameters","Redshift",0)
+        param["linemeas"]["linemeassolve"]["linemodel"]["velocityabsorption"] = output.get_attribute("galaxy",
+                                                                                                     "model_parameters",
+                                                                                                     "VelocityAbsorption",
+                                                                                                     0)
+        param["linemeas"]["linemeassolve"]["linemodel"]["velocityemission"] = output.get_attribute("galaxy",
+                                                                                                   "model_parameters",
+                                                                                                   "VelocityEmission",
+                                                                                                   0)
+        ctx.LoadParameterStore(json.dumps(param))
+        pflow.Process(ctx)
+    except Exception as e:
+        raise Exception("Line Measurement Processing error : {}".format(e))
+
+    try:
+        param["enablegalaxysolve"] = "yes"
+        param["enablelinemeassolve"] = "no" # temporary trick, waiting for correct API in 0.26
+
+        output = ResultStoreOutput(None, ctx.GetResultStore(), param)
+        output.object_results["linemeas"] = dict() # temporary trick, waiting for correct API in 0.26
+        output.object_dataframes["linemeas"] = dict() # temporary trick, waiting for correct API in 0.26
+        output.operator_results["linemeas"] = dict() # temporary trick, waiting for correct API in 0.26
+        output.load_object_level("linemeas") # temporary trick, waiting for correct API in 0.26
+
+        rc = RedshiftCandidates(output, spectrum_path, logger, user_param)
+        rc.load_line_catalog(normpath(param['calibrationDir'],
+                                      param["linemeas"]["linemeassolve"]["linemodel"]["linecatalog"]))
         logger.log(logging.INFO, "write fits")
         rc.write_fits(output_dir)
     except Exception as e:
