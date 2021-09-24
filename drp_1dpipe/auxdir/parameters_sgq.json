@@ -184,7 +184,7 @@
 	"template_dir": "templates/BC03_sdss_tremonti21",
 	"linemeassolve": {
 	    "linemodel": {
-	    	"linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
+	    	"linecatalog": "linecatalogs/linecatalogamazedvacuum_F2_noHepsilon-linemeas.txt",
 		"nsigmasupport": "8",
 		"linewidthtype": "combined",
 		"fittingmethod": "hybrid",

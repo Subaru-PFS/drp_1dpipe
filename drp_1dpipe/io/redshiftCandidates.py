@@ -207,50 +207,22 @@ class RedshiftCandidates:
         zi = 0
         for i in list(fr.index):
             zlines[zi]['LINENAME'] = fr.at[i, "name"]
-            zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasRaysLambda"]
+            zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasRaysLambda"]*0.1
             zlines[zi]['LINEZ'] = self.drp1d_output.get_candidate_data("galaxy", 0, "Redshift" )
             zlines[zi]['LINEZ_ERR'] = self.drp1d_output.get_candidate_data("galaxy", 0, "RedshiftUncertainty")
             zlines[zi]['LINESIGMA'] = -1
             zlines[zi]['LINESIGMA_ERR'] = -1
             zlines[zi]['LINEVEL'] = -1
             zlines[zi]['LINEVEL_ERR'] = -1
-            zlines[zi]['LINEFLUX'] = fr.at[i, "LinemeasRaysFlux"]
-            zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasRaysFluxError"]
+            # erg/cm2/s -> 10^-35 W/m2 : erg/cm2/s=10^-7W/cm2=10^-3W/m2 -> *10^-3
+            zlines[zi]['LINEFLUX'] = fr.at[i, "LinemeasRaysFlux"]*10**-3
+            zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasRaysFluxError"]*10**-3
             zlines[zi]['LINEEW'] = -1
             zlines[zi]['LINEEW_ERR'] = -1
             zlines[zi]['LINECONTLEVEL'] = -1
             zlines[zi]['LINECONTLEVEL_ERR'] = -1
             zi = zi+1
 
-        # fr['LINEZ']=[self.drp1d_output.get_candidate_data("galaxy", 0, "Redshift") for i in range(nr)]
-        # fr['LINEZ_ERR'] = [self.drp1d_output.get_candidate_data("galaxy", 0, "RedshiftUncertainty")
-        #                for i in range(nr)]
-        # fr["LINESIGMA"] = [-1 for i in range(nr)]
-        # fr["LINESIGMA_ERR"] = [-1 for i in range(nr)]
-        # fr["LINEVEL"] = [-1 for i in range(nr)]
-        # fr["LINEVEL_ERR"] = [-1 for i in range(nr)]
-        # fr["LINEEW"] = [-1 for i in range(nr)]
-        # fr["LINEEW_ERR"] = [-1 for i in range(nr)]
-        # fr["LINECONTLEVEL"] = [-1 for i in range(nr)]
-        # fr["LINECONTLEVEL_ERR"] = [-1 for i in range(nr)]
-        # fr = fr[["name", "LambdaRest", "LINEZ", 'LINEZ_ERR', 'LINESIGMA', 'LINESIGMA_ERR', 'LINEVEL', 'LINEVEL_ERR',
-        #          "LinemeasRaysFlux", "LinemeasRaysFluxError",
-        #          'LINEEW','LINEEW_ERR', 'LINECONTLEVEL', 'LINECONTLEVEL_ERR']]
-        # zlines = np.ndarray(fr.index.size,buffer=fr.to_records(index=False),
-        #                     dtype=[('LINENAME', 'S15'),
-        #                            ('LINEWAVE', 'f4'),
-        #                            ('LINEZ', 'f4'),
-        #                            ('LINEZ_ERR', 'f4'),
-        #                            ('LINESIGMA', 'f4'),
-        #                            ('LINESIGMA_ERR', 'f4'),
-        #                            ('LINEVEL', 'f4'),
-        #                            ('LINEVEL_ERR', 'f4'),
-        #                            ('LINEFLUX', 'f4'),
-        #                            ('LINEFLUX_ERR', 'f4'),
-        #                            ('LINEEW', 'f4'),
-        #                            ('LINEEW_ERR', 'f4'),
-        #                            ('LINECONTLEVEL', 'f4'),
-        #                            ('LINECONTLEVEL_ERR', 'f4')])
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES", data=zlines))
 
     def qso_lines_to_fits(self, object_type, hdulist):
@@ -303,5 +275,6 @@ class RedshiftCandidates:
         return {"CRPIX1": f[1].header["CRPIX1"],
                 "CRVAL1": f[1].header["CRVAL1"],
                 "CDELT1": f[1].header["CDELT1"]}
-                
+
+
                   
