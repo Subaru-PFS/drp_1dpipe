@@ -97,8 +97,7 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     # proc_id = os.path.join(spectrum.GetName(), str(index))
     proc_id, ext = os.path.splitext(spectrum.GetName())
-    param["enablestellarsolve"] = "no"
-    param["enableqsosolve"] = "no"
+
     try:
         ctx = CProcessFlowContext()
         parameter_store = ctx.LoadParameterStore(json.dumps(param))

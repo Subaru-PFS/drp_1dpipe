@@ -175,5 +175,23 @@
             "dustfit": "yes",
             "extinction":"yes"   
 	}
+    },
+    "linemeas": {
+	"dzhalf":0.001,
+	"redshiftstep": "0.0001",
+	"redshiftsampling": "log",
+	"method": "linemeassolve",
+	"template_dir": "templates/BC03_sdss_tremonti21",
+	"linemeassolve": {
+	    "linemodel": {
+	    	"linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
+		"nsigmasupport": "8",
+		"linewidthtype": "combined",
+		"fittingmethod": "hybrid",
+		"velocityfit": "no",
+		"rigidity": "rules",
+		"rules": "no"
+            }
+	}
     }
 }
