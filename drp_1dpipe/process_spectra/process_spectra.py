@@ -164,7 +164,7 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
         rc = RedshiftCandidates(output, spectrum_path, logger, user_param)
         rc.load_line_catalog(normpath(param['calibrationDir'],
-                                      param["linemeas"]["linemeassolve"]["linemodel"]["linecatalog"]))
+                                      "linecatalogs/pfs_linecatalog_F1_names.csv"))
         logger.log(logging.INFO, "write fits")
         rc.write_fits(output_dir)
     except Exception as e:
@@ -178,7 +178,6 @@ def load_line_catalog(calibration_dir, objectType, linemodel_params):
     line_catalog_file = linemodel_params["linecatalog"]
     line_catalog = CRayCatalog()
     line_catalog.Load(normpath(calibration_dir, line_catalog_file))
-    line_catalog.ConvertVacuumToAir()
 
     return line_catalog
 

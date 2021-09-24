@@ -19,8 +19,7 @@ class RedshiftCandidates:
         self.line_catalog = pd.DataFrame()
 
     def load_line_catalog(self,linecatalog_path):
-        self.line_catalog = pd.read_csv(linecatalog_path, sep='\t', header=3,float_precision='round_trip', index_col="id")
-        self.line_catalog.rename(columns={"#lambda": "LambdaRest"},inplace=True)
+        self.line_catalog = pd.read_csv(linecatalog_path, sep='\t', float_precision='round_trip', index_col="id")
 
     def write_fits(self, output_dir):
         catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
