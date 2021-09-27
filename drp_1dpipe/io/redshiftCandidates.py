@@ -57,7 +57,7 @@ class RedshiftCandidates:
                   fits.Card('CRPIX1',wl_infos["CRPIX1"],'Pixel coordinate of reference point'),
                   fits.Card('CRVAL1',wl_infos["CRVAL1"],'[m] Coordinate value at reference point'),
                   fits.Card('CDELT1',wl_infos["CDELT1"],'[m] Coordinate increment at reference point'),
-                  fits.Card('D1D_VER', get_version(), 'Version of the DRP_1D library'),
+                  fits.Card('D1D_VER', get_version()[0:7], 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
                   fits.Card('DAMD_VER', get_datamodel_version(self.spectrum_path), 'Version of the data model'),
                   fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json"),
