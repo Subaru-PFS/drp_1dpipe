@@ -154,6 +154,8 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     try:
         param["enablegalaxysolve"] = "yes"
+        param["enablestellarsolve"] = "yes"
+        param["enableqsosolve"] = "yes"
         param["enablelinemeassolve"] = "no" # temporary trick, waiting for correct API in 0.26
 
         output = ResultStoreOutput(None, ctx.GetResultStore(), param)
