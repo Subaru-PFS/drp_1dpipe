@@ -170,13 +170,16 @@ class RedshiftCandidates:
 
     def object_pdf_to_fits(self, object_type, hdulist):
         if object_type in self.drp1d_output.object_results:
-            pdf = self.drp1d_output.object_dataframes[object_type]["pdf"].to_records(index=False)
+            ln_pdf = np.float32(self.drp1d_output.object_dataframes[object_type]["pdf"]["PDFProbaLog"])
+            pdf_grid = np.float32(self.drp1d_output.object_dataframes[object_type]["pdf"]["PDFZGrid"])
             grid_size = self.drp1d_output.object_dataframes[object_type]["pdf"].index.size
             grid_name = 'REDSHIFT'
             if object_type == "star":
                 grid_name = 'VELOCITY'
-            zpdf_hdu = np.ndarray(grid_size, buffer=pdf,
+            zpdf_hdu = np.ndarray(grid_size, 
                                   dtype=[('ln PDF', 'f4'), (grid_name, 'f4')])
+            zpdf_hdu['ln PDF']=ln_pdf
+            zpdf_hdu[grid_name]=pdf_grid
         else:
             zpdf_hdu = None
 
@@ -267,7 +270,7 @@ class RedshiftCandidates:
         model.fill(np.nan)
         np.place(model, self.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
         model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
-        return model
+        return np.float32(model)
 
     def _get_pfsObject_wavelength_infos(self, path):
         f = fits.open(path)
