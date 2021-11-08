@@ -100,6 +100,7 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     try:
         ctx = CProcessFlowContext()
+        param["enablelinemeassolve"] = False
         parameter_store = ctx.LoadParameterStore(json.dumps(param))
     except GlobalException as e:
         raise Exception("Can't build parameter Store : {}".format(e.what()))
@@ -134,10 +135,10 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
 
     try:
         output = ResultStoreOutput(None, ctx.GetResultStore(), param)
-        param["enablelinemeassolve"] = "yes"
-        param["enablegalaxysolve"] = "no"
-        param["enablestellarsolve"] = "no"
-        param["enableqsosolve"] = "no"
+        param["enablelinemeassolve"] = True
+        param["enablegalaxysolve"] = False
+        param["enablestarsolve"] = False
+        param["enableqsosolve"] = False
         param["linemeas"]["redshiftref"] = output.get_attribute("galaxy","model_parameters","Redshift",0)
         param["linemeas"]["linemeassolve"]["linemodel"]["velocityabsorption"] = output.get_attribute("galaxy",
                                                                                                      "model_parameters",
@@ -153,10 +154,10 @@ def _process_spectrum(output_dir, spectrum_path, template_catalog,
         raise Exception("Line Measurement Processing error : {}".format(e))
 
     try:
-        param["enablegalaxysolve"] = "yes"
-        param["enablestellarsolve"] = "yes"
-        param["enableqsosolve"] = "yes"
-        param["enablelinemeassolve"] = "no" # temporary trick, waiting for correct API in 0.26
+        param["enablegalaxysolve"] = True
+        param["enablestarsolve"] = True
+        param["enableqsosolve"] = True
+        param["enablelinemeassolve"] = False # temporary trick, waiting for correct API in 0.26
 
         output = ResultStoreOutput(None, ctx.GetResultStore(), param)
         output.object_results["linemeas"] = dict() # temporary trick, waiting for correct API in 0.26
@@ -212,32 +213,19 @@ def _setup_pass(calibration_dir, parameters_file):
     else:
         gal_line_catalog = CRayCatalog()
 
-    if params["enableqsosolve"] == "yes" and "linemodelsolve" in params["qso"]:
+    if params["enableqsosolve"] and "linemodelsolve" in params["qso"]:
         linemodel_params = params["qso"]["linemodelsolve"]["linemodel"]
         qso_line_catalog = load_line_catalog(calibration_dir, "QSO", linemodel_params)
     else:
         qso_line_catalog = CRayCatalog()
 
-    medianRemovalMethod = params['templateCatalog']['continuumRemoval']['method']
-    medianKernelWidth = float(params["templateCatalog"]["continuumRemoval"]["medianKernelWidth"])
-    nscales = float(params["templateCatalog"]["continuumRemoval"]["decompScales"])
-    dfBinPath = params["templateCatalog"]["continuumRemoval"]["binPath"]
 
     # Load galaxy templates
     if "template_dir" not in params["galaxy"]:
         raise Exception("Incomplete parameter file, template_dir entry mandatory")
     _template_dir = normpath(calibration_dir,  params["galaxy"]["template_dir"])
 
-    if os.path.isfile(_template_dir):
-        # template_dir is actually a file: load templates from FITS
-        template_catalog = FitsTemplateCatalog(medianRemovalMethod,
-                                               medianKernelWidth,
-                                               nscales, dfBinPath)
-    else:
-        # template_dir a directory: load templates from calibration dirs
-        template_catalog = DirectoryTemplateCatalog(medianRemovalMethod,
-                                                    medianKernelWidth,
-                                                    nscales, dfBinPath)
+    template_catalog = DirectoryTemplateCatalog()
     logger.log(logging.INFO, "Loading %s" % _template_dir)
 
     try:
@@ -246,11 +234,11 @@ def _setup_pass(calibration_dir, parameters_file):
         logger.log(logging.CRITICAL, "Can't load template : {}".format(e))
         raise
 
-    if params["enablestellarsolve"] == "yes":
+    if params["enablestarsolve"]:
         tdir = normpath(calibration_dir, params["star"]["template_dir"])
         template_catalog.Load(tdir)
     # Read QSO template catalog
-    if params["enableqsosolve"] == "yes":
+    if params["enableqsosolve"]:
         tdir = normpath(calibration_dir, params["qso"]["template_dir"])
         template_catalog.Load(tdir)
 
