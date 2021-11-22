@@ -15,8 +15,8 @@ Install Amazed library for Subaru-PFS project. See https://github.com/Subaru-PFS
 ### Install drp_1dpipe
 
 To install Subaru PFS 1D data reduction pipeline, simply run :
-
-    pip install .
+   pip install -r pip-requirements.txt
+   pip install .
 
 ### Testing an installed 1D DRP pipeline
 
