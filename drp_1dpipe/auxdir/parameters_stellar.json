@@ -1,14 +1,15 @@
 {
     "lambdarange": [
-        3000,
-        13000
+        3900,
+        12500
     ],
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": 400
     },
-    "enablestellarsolve": "yes",
-    "enableqsosolve": "no",
+    "enablestellarsolve": true,
+    "enableqsosolve": false,
+    "enablegalaxysolve":false,
     "star": {
         "template_dir": "templates/Xshooter_stars_v2",
         "redshiftrange": [

@@ -1,14 +1,19 @@
 {
     "lambdarange": [
-        3000,
-        13000
+        3900,
+        12500
     ],
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": 400
     },
-    "enablestellarsolve": "yes",
-    "enableqsosolve": "no",
+    "LSF": {
+        "LSFType": "GaussianConstantResolution",
+        "resolution": 4300
+    },
+
+    "enablestarsolve": true,
+    "enableqsosolve": false,
     "galaxy": {
         "redshiftrange": [
             0.01,
@@ -20,29 +25,28 @@
         "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
         "linemodelsolve": {
             "linemodel": {
-                "linetypefilter": "no",
-                "lineforcefilter": "no",
-                "instrumentresolution": "4300",
-                "velocityemission": "100",
-                "velocityabsorption": "100",
-                "velocityfit": "yes",
-                "emvelocityfitmin": "10",
-                "emvelocityfitmax": "400",
-                "emvelocityfitstep": "20",
-                "absvelocityfitmin": "150",
-                "absvelocityfitmax": "500",
-                "absvelocityfitstep": "50",
-                "tplratio_ismfit": "yes",
+                "linetypefilter": false,
+                "lineforcefilter": false,
+                "velocityemission": 100,
+                "velocityabsorption": 100,
+                "velocityfit": true,
+                "emvelocityfitmin": 10,
+                "emvelocityfitmax": 400,
+                "emvelocityfitstep": 20,
+                "absvelocityfitmin": 150,
+                "absvelocityfitmax": 500,
+                "absvelocityfitstep": 50,
+                "tplratio_ismfit": true,
                 "continuumcomponent": "tplfit",
                 "continuumfit": {
-                    "ismfit": "yes",
-                    "igmfit": "yes"
+                    "ismfit": true,
+                    "igmfit": true
                 },
-                "skipsecondpass": "no",
+                "skipsecondpass": false,
                 "extremacount": "5",
                 "extremacutprobathreshold": "-1",
                 "firstpass": {
-                    "tplratio_ismfit": "no"
+                    "tplratio_ismfit": false
                 },
                 "stronglinesprior": "-1"
             }
@@ -58,7 +62,7 @@
     },
     "qso": {
         "redshiftrange": [0.1,8],
-        "redshiftstep": "0.001",
+        "redshiftstep": 0.001,
         "template_dir": "templates/qso_sdss_meanqso_comp4/"
     }
 }
