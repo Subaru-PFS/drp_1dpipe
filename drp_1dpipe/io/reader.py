@@ -1,58 +1,95 @@
 import os.path
 from pfs.datamodel.drp import PfsObject
-from pylibamazed.redshift import (CSpectrumSpectralAxis,
-                                  CSpectrumFluxAxis_withError,
-                                  CSpectrum)
+from pylibamazed.AbstractSpectrumReader import AbstractSpectrumReader
 from astropy.io import fits
 import numpy as np
 
 
-def read_spectrum(path):
-    """
-    Read a pfsObject FITS file and build a CSpectrum out of it
+class PfsObjectReader(AbstractSpectrumReader):
 
-    :param path: FITS file name
-    :rtype: CSpectrum
-    """
+    def __init__(self, spectrum_path, calibration_library):
+        self.pfs_object = PfsObject.readFits(spectrum_path)
+        proc_id, ext = os.path.splitext(spectrum_path.split(os.pathsep)[-1])
+        catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
+                os.path.basename(spectrum_path))
+        self.pfs_object_id = {
+            "catId": catId,
+            "tract": tract,
+            "patch": patch,
+            "objId": objId,
+            "nVisit": nVisit,
+            "pfsVisitHash": pfsVisitHash
+        }
 
-    obj = PfsObject.readFits(path)
-    mask = obj.mask
-    valid = np.where(mask == 0, True, False)
-    wavelength = np.array(np.extract(valid, obj.wavelength), dtype=np.float32)
-    flux = np.array(np.extract(valid, obj.flux), dtype=np.float32)
-    error = np.array(np.extract(valid, np.sqrt(obj.covar[0][0:])), dtype=np.float32)
+        f = fits.open(spectrum_path)
+        self.wl_infos = {"CRPIX1": f[1].header["CRPIX1"],
+                         "CRVAL1": f[1].header["CRVAL1"],
+                         "CDELT1": f[1].header["CDELT1"]}
 
-    # convert from nJy
-    flux = np.multiply(1/wavelength**2, flux)*2.99792458/10**14
-    error = np.multiply(1/wavelength**2, error)*2.99792458/10**14
+        self.damd_version = f[1].header["DAMD_VER"]
+        AbstractSpectrumReader.__init__(self,
+                                        proc_id,
+                                        calibration_library.parameters,
+                                        calibration_library,
+                                        proc_id)
 
-    spectralaxis = CSpectrumSpectralAxis(wavelength * 10.0, "")
-    signal = CSpectrumFluxAxis_withError(flux, error)
-    spectrum = CSpectrum(spectralaxis, signal)
-    spectrum.SetName(os.path.basename(path))
-    return spectrum
+    def load_wave(self, hdul):
+        """
+        Load the spectral axis in self.wave , units are in Angstrom by default
+        :param hdul: hdul of the resource where the wave can be found
+        """
+        mask = self.pfs_object.mask
+        valid = np.where(mask == 0, True, False)
+        wavelength = np.array(np.extract(valid, self.pfs_object.wavelength), dtype=np.float32)
+        self.waves.append(wavelength*10)
 
+    def load_flux(self, hdul):
+        """
+        Load the spectral axis in self.flux , units are in erg.cm-2 by default
+        :param hdul: hdul of the resource where the wave can be found
+        """
+        mask = self.pfs_object.mask
+        valid = np.where(mask == 0, True, False)
+        flux = np.array(np.extract(valid, self.pfs_object.flux), dtype=np.float32)
+        flux = np.multiply(1 / self.waves[0] ** 2, flux) * 2.99792458 / 10 ** 14
+        self.fluxes.append(flux)
 
-def get_nb_valid_points(path):
-    """
-    Read a pfsObject FITS file and tells if it is valid
+    def load_error(self, hdul):
+        mask = self.pfs_object.mask
+        valid = np.where(mask == 0, True, False)
+        error = np.array(np.extract(valid, np.sqrt(self.pfs_object.covar[0][0:])), dtype=np.float32)
+        error = np.multiply(1 / self.waves[0] ** 2, error) * 2.99792458 / 10 ** 14
+        self.errors.append(error)
 
-    :param path: FITS file name
-    :rtype: CSpectrum
-    """
+    def load_lsf(self, hdul):
+        pass
 
-    obj = PfsObject.readFits(path)
-    mask = obj.mask
-    valid = np.where(mask == 0, True, False)
-    return np.sum(valid)
+    def load_photometry(self, hdul):
+        pass
 
-
-def get_datamodel_version(path):
-    """
+    def get_nb_valid_points(self):
+        """
         Read a pfsObject FITS file and tells if it is valid
 
         :param path: FITS file name
         :rtype: CSpectrum
-    """
-    f = fits.open(path)
-    return f[1].header["DAMD_VER"]
+        """
+
+        mask = self.pfs_object.mask
+        valid = np.where(mask == 0, True, False)
+        return np.sum(valid)
+
+    def _parse_pfsObject_name(self, name):
+        """Parse a pfsObject file name.
+
+        Template is : pfsObject-%05d-%05d-%s-%016x-%03d-0x%016x.fits
+        pfsObject-%(catId)05d-%(tract)05d-%(patch)s-%(objId)016x-%(nVisit % 1000)03d-0x%(pfsVisitHash)016x.fits
+        """
+        basename = os.path.splitext(name)[0]
+        head, catId, tract, patch, objId, nvisit, pfsVisitHash = basename.split('-')
+        assert head == 'pfsObject'
+        return (int(catId), int(tract), patch, int(objId, 16), int(nvisit), int(pfsVisitHash, 16))
+
+
+
+

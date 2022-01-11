@@ -3,17 +3,15 @@ import numpy as np
 from pylibamazed.redshift import get_version
 from drp_1dpipe import VERSION
 from astropy.io import fits
-from pfs.datamodel.drp import PfsObject
-from drp_1dpipe.io.reader import get_datamodel_version
 import json
 import pandas as pd
 
 
 class RedshiftCandidates:
 
-    def __init__(self, drp1d_output, spectrum_path, logger,user_param):
+    def __init__(self, drp1d_output, spectrum_reader, logger,user_param):
         self.drp1d_output = drp1d_output
-        self.spectrum_path = spectrum_path
+        self.spectrum_reader = spectrum_reader
         self.logger = logger
         self.user_param = user_param
         self.line_catalog = pd.DataFrame()
@@ -22,12 +20,14 @@ class RedshiftCandidates:
         self.line_catalog = pd.read_csv(linecatalog_path, sep='\t', float_precision='round_trip', index_col="id")
 
     def write_fits(self, output_dir):
-        catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
-                os.path.basename(self.spectrum_path))
         path = "pfsZcandidates-%05d-%05d-%s-%016x-%03d-0x%016x.fits" % (
-        catId, tract, patch, objId, nVisit % 1000, pfsVisitHash)
+            self.spectrum_reader.pfs_object_id["catId"],
+            self.spectrum_reader.pfs_object_id["tract"],
+            self.spectrum_reader.pfs_object_id["patch"],
+            self.spectrum_reader.pfs_object_id["objId"],
+            self.spectrum_reader.pfs_object_id["nVisit"] % 1000,
+            self.spectrum_reader.pfs_object_id["pfsVisitHash"])
         hdul = []
-        self._read_lambda_ranges()
         self.header_to_fits(hdul)
         self.classification_to_fits(hdul)
         self.galaxy_candidates_to_fits(hdul)
@@ -43,23 +43,19 @@ class RedshiftCandidates:
                                    overwrite=True)
 
     def header_to_fits(self, hdulist):
-
-        catId, tract, patch, objId, nVisit, pfsVisitHash = self._parse_pfsObject_name(
-                os.path.basename(self.spectrum_path))
-        wl_infos = self._get_pfsObject_wavelength_infos(self.spectrum_path)
         quality_flag = 2 # no linemeas active
-        header = [fits.Card('tract', tract, 'Area of the sky'),
-                  fits.Card('patch', patch, 'Region within tract'),
-                  fits.Card('catId', catId, 'Source of the objId'),
-                  fits.Card('objId', objId, 'Unique ID for object'),
-                  fits.Card('nvisit', nVisit, 'Number of visit'),
-                  fits.Card('vHash', pfsVisitHash, '63-bit SHA-1 list of visits'),
-                  fits.Card('CRPIX1',wl_infos["CRPIX1"],'Pixel coordinate of reference point'),
-                  fits.Card('CRVAL1',wl_infos["CRVAL1"],'[m] Coordinate value at reference point'),
-                  fits.Card('CDELT1',wl_infos["CDELT1"],'[m] Coordinate increment at reference point'),
+        header = [fits.Card('tract', self.spectrum_reader.pfs_object_id["tract"], 'Area of the sky'),
+                  fits.Card('patch', self.spectrum_reader.pfs_object_id["patch"], 'Region within tract'),
+                  fits.Card('catId', self.spectrum_reader.pfs_object_id["catId"], 'Source of the objId'),
+                  fits.Card('objId', self.spectrum_reader.pfs_object_id["objId"], 'Unique ID for object'),
+                  fits.Card('nvisit', self.spectrum_reader.pfs_object_id["nVisit"], 'Number of visit'),
+                  fits.Card('vHash', self.spectrum_reader.pfs_object_id["pfsVisitHash"], '63-bit SHA-1 list of visits'),
+                  fits.Card('CRPIX1',self.spectrum_reader.wl_infos["CRPIX1"],'Pixel coordinate of reference point'),
+                  fits.Card('CRVAL1',self.spectrum_reader.wl_infos["CRVAL1"],'[m] Coordinate value at reference point'),
+                  fits.Card('CDELT1',self.spectrum_reader.wl_infos["CDELT1"],'[m] Coordinate increment at reference point'),
                   fits.Card('D1D_VER', get_version()[0:7], 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
-                  fits.Card('DAMD_VER', get_datamodel_version(self.spectrum_path), 'Version of the data model'),
+                  fits.Card('DAMD_VER', self.spectrum_reader.damd_version, 'Version of the data model'),
                   fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json"),
                   fits.Card('ZWARNING', quality_flag, 'Quality flag')]
 
@@ -92,7 +88,7 @@ class RedshiftCandidates:
 
     def galaxy_candidates_to_fits(self, hdulist):
         nb_candidates = self.drp1d_output.get_nb_candidates("galaxy")
-        npix = len(self.lambda_ranges)
+        npix = len(self.spectrum_reader.pfs_object.wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('Z', 'f4'),
@@ -121,7 +117,7 @@ class RedshiftCandidates:
             nb_candidates = self.drp1d_output.get_nb_candidates("qso")
         else:
             nb_candidates = 0
-        npix = len(self.lambda_ranges)
+        npix = len(self.spectrum_reader.pfs_object.wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('Z', 'f4'),
@@ -146,7 +142,7 @@ class RedshiftCandidates:
             nb_candidates = self.drp1d_output.get_nb_candidates("star")
         else:
             nb_candidates = 0
-        npix = len(self.lambda_ranges)
+        npix = len(self.spectrum_reader.pfs_object.wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('V', 'f4'),
@@ -245,38 +241,14 @@ class RedshiftCandidates:
                                    ('LINECONTLEVEL_ERR', 'f4')])
         hdulist.append(fits.BinTableHDU(name=object_type.upper() + "_LINES", data=zlines))
 
-    @staticmethod
-    def _parse_pfsObject_name(name):
-        """Parse a pfsObject file name.
-
-        Template is : pfsObject-%05d-%05d-%s-%016x-%03d-0x%016x.fits
-        pfsObject-%(catId)05d-%(tract)05d-%(patch)s-%(objId)016x-%(nVisit % 1000)03d-0x%(pfsVisitHash)016x.fits
-        """
-        basename = os.path.splitext(name)[0]
-        head, catId, tract, patch, objId, nvisit, pfsVisitHash = basename.split('-')
-        assert head == 'pfsObject'
-        return (int(catId), int(tract), patch, int(objId, 16), int(nvisit), int(pfsVisitHash, 16))
-
-    def _read_lambda_ranges(self):
-        """Method used to read lambda vector from spectrum
-        """
-        obj = PfsObject.readFits(self.spectrum_path)
-
-        self.lambda_ranges = obj.wavelength
-        self.mask = obj.mask
-
-    def _get_model_on_lambda_range(self,object_type,rank):
-        model = np.array(self.lambda_ranges, dtype=np.float64, copy=True)
+    def _get_model_on_lambda_range(self, object_type, rank):
+        model = np.array(self.spectrum_reader.pfs_object.wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
-        np.place(model, self.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
-        model = np.multiply(np.array(self.lambda_ranges) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
+        np.place(model, self.spectrum_reader.pfs_object.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
+        model = np.multiply(np.array(self.spectrum_reader.pfs_object.wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
         return np.float32(model)
 
-    def _get_pfsObject_wavelength_infos(self, path):
-        f = fits.open(path)
-        return {"CRPIX1": f[1].header["CRPIX1"],
-                "CRVAL1": f[1].header["CRVAL1"],
-                "CDELT1": f[1].header["CDELT1"]}
+
 
 
                   
