@@ -8,6 +8,7 @@ import traceback
 
 from pylibamazed.CalibrationLibrary import CalibrationLibrary
 from pylibamazed.ResultStoreOutput import ResultStoreOutput
+from pylibamazed.Context import Context
 
 from drp_1dpipe import VERSION
 from drp_1dpipe.core.logger import init_logger
@@ -19,7 +20,8 @@ from drp_1dpipe.core.utils import init_environ, normpath, TemporaryFilesSet
 from drp_1dpipe.io.reader import PfsObjectReader
 from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
-from pylibamazed.redshift import (CProcessFlowContext, CProcessFlow, CLog,
+
+from pylibamazed.redshift import (CLog,
                                   CLogFileHandler, GlobalException, ParameterException,
                                   get_version)
 import collections.abc
@@ -85,90 +87,38 @@ def _output_path(args, *path):
     return normpath(args.workdir, args.output_dir, *path)
 
 
-def _process_spectrum(output_dir, reader, calibration_library, user_param) :
+def _process_spectrum(output_dir, reader, context, user_param) :
 
     try:
         reader.load_all(None)
-        reader.init()
-        spectrum = reader.get_spectrum()
     except Exception as e:
         traceback.print_exc()
         raise Exception("Spectrum loading error: {}".format(e))
 
-    # proc_id = os.path.join(spectrum.GetName(), str(index))
-    proc_id, ext = os.path.splitext(spectrum.GetName())
-    param = calibration_library.parameters
     try:
-        ctx = CProcessFlowContext()
-        calibration_library.parameters["enablelinemeassolve"] = False
-        parameter_store = ctx.LoadParameterStore(json.dumps(param))
+        output = context.run(reader)
     except GlobalException as e:
-        raise Exception("Can't build parameter Store : {}".format(e.what()))
+        raise Exception("Error processing spectrum {} : {}".format(reader.source_id, e.what()))
     except ParameterException as e:
-        raise Exception("Can't build parameter Store : {}".format(e.what()))
+        raise Exception("Error processing spectrum {} : {}".format(reader.source_id, e.what()))
     except Exception as e:
-        raise Exception("Can't build parameter Store : {}".format(e))
+        raise Exception("Error processing spectrum {} : {}".format(reader.source_id, e))
 
     try:
-        ctx.Init(spectrum,
-                 calibration_library.templates_catalogs["all"],
-                 calibration_library.line_catalogs["galaxy"],
-                 calibration_library.line_catalogs["qso"],
-                 calibration_library.photometric_bands
-                 )
-    except Exception as e:
-        raise Exception("ProcessFlow init error : {}".format(e))
-
-    pflow = CProcessFlow()
-    try:
-        pflow.Process(ctx)
-    except Exception as e:
-        raise Exception("Processing error : {}".format(e))
-
-    try:
-        output = ResultStoreOutput(ctx.GetResultStore(), param)
-        param["enablelinemeassolve"] = True
-        param["enablegalaxysolve"] = False
-        param["enablestarsolve"] = False
-        param["enableqsosolve"] = False
-        param["linemeas"]["redshiftref"] = output.get_attribute("galaxy", "model_parameters", "Redshift", 0)
-        param["linemeas"]["linemeassolve"]["linemodel"]["velocityabsorption"] = output.get_attribute("galaxy",
-                                                                                                     "model_parameters",
-                                                                                                     "VelocityAbsorption",
-                                                                                                     0)
-        param["linemeas"]["linemeassolve"]["linemodel"]["velocityemission"] = output.get_attribute("galaxy",
-                                                                                                   "model_parameters",
-                                                                                                   "VelocityEmission",
-                                                                                                   0)
-        ctx.LoadParameterStore(json.dumps(param))
-        pflow.Process(ctx)
-    except Exception as e:
-        raise Exception("Line Measurement Processing error : {}".format(e))
-
-    try:
-        param["enablegalaxysolve"] = True
-        param["enablestarsolve"] = True
-        param["enableqsosolve"] = True
-        param["enablelinemeassolve"] = False # temporary trick, waiting for correct API in 0.26
-
-        output = ResultStoreOutput(ctx.GetResultStore(), param)
-        output.object_results["linemeas"] = dict() # temporary trick, waiting for correct API in 0.26
-        output.object_dataframes["linemeas"] = dict() # temporary trick, waiting for correct API in 0.26
-        output.operator_results["linemeas"] = dict() # temporary trick, waiting for correct API in 0.26
-        output.load_object_level("linemeas") # temporary trick, waiting for correct API in 0.26
-
-        rc = RedshiftCandidates(output, reader, logger, user_param)
-        rc.load_line_catalog(normpath(param['calibrationDir'],
-                                      "linecatalogs/pfs_linecatalog_F1_names.csv"))
+        rc = RedshiftCandidates(output, reader, logger, user_param, context.calibration_library)
         logger.log(logging.INFO, "write fits")
+
         rc.write_fits(output_dir)
     except Exception as e:
         raise Exception("Failed to write fits result for spectrum "
-                      "{} : {}".format(proc_id, e))
+                        "{} : {}".format(reader.source_id, e))
 
 
-def _setup_pass(calibration_dir, parameters_file):
+def _setup_pass(config):
 
+    parameters_file = None
+    if config.parameters_file:
+        parameters_file = normpath(config.parameters_file)
     params = default_parameters.copy()
     user_params = None
     if parameters_file:
@@ -183,15 +133,14 @@ def _setup_pass(calibration_dir, parameters_file):
             raise
 
     # setup calibration dir
-    if not os.path.exists(calibration_dir):
+    if not os.path.exists(config.calibration_dir):
         raise FileNotFoundError(f"Calibration directory does not exist: "
-                                f"{calibration_dir}")
-    params['calibrationDir'] = calibration_dir
-    calibration = CalibrationLibrary(params, params['calibrationDir'])
+                                f"{config.calibration_dir}")
+    params['calibrationDir'] = config.calibration_dir
 
-    calibration.load_all()
+    context = Context(vars(config), params)
 
-    return calibration, user_params
+    return context, user_params
 
 
 def amazed(config):
@@ -208,11 +157,7 @@ def amazed(config):
     #
     # Set up param and linecatalog for redshift pass
     #
-    parameters_file = None
-    if config.parameters_file:
-        parameters_file = normpath(config.parameters_file)
-
-    calibration_library, user_parameters = _setup_pass(normpath(config.calibration_dir), parameters_file)
+    context, user_parameters = _setup_pass(config)
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
@@ -226,7 +171,7 @@ def amazed(config):
     products = []
     for i, spectrum_path in enumerate(spectra_list):
         spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path["fits"])
-        reader = PfsObjectReader(spectrum, calibration_library)
+        reader = PfsObjectReader(spectrum, context.calibration_library)
         nb_valid_points = reader.get_nb_valid_points()
         if nb_valid_points < 3000:
             logger.log(logging.WARNING,
@@ -247,7 +192,7 @@ def amazed(config):
                     shutil.rmtree(spc_out_dir)
             if to_process:
                 try:
-                    _process_spectrum(data_dir, reader,calibration_library, user_parameters)
+                    _process_spectrum(data_dir, reader,context, user_parameters)
                     processed = True
                 except Exception as e:
                     logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
@@ -261,7 +206,7 @@ def amazed(config):
         parameters_file = os.path.join(normpath(config.workdir, config.output_dir),
                                        'parameters.json')
         with open(parameters_file,'w') as f:
-            json.dump(calibration_library.parameters, f)
+            json.dump(context.parameters, f)
         tmpcontext.add_files(parameters_file)
 
         # write list of created products

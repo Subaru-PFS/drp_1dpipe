@@ -9,15 +9,12 @@ import pandas as pd
 
 class RedshiftCandidates:
 
-    def __init__(self, drp1d_output, spectrum_reader, logger,user_param):
+    def __init__(self, drp1d_output, spectrum_reader, logger, user_param, calibration_library):
         self.drp1d_output = drp1d_output
         self.spectrum_reader = spectrum_reader
         self.logger = logger
         self.user_param = user_param
-        self.line_catalog = pd.DataFrame()
-
-    def load_line_catalog(self,linecatalog_path):
-        self.line_catalog = pd.read_csv(linecatalog_path, sep='\t', float_precision='round_trip', index_col="id")
+        self.calibration_library = calibration_library
 
     def write_fits(self, output_dir):
         path = "pfsZcandidates-%05d-%05d-%s-%016x-%03d-0x%016x.fits" % (
@@ -32,7 +29,7 @@ class RedshiftCandidates:
         self.classification_to_fits(hdul)
         self.galaxy_candidates_to_fits(hdul)
         self.object_pdf_to_fits("galaxy", hdul)
-        self.galaxy_lines_to_fits("galaxy", hdul)
+        self.object_lines_to_fits("galaxy", hdul)
         self.qso_candidates_to_fits(hdul)
         self.object_pdf_to_fits("qso", hdul)
         self.qso_lines_to_fits("qso", hdul)
@@ -64,23 +61,16 @@ class RedshiftCandidates:
         hdulist.append(primary)
 
     def get_classification_type(self):
-        if self.drp1d_output.get_classification()["Type"] == "G":
-            return "GALAXY"
-        elif self.drp1d_output.get_classification()["Type"] == "S":
-            return "STAR"
-        elif self.drp1d_output.get_classification()["Type"] == "Q":
-            return "QSO"
-        else:
-            raise Exception("Unknow classification type " + self.drp1d_output.get_classification()["Type"])
+        return self.drp1d_output.get_classification()["Type"].capitalize()
 
     def classification_to_fits(self, hdulist):
         classification = [fits.Card('CLASS', self.get_classification_type(),
                                     "Spectro classification: GALAXY, QSO, STAR"),
-                          fits.Card('P_GALAXY',self.drp1d_output.get_classification()["GalaxyProba"],
+                          fits.Card('P_GALAXY',self.drp1d_output.get_classification()["galaxyProba"],
                                     "Probability to be a galaxy"),
-                          fits.Card('P_QSO',self.drp1d_output.get_classification()["QSOProba"],
+                          fits.Card('P_QSO',self.drp1d_output.get_classification()["qsoProba"],
                                     "Probability to be a QSO"),
-                          fits.Card('P_STAR',self.drp1d_output.get_classification()["StarProba"],
+                          fits.Card('P_STAR',self.drp1d_output.get_classification()["starProba"],
                                     "Probability to be a star")]
         hdr = fits.Header(classification)
         hdu = fits.BinTableHDU(header=hdr, name="CLASSIFICATION")
@@ -181,11 +171,13 @@ class RedshiftCandidates:
 
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+'_PDF', data=zpdf_hdu))
 
-    def galaxy_lines_to_fits(self, object_type, hdulist):
-        fr = self.drp1d_output.get_fitted_rays_by_rank("linemeas", None)
-        fr = fr[fr["LinemeasRaysLambda"] > 0]
-        fr = fr.set_index("LinemeasRaysID")
-        fr = pd.merge(fr, self.line_catalog[["name", "LambdaRest"]], left_index=True, right_index=True)
+    def object_lines_to_fits(self, object_type, hdulist):
+        fr = self.drp1d_output.object_dataframes[object_type]["linemeas"]
+        fr = fr[fr["LinemeasLineLambda"] > 0]
+        fr = fr.set_index("LinemeasLineID")
+        line_catalog = self.calibration_library.line_catalogs_df[object_type]
+        fr = pd.merge(fr, line_catalog[["PfsName", "WaveLength"]], left_index=True, right_index=True)
+
         nr = fr.index.size
         zlines = np.ndarray((fr.index.size,),
                             dtype=[('LINENAME', 'S15'),
@@ -204,8 +196,8 @@ class RedshiftCandidates:
                                    ('LINECONTLEVEL_ERR', 'f4')])
         zi = 0
         for i in list(fr.index):
-            zlines[zi]['LINENAME'] = fr.at[i, "name"]
-            zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasRaysLambda"]*0.1
+            zlines[zi]['LINENAME'] = fr.at[i, "PfsName"]
+            zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasLineLambda"]*0.1
             zlines[zi]['LINEZ'] = self.drp1d_output.get_candidate_data("galaxy", 0, "Redshift" )
             zlines[zi]['LINEZ_ERR'] = self.drp1d_output.get_candidate_data("galaxy", 0, "RedshiftUncertainty")
             zlines[zi]['LINESIGMA'] = -1
@@ -213,8 +205,8 @@ class RedshiftCandidates:
             zlines[zi]['LINEVEL'] = -1
             zlines[zi]['LINEVEL_ERR'] = -1
             # erg/cm2/s -> 10^-35 W/m2 : erg/cm2/s=10^-7W/cm2=10^-3W/m2 -> *10^-3
-            zlines[zi]['LINEFLUX'] = fr.at[i, "LinemeasRaysFlux"]*10**-3
-            zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasRaysFluxError"]*10**-3
+            zlines[zi]['LINEFLUX'] = fr.at[i, "LinemeasLineFlux"]*10**-3
+            zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasLineFluxError"]*10**-3
             zlines[zi]['LINEEW'] = -1
             zlines[zi]['LINEEW_ERR'] = -1
             zlines[zi]['LINECONTLEVEL'] = -1
