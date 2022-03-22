@@ -177,8 +177,8 @@ class RedshiftCandidates:
         fr = fr.set_index("LinemeasLineID")
         line_catalog = self.calibration_library.line_catalogs_df[object_type]
         fr = pd.merge(fr, line_catalog[["PfsName", "WaveLength"]], left_index=True, right_index=True)
+        fr = fr[fr["PfsName"] != "None"]
 
-        nr = fr.index.size
         zlines = np.ndarray((fr.index.size,),
                             dtype=[('LINENAME', 'S15'),
                                    ('LINEWAVE', 'f4'),
@@ -198,9 +198,9 @@ class RedshiftCandidates:
         for i in list(fr.index):
             zlines[zi]['LINENAME'] = fr.at[i, "PfsName"]
             zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasLineLambda"]*0.1
-            zlines[zi]['LINEZ'] = self.drp1d_output.get_candidate_data("galaxy", 0, "Redshift" )
-            zlines[zi]['LINEZ_ERR'] = self.drp1d_output.get_candidate_data("galaxy", 0, "RedshiftUncertainty")
-            zlines[zi]['LINESIGMA'] = -1
+            zlines[zi]['LINEZ'] = self.drp1d_output.get_candidate_data(object_type, 0, "Redshift" )
+            zlines[zi]['LINEZ_ERR'] = self.drp1d_output.get_candidate_data(object_type, 0, "RedshiftUncertainty")
+            zlines[zi]['LINESIGMA'] = fr.at[i,"LinemeasLineWidth"]/10.
             zlines[zi]['LINESIGMA_ERR'] = -1
             zlines[zi]['LINEVEL'] = -1
             zlines[zi]['LINEVEL_ERR'] = -1
@@ -209,7 +209,7 @@ class RedshiftCandidates:
             zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasLineFluxError"]*10**-3
             zlines[zi]['LINEEW'] = -1
             zlines[zi]['LINEEW_ERR'] = -1
-            zlines[zi]['LINECONTLEVEL'] = -1
+            zlines[zi]['LINECONTLEVEL'] = fr.at[i,"LinemeasLineCenterContinuumFlux"]
             zlines[zi]['LINECONTLEVEL_ERR'] = -1
             zi = zi+1
 
