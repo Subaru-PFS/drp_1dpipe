@@ -16,7 +16,7 @@ from drp_1dpipe.core.argparser import define_global_program_options, AbspathActi
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
 from drp_1dpipe.process_spectra.config import config_defaults
 
-from drp_1dpipe.core.utils import init_environ, normpath, TemporaryFilesSet
+from drp_1dpipe.core.utils import normpath, TemporaryFilesSet
 from drp_1dpipe.io.reader import PfsObjectReader
 from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
@@ -245,8 +245,6 @@ def main_method(config):
     start_message = "Running process_spectra {}".format(VERSION)
     logger.info(start_message)
 
-    # set workdir environment
-    init_environ(config.workdir)
 
     if config.process_method.lower() == 'amazed':
         amazed(config)

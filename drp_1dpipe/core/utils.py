@@ -59,16 +59,6 @@ def get_conf_path(file_name):
     return os.path.join(os.path.dirname(os.path.dirname(__file__)), 'conf', file_name)
 
 
-def init_environ(workdir):
-    """Initialize the workin environment
-
-    Parameters
-    ----------
-    workdir : str
-        Path to the working directory
-    """    
-    os.environ['WORKDIR']=os.path.normpath(os.path.expanduser(workdir))
-
 
 def get_args_from_file(file_name):
     """Get arguments value from configuration file.
@@ -90,22 +80,6 @@ def get_args_from_file(file_name):
             continue
         args[key.strip()] = value.strip()
     return args
-
-
-# def save_config_file(args):
-#     """Save the main config file
-
-#     :param args: the argparse Namespace object
-#     """
-#     outdir = normpath(args.workdir, args.output_dir)
-#     os.makedirs(outdir, exist_ok=True)
-#     with open(normpath(outdir, 'config.conf'), 'w') as ff:
-#         dargs=vars(args)
-#         ff.write("# Edited on {}\n".format(
-#             datetime.datetime.now().isoformat(timespec='seconds'))
-#             )
-#         for arg in dargs.keys():
-#             ff.write("{} = {}\n".format(arg, dargs[arg]))
 
 
 def normpath(*args):
@@ -238,7 +212,10 @@ def config_update(origin_config, args=None, install_conf_path=None, environ_var=
             config.log_level = _loglevels[config.loglevel]
         except KeyError:
             raise KeyError("Unknown loglevel. Should be in [ERROR|WARNING|INFO|DEBUG], found : {}".format(config.loglevel))
-
+    if hasattr(config, 'calibration_dir') and not os.path.isabs(config.calibration_dir):
+        config.calibration_dir = os.path.join(config.workdir, config.calibration_dir)
+    if hasattr(config, 'spectra_dir') and not os.path.isabs(config.spectra_dir):
+        config.spectra_dir = os.path.join(config.workdir, config.spectra_dir)
     return config
 
 

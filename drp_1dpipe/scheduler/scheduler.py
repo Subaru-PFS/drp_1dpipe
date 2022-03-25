@@ -16,7 +16,7 @@ from datetime import datetime
 from drp_1dpipe import VERSION
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction, ShowParametersAction
 from drp_1dpipe.core.logger import init_logger
-from drp_1dpipe.core.utils import ( init_environ, get_args_from_file,
+from drp_1dpipe.core.utils import ( get_args_from_file,
                                     normpath, get_auxiliary_path, get_conf_path,
                                     TemporaryFilesSet, config_update, config_save )
 from drp_1dpipe.core.engine.runner import get_runner, list_runners
@@ -168,9 +168,6 @@ def main_method(config):
 
     # Launch banner
     print(start_message)
-
-    # set workdir environment
-    init_environ(config.workdir)
 
     runner_class = get_runner(config.scheduler)
     # if not runner_class:

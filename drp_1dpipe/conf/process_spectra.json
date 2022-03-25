@@ -1,4 +1,4 @@
 {
-    "calibration_dir": "$WORKDIR/calibration",
+   "calibration_dir": "calibration",
     "process_method": "amazed"
 }
