@@ -22,8 +22,10 @@ from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
 
 from pylibamazed.redshift import (CLog,
-                                  CLogFileHandler, GlobalException, ParameterException,
+                                  CLogFileHandler,
                                   get_version)
+from pylibamazed.Exception import AmazedError
+
 import collections.abc
 
 zlog = CLog.GetInstance()
@@ -93,25 +95,19 @@ def _process_spectrum(output_dir, reader, context, user_param) :
         reader.load_all(None)
     except Exception as e:
         traceback.print_exc()
-        raise Exception("Spectrum loading error: {}".format(e))
+        raise AmazedError(ErrorCode.EXTERNAL_LIB_ERROR, "Failed to prepare reader : " + str(e))
 
-    try:
-        output = context.run(reader)
-    except GlobalException as e:
-        raise Exception("Error processing spectrum {} : {}".format(reader.source_id, e.what()))
-    except ParameterException as e:
-        raise Exception("Error processing spectrum {} : {}".format(reader.source_id, e.what()))
-    except Exception as e:
-        raise Exception("Error processing spectrum {} : {}".format(reader.source_id, e))
 
+    output = context.run(reader)
+    
     try:
         rc = RedshiftCandidates(output, reader, logger, user_param, context.calibration_library)
         logger.log(logging.INFO, "write fits")
 
         rc.write_fits(output_dir)
     except Exception as e:
-        raise Exception("Failed to write fits result for spectrum "
-                        "{} : {}".format(reader.source_id, e))
+        raise AmazedError(ErrorCode.EXTERNAL_LIB_ERROR,"Failed to write fits result for spectrum "
+                          "{} : {}".format(reader.source_id, e))
 
 
 def _setup_pass(config):
@@ -181,7 +177,6 @@ def amazed(config):
             to_process = True
         proc_id, ext = os.path.splitext(spectrum_path["fits"])
         spc_out_dir = os.path.join(outdir, proc_id )
-        processed = False
         if to_process:
             # first step : compute redshift
             to_process = True
@@ -193,8 +188,7 @@ def amazed(config):
             if to_process:
                 try:
                     _process_spectrum(data_dir, reader,context, user_parameters)
-                    processed = True
-                except Exception as e:
+                except AmazedError as e:
                     logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
