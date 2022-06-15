@@ -50,6 +50,7 @@
                 "linetypefilter": "no",
                 "lineforcefilter": "no",
                 "fittingmethod": "individual",
+                "igmfit": false,
                 "linewidthtype": "combined",
                 "velocityemission": 100,
                 "velocityabsorption": 100,
@@ -137,9 +138,11 @@
                 "nsigmasupport": 8,
                 "linewidthtype": "combined",
                 "fittingmethod": "hybrid",
+                "polynomialdegree": 2,
                 "velocityfit": false,
                 "rigidity": "rules",
-                "rules": "no"
+                "rules": "no",
+                "igmfit": false
             }
         },
         "enable_reliability": false,
@@ -176,7 +179,8 @@
                 "component": "raw"
             },
             "interpolation": "lin",
-            "dustfit": true
+            "dustfit": true,
+            "extinction": false
         }
     },
     "qso": {
@@ -223,6 +227,7 @@
                 "rules": "no",
                 "continuumcomponent": "tplfit",
                 "continuumreestimation": false,
+                "igmfit": false,
                 "continuumfit": {
                     "negativethreshold": -5.0,
                     "fftprocessing": false,
