@@ -61,16 +61,16 @@ class RedshiftCandidates:
         hdulist.append(primary)
 
     def get_classification_type(self):
-        return self.drp1d_output.get_classification()["Type"].capitalize()
+        return self.drp1d_output.get_attribute(None,"classification","Type").capitalize()
 
     def classification_to_fits(self, hdulist):
         classification = [fits.Card('CLASS', self.get_classification_type(),
                                     "Spectro classification: GALAXY, QSO, STAR"),
-                          fits.Card('P_GALAXY',self.drp1d_output.get_classification()["galaxyProba"],
+                          fits.Card('P_GALAXY',self.drp1d_output.get_attribute(None,"classification","galaxyProba"),
                                     "Probability to be a galaxy"),
-                          fits.Card('P_QSO',self.drp1d_output.get_classification()["qsoProba"],
+                          fits.Card('P_QSO',self.drp1d_output.get_attribute(None,"classification","qsoProba"),
                                     "Probability to be a QSO"),
-                          fits.Card('P_STAR',self.drp1d_output.get_classification()["starProba"],
+                          fits.Card('P_STAR',self.drp1d_output.get_attribute(None,"classification","starProba"),
                                     "Probability to be a star")]
         hdr = fits.Header(classification)
         hdu = fits.BinTableHDU(header=hdr, name="CLASSIFICATION")
@@ -156,9 +156,9 @@ class RedshiftCandidates:
 
     def object_pdf_to_fits(self, object_type, hdulist):
         if object_type in self.drp1d_output.object_results:
-            ln_pdf = np.float32(self.drp1d_output.object_dataframes[object_type]["pdf"]["PDFProbaLog"])
-            pdf_grid = np.float32(self.drp1d_output.object_dataframes[object_type]["pdf"]["PDFZGrid"])
-            grid_size = self.drp1d_output.object_dataframes[object_type]["pdf"].index.size
+            ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFProbaLog"))
+            pdf_grid = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFZGrid"))
+            grid_size = self.drp1d_output.get_dataset_size(object_type,"pdf")
             grid_name = 'REDSHIFT'
             if object_type == "star":
                 grid_name = 'VELOCITY'
@@ -172,10 +172,10 @@ class RedshiftCandidates:
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+'_PDF', data=zpdf_hdu))
 
     def object_lines_to_fits(self, object_type, hdulist):
-        fr = self.drp1d_output.object_dataframes[object_type]["linemeas"]
+        fr = pd.DataFrame(self.drp1d_output.get_dataset("linemeas",object_type))
         fr = fr[fr["LinemeasLineLambda"] > 0]
         fr = fr.set_index("LinemeasLineID")
-        line_catalog = self.calibration_library.line_catalogs_df[object_type]
+        line_catalog = self.calibration_library.line_catalogs_df[object_type]["LineMeasSolve"]
         fr = pd.merge(fr, line_catalog[["PfsName", "WaveLength"]], left_index=True, right_index=True)
         fr = fr[fr["PfsName"] != "None"]
 

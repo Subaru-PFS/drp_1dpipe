@@ -23,6 +23,7 @@ from drp_1dpipe.process_spectra.parameters import default_parameters
 
 from pylibamazed.redshift import (CLog,
                                   CLogFileHandler,
+                                  ErrorCode,
                                   get_version)
 from pylibamazed.Exception import AmazedError
 
@@ -200,7 +201,7 @@ def amazed(config):
         parameters_file = os.path.join(normpath(config.workdir, config.output_dir),
                                        'parameters.json')
         with open(parameters_file,'w') as f:
-            json.dump(context.parameters, f)
+            json.dump(context.parameters.parameters, f)
         tmpcontext.add_files(parameters_file)
 
         # write list of created products
