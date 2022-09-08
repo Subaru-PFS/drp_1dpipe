@@ -77,14 +77,16 @@
                 },
                 "extremacountB": 0,
                 "haprior": -1,
-                "rigidity": "tplshape",
+                "lineRatioType": "tplratio",
                 "rules": "all",
+                "improveBalmerFit": true,
                 "tplratio_catalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v16_emission",
                 "tplratio_ismfit": true,
                 "continuumcomponent": "tplfit",
-                "continuumreestimation": false,
+                "continuumreestimation": "no",
                 "continuumfit": {
                     "negativethreshold": -5.0,
+                    "nullthreshold": 3,
                     "fftprocessing": true,
                     "ismfit": true,
                     "igmfit": true,
@@ -126,7 +128,8 @@
                         "catalog_dirpath": ""
                     }
                 },
-                "nsigmasupport": 8
+                "nsigmasupport": 8,
+                "enablephotometry": false
             }
         },
         "linemeas_method": "LineMeasSolve",
@@ -134,15 +137,20 @@
         "linemeas_redshiftstep": 0.0001,
         "LineMeasSolve": {
             "linemodel": {
+                "continuumcomponent": "nocontinuum",
                 "linecatalog": "linecatalogs/linecatalogamazedvacuum_H0.tsv",
+                "linetypefilter": "E",
+                "lineforcefilter": "no",
                 "nsigmasupport": 8,
                 "linewidthtype": "combined",
                 "fittingmethod": "hybrid",
                 "polynomialdegree": 2,
                 "velocityfit": false,
-                "rigidity": "rules",
+                "lineRatioType": "rules",
                 "rules": "no",
-                "igmfit": false
+                "igmfit": false,
+                "improveBalmerFit": true,
+                "lyaforcedisablefit": false
             }
         },
         "enable_reliability": false,
@@ -157,7 +165,8 @@
             "interpolation": "precomputedfinegrid",
             "extinction": true,
             "dustfit": true,
-            "pdfcombination": "marg"
+            "pdfcombination": "marg",
+            "enablephotometry": false
         }
     },
     "star": {
@@ -180,7 +189,8 @@
             },
             "interpolation": "lin",
             "dustfit": true,
-            "extinction": false
+            "extinction": false,
+            "enablephotometry": false
         }
     },
     "qso": {
@@ -203,7 +213,8 @@
             },
             "interpolation": "precomputedfinegrid",
             "dustfit": true,
-            "extinction": true
+            "extinction": true,
+            "enablephotometry": false
         },
         "LineModelSolve": {
             "linemodel": {
@@ -221,12 +232,12 @@
                 "absvelocityfitmax": 500,
                 "absvelocityfitstep": 50,
                 "haprior": -1,
-                "rigidity": "rules",
+                "lineRatioType": "rules",
                 "improveBalmerFit": true,
                 "fittingmethod": "hybrid",
                 "rules": "no",
                 "continuumcomponent": "tplfit",
-                "continuumreestimation": false,
+                "continuumreestimation": "no",
                 "igmfit": false,
                 "continuumfit": {
                     "negativethreshold": -5.0,
@@ -235,6 +246,7 @@
                     "ismfit": true,
                     "count": 1,
                     "ignorelinesupport": false,
+                    "nullthreshold": 3,
                     "priors": {
                         "betaA": 1,
                         "betaTE": 1,
@@ -286,7 +298,8 @@
                         "catalog_dirpath": ""
                     }
                 },
-                "nsigmasupport": 8
+                "nsigmasupport": 8,
+                "enablephotometry": false
             }
         }
     },
