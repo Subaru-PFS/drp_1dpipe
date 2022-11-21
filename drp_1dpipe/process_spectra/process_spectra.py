@@ -23,9 +23,7 @@ from drp_1dpipe.process_spectra.parameters import default_parameters
 
 from pylibamazed.redshift import (CLog,
                                   CLogFileHandler,
-                                  ErrorCode,
                                   get_version)
-from pylibamazed.Exception import AmazedError
 
 import collections.abc
 
@@ -95,8 +93,7 @@ def _process_spectrum(output_dir, reader, context, user_param) :
     try:
         reader.load_all(None)
     except Exception as e:
-        traceback.print_exc()
-        raise AmazedError(ErrorCode.EXTERNAL_LIB_ERROR, "Failed to prepare reader : " + str(e))
+        raise Exception(f"Failed to prepare reader for {reader.source_id} : {e}")
 
 
     output = context.run(reader)
@@ -107,7 +104,7 @@ def _process_spectrum(output_dir, reader, context, user_param) :
 
         rc.write_fits(output_dir)
     except Exception as e:
-        raise AmazedError(ErrorCode.EXTERNAL_LIB_ERROR,"Failed to write fits result for spectrum "
+        raise Exception("Failed to write fits result for spectrum "
                           "{} : {}".format(reader.source_id, e))
 
 
@@ -189,7 +186,7 @@ def amazed(config):
             if to_process:
                 try:
                     _process_spectrum(data_dir, reader,context, user_parameters)
-                except AmazedError as e:
+                except Exception as e:
                     logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:

@@ -153,21 +153,7 @@
                 "lyaforcedisablefit": false
             }
         },
-        "enable_reliability": false,
-        "reliability_model": "reliability/NNmodels/NN02221231_35_WholeModel.h5",
-        "TemplateFittingSolve": {
-            "extremacount": 5,
-            "overlapThreshold": 1,
-            "spectrum": {
-                "component": "raw"
-            },
-            "fftprocessing": false,
-            "interpolation": "precomputedfinegrid",
-            "extinction": true,
-            "dustfit": true,
-            "pdfcombination": "marg",
-            "enablephotometry": false
-        }
+        "enable_reliability": false
     },
     "star": {
         "redshiftrange": [
@@ -302,6 +288,5 @@
                 "enablephotometry": false
             }
         }
-    },
-    "airvacuum_method": "default"
+    }
 }

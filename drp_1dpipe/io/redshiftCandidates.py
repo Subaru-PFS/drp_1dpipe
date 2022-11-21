@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from pylibamazed.redshift import get_version
+from pylibamazed.PdfBuilder import PdfBuilder
 from drp_1dpipe import VERSION
 from astropy.io import fits
 import json
@@ -26,15 +27,24 @@ class RedshiftCandidates:
             self.spectrum_reader.pfs_object_id["pfsVisitHash"])
         hdul = []
         self.header_to_fits(hdul)
-        self.classification_to_fits(hdul)
-        self.galaxy_candidates_to_fits(hdul)
-        self.object_pdf_to_fits("galaxy", hdul)
-        self.object_lines_to_fits("galaxy", hdul)
-        self.qso_candidates_to_fits(hdul)
-        self.object_pdf_to_fits("qso", hdul)
-        self.qso_lines_to_fits("qso", hdul)
-        self.star_candidates_to_fits(hdul)
-        self.object_pdf_to_fits("star", hdul)
+        if not self.drp1d_output.has_error(None,"classification"):
+            self.classification_to_fits(hdul)
+        if not self.drp1d_output.has_error("galaxy","redshift_solver"):
+            self.galaxy_candidates_to_fits(hdul)
+            self.object_pdf_to_fits("galaxy", hdul)
+        if not self.drp1d_output.has_error("galaxy","linemeas_solver"):
+            try:
+                self.object_lines_to_fits("galaxy", hdul)
+            except Exception as e:
+                raise Exception(f"Could not write line meas, available datasets are {self.drp1d_output.object_results['galaxy'].keys()}")
+        if not self.drp1d_output.has_error("qso","redshift_solver"):
+            self.qso_candidates_to_fits(hdul)
+            self.object_pdf_to_fits("qso", hdul)
+        if not self.drp1d_output.has_error("qso","linemeas_solver"):
+            self.qso_lines_to_fits("qso", hdul)
+        if not self.drp1d_output.has_error("qso","redshift_solver"):    
+            self.star_candidates_to_fits(hdul)
+            self.object_pdf_to_fits("star", hdul)
 
         fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
                                    overwrite=True)
@@ -53,15 +63,63 @@ class RedshiftCandidates:
                   fits.Card('D1D_VER', get_version()[0:7], 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
                   fits.Card('DAMD_VER', self.spectrum_reader.damd_version, 'Version of the data model'),
-                  fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json"),
-                  fits.Card('ZWARNING', quality_flag, 'Quality flag')]
-
+                  fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json")
+                  ]
+        params = self.calibration_library.parameters
+        for ot in ["galaxy","qso","star"]:
+            meth = params[ot]["method"]
+            try:
+                header.append(fits.Card(f'hierarch {ot.upper()}_ZWARNING',
+                                        self.drp1d_output.get_attribute(ot,
+                                                                        "warningFlag",
+                                                                        meth+"WarningFlags"),
+                                        f'Quality flag for {ot} redshift solver'))
+            except Exception as e:
+                raise Exception(f"Could not write quality flag for {ot} and {meth} : {e}") 
+            try:
+                if params[ot]["linemeas_method"]:
+                    header.append(fits.Card(f'hierarch {ot.upper()}_LWARNING',
+                                            self.drp1d_output.get_attribute(ot,
+                                                                            "warningFlag",
+                                                                            "LineMeasSolveWarningFlags"),
+                                            f'Quality flag for {ot} linemeas solver'))
+            except Exception as e:
+                raise Exception(f"Could not write linemeas quality flag for {ot} : {e}")
+        header.append(fits.Card(f'hierarch CLASSIFICATION_WARNING',
+                                0,
+                                # self.drp1d_output.get_attribute(None,
+                                #                                 "warningFlag",
+                                #                                 "classificationWarningFlags"),
+                                f'Quality flag for classification solver'))
+        for ot in ["galaxy","qso","star"]:
+            if self.drp1d_output.has_error(ot,"redshift_solver"):
+                header.append(fits.Card(f'hierarch {ot.upper()}_ZERROR',
+                                        self.drp1d_output.get_error(ot,"redshift_solver")["code"])
+                              )
+            else:
+                header.append(fits.Card(f'hierarch {ot.upper()}_ZERROR',""))
+            if params[ot]["linemeas_method"]:
+                if self.drp1d_output.has_error(ot,"linemeas_solver"):
+                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',
+                                            self.drp1d_output.get_error(ot,"linemeas_solver")["code"])
+                                  )
+                else:
+                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',""))
+        if self.drp1d_output.has_error(None,"classification"):
+            header.append(fits.Card(f'hierarch CLASSIFICATION_ERROR',
+                                    self.drp1d_output.get_error(None,"classification")["code"])
+                                  )
+        else:
+            header.append(fits.Card(f'hierarch CLASSIFICATION_ERROR',
+                                    "")
+                          )
+                
         hdr = fits.Header(header)
         primary = fits.PrimaryHDU(header=hdr)
         hdulist.append(primary)
 
     def get_classification_type(self):
-        return self.drp1d_output.get_attribute(None,"classification","Type").capitalize()
+        return self.drp1d_output.get_attribute(None,"classification","Type").upper()
 
     def classification_to_fits(self, hdulist):
         classification = [fits.Card('CLASS', self.get_classification_type(),
@@ -157,7 +215,10 @@ class RedshiftCandidates:
     def object_pdf_to_fits(self, object_type, hdulist):
         if object_type in self.drp1d_output.object_results:
             ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFProbaLog"))
-            pdf_grid = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFZGrid"))
+            builder = PdfBuilder(self.drp1d_output)
+            pdf_grid = np.float32(builder.get_zgrid(object_type,
+                                                    True,
+                                                    False))
             grid_size = self.drp1d_output.get_dataset_size(object_type,"pdf")
             grid_name = 'REDSHIFT'
             if object_type == "star":
@@ -172,7 +233,7 @@ class RedshiftCandidates:
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+'_PDF', data=zpdf_hdu))
 
     def object_lines_to_fits(self, object_type, hdulist):
-        fr = pd.DataFrame(self.drp1d_output.get_dataset("linemeas",object_type))
+        fr = pd.DataFrame(self.drp1d_output.get_dataset(object_type, "linemeas"))
         fr = fr[fr["LinemeasLineLambda"] > 0]
         fr = fr.set_index("LinemeasLineID")
         line_catalog = self.calibration_library.line_catalogs_df[object_type]["LineMeasSolve"]
