@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from pylibamazed.redshift import get_version
-from pylibamazed.PdfBuilder import PdfBuilder
+from pylibamazed.PdfHandler import buildPdfHandler
 from drp_1dpipe import VERSION
 from astropy.io import fits
 import json
@@ -215,17 +215,16 @@ class RedshiftCandidates:
     def object_pdf_to_fits(self, object_type, hdulist):
         if object_type in self.drp1d_output.object_results:
             ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFProbaLog"))
-            builder = PdfBuilder(self.drp1d_output)
-            pdf_grid = np.float32(builder.get_zgrid(object_type,
-                                                    True,
-                                                    False))
-            grid_size = self.drp1d_output.get_dataset_size(object_type,"pdf")
+            pdfHandler = buildPdfHandler(self.drp1d_output, object_type, True)
+            
+            pdf_grid = np.float32(pdfHandler.redshifts)
+            grid_size = len(pdf_grid)
             grid_name = 'REDSHIFT'
             if object_type == "star":
                 grid_name = 'VELOCITY'
             zpdf_hdu = np.ndarray(grid_size, 
                                   dtype=[('ln PDF', 'f4'), (grid_name, 'f4')])
-            zpdf_hdu['ln PDF']=ln_pdf
+            zpdf_hdu['ln PDF']=pdfHandler.valProbaLog
             zpdf_hdu[grid_name]=pdf_grid
         else:
             zpdf_hdu = None
