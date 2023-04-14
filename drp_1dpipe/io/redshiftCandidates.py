@@ -36,13 +36,13 @@ class RedshiftCandidates:
             try:
                 self.object_lines_to_fits("galaxy", hdul)
             except Exception as e:
-                raise Exception(f"Could not write line meas, available datasets are {self.drp1d_output.object_results['galaxy'].keys()}")
+                raise Exception(f"Could not write line meas, available datasets are {self.drp1d_output.object_results['galaxy'].keys()} : {e}")
         if not self.drp1d_output.has_error("qso","redshift_solver"):
             self.qso_candidates_to_fits(hdul)
             self.object_pdf_to_fits("qso", hdul)
         if not self.drp1d_output.has_error("qso","linemeas_solver"):
             self.qso_lines_to_fits("qso", hdul)
-        if not self.drp1d_output.has_error("qso","redshift_solver"):    
+        if not self.drp1d_output.has_error("star","redshift_solver"):    
             self.star_candidates_to_fits(hdul)
             self.object_pdf_to_fits("star", hdul)
 
@@ -78,10 +78,13 @@ class RedshiftCandidates:
                 raise Exception(f"Could not write quality flag for {ot} and {meth} : {e}") 
             try:
                 if params[ot]["linemeas_method"]:
-                    header.append(fits.Card(f'hierarch {ot.upper()}_LWARNING',
-                                            self.drp1d_output.get_attribute(ot,
-                                                                            "warningFlag",
-                                                                            "LineMeasSolveWarningFlags"),
+                    if not self.drp1d_output.has_error(ot,"linemeas_solver"):
+                        w = self.drp1d_output.get_attribute(ot,
+                                                            "warningFlag",
+                                                            "LineMeasSolveWarningFlags")
+                    else:
+                        w = 0
+                    header.append(fits.Card(f'hierarch {ot.upper()}_LWARNING',w,
                                             f'Quality flag for {ot} linemeas solver'))
             except Exception as e:
                 raise Exception(f"Could not write linemeas quality flag for {ot} : {e}")
@@ -119,16 +122,28 @@ class RedshiftCandidates:
         hdulist.append(primary)
 
     def get_classification_type(self):
-        return self.drp1d_output.get_attribute(None,"classification","Type").upper()
-
+        try:
+            return self.drp1d_output.get_attribute(None,"classification","Type").upper()
+        except Exception as e:
+            return ""
+        
     def classification_to_fits(self, hdulist):
+        
+        o_proba = dict()
+        classification = ""
+        for o in ["galaxy","star","qso"]:
+            try:
+                o_proba[o] = self.drp1d_output.get_attribute(None,"classification",f"{o}Proba")
+            except Exception as e:
+                o_proba[o]= 0
+        
         classification = [fits.Card('CLASS', self.get_classification_type(),
                                     "Spectro classification: GALAXY, QSO, STAR"),
-                          fits.Card('P_GALAXY',self.drp1d_output.get_attribute(None,"classification","galaxyProba"),
+                          fits.Card('P_GALAXY',o_proba["galaxy"],
                                     "Probability to be a galaxy"),
-                          fits.Card('P_QSO',self.drp1d_output.get_attribute(None,"classification","qsoProba"),
+                          fits.Card('P_QSO',o_proba["qso"],
                                     "Probability to be a QSO"),
-                          fits.Card('P_STAR',self.drp1d_output.get_attribute(None,"classification","starProba"),
+                          fits.Card('P_STAR',o_proba["star"],
                                     "Probability to be a star")]
         hdr = fits.Header(classification)
         hdu = fits.BinTableHDU(header=hdr, name="CLASSIFICATION")
@@ -214,7 +229,10 @@ class RedshiftCandidates:
 
     def object_pdf_to_fits(self, object_type, hdulist):
         if object_type in self.drp1d_output.object_results:
-            ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFProbaLog"))
+            try:
+                ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFProbaLog"))
+            except Exception as e:
+                raise Exception(f"Failed to get {object_type} pdf : {e}")
             pdfHandler = buildPdfHandler(self.drp1d_output, object_type, True)
             
             pdf_grid = np.float32(pdfHandler.redshifts)
