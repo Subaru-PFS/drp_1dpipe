@@ -33,7 +33,7 @@ class PfsObjectReader(AbstractSpectrumReader):
                                         calibration_library,
                                         proc_id)
 
-    def load_wave(self, hdul):
+    def load_wave(self, hdul, obs_id=""):
         """
         Load the spectral axis in self.wave , units are in Angstrom by default
         :param hdul: hdul of the resource where the wave can be found
@@ -41,9 +41,12 @@ class PfsObjectReader(AbstractSpectrumReader):
         mask = self.pfs_object.mask
         valid = np.where(mask == 0, True, False)
         wavelength = np.array(np.extract(valid, self.pfs_object.wavelength), dtype=np.float32)
-        self.waves.append(wavelength*10)
-
-    def load_flux(self, hdul):
+        try:
+            self.waves.append(wavelength*10, obs_id)
+        except Exception as e:
+            raise Exception("Could not load wave : {e}")
+        
+    def load_flux(self, hdul, obs_id=""):
         """
         Load the spectral axis in self.flux , units are in erg.cm-2 by default
         :param hdul: hdul of the resource where the wave can be found
@@ -51,15 +54,21 @@ class PfsObjectReader(AbstractSpectrumReader):
         mask = self.pfs_object.mask
         valid = np.where(mask == 0, True, False)
         flux = np.array(np.extract(valid, self.pfs_object.flux), dtype=np.float32)
-        flux = np.multiply(1 / self.waves[0] ** 2, flux) * 2.99792458 / 10 ** 14
-        self.fluxes.append(flux)
+        flux = np.multiply(1 / self.waves.get(obs_id) ** 2, flux) * 2.99792458 / 10 ** 14
+        try:
+            self.fluxes.append(flux, obs_id)
+        except Exception as e:
+            raise Exception("Could not load flux : {e}")
 
-    def load_error(self, hdul):
+    def load_error(self, hdul, obs_id=""):
         mask = self.pfs_object.mask
         valid = np.where(mask == 0, True, False)
         error = np.array(np.extract(valid, np.sqrt(self.pfs_object.covar[0][0:])), dtype=np.float32)
-        error = np.multiply(1 / self.waves[0] ** 2, error) * 2.99792458 / 10 ** 14
-        self.errors.append(error)
+        error = np.multiply(1 / self.waves.get(obs_id) ** 2, error) * 2.99792458 / 10 ** 14
+        try:
+            self.errors.append(error, obs_id)
+        except Exception as e:
+            raise Exception("Could not load error : {e}")
 
     def load_lsf(self, hdul):
         pass

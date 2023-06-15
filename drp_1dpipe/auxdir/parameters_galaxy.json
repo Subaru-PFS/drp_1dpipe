@@ -7,8 +7,7 @@
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": 400
     },
-    "enablestarsolve": false,
-    "enableqsosolve": false,
+    "objects":["galaxy"],
     "galaxy": {
         "redshiftrange": [
             0.01,
@@ -17,14 +16,13 @@
         "redshiftstep": 0.0001,
         "redshiftsampling": "log",
         "template_dir": "templates/BC03_sdss_tremonti21",
-        "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
-        "linemodelsolve": {
+        "LineModelSolve": {
             "linemodel": {
-                "linetypefilter": false,
-                "lineforcefilter": false,
-                "instrumentresolution": "4300",
-                "velocityemission": "100",
-                "velocityabsorption": "100",
+               "linecatalog": "linecatalogs/linecatalogamazedvacuum_H1.tsv",
+                "linetypefilter": "no",
+                "lineforcefilter": "no",
+                "velocityemission": 100,
+                "velocityabsorption": 100,
                 "velocityfit": true,
 		"emvelocityfitmin": 10,
                 "emvelocityfitmax": 400,

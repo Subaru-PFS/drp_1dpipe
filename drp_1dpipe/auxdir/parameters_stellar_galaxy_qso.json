@@ -11,9 +11,11 @@
         "LSFType": "GaussianConstantResolution",
         "resolution": 4300
     },
-
-    "enablestarsolve": true,
-    "enableqsosolve": false,
+    "objects": [
+        "galaxy",
+        "star",
+        "qso"
+    ],
     "galaxy": {
         "redshiftrange": [
             0.01,
@@ -22,11 +24,11 @@
         "redshiftstep": 0.0001,
         "redshiftsampling": "log",
         "template_dir": "templates/BC03_sdss_tremonti21",
-        "linecatalog": "linecatalogs/linecatalogamazedvacuum_F1_noHepsilon.txt",
-        "linemodelsolve": {
+        "LineModelSolve": {
             "linemodel": {
-                "linetypefilter": false,
-                "lineforcefilter": false,
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H1.tsv",
+                "linetypefilter": "no",
+                "lineforcefilter": "no",
                 "velocityemission": 100,
                 "velocityabsorption": 100,
                 "velocityfit": true,
@@ -43,12 +45,11 @@
                     "igmfit": true
                 },
                 "skipsecondpass": false,
-                "extremacount": "5",
-                "extremacutprobathreshold": "-1",
+                "extremacutprobathreshold": -1,
                 "firstpass": {
                     "tplratio_ismfit": false
                 },
-                "stronglinesprior": "-1"
+                "stronglinesprior": -1
             }
         }
     },
