@@ -140,22 +140,26 @@
         "linemeas_redshiftstep": 1e-05,
         "LineMeasSolve": {
             "linemodel": {
-                "continuumcomponent": "nocontinuum",
+              "continuumcomponent": "nocontinuum",
                 "linecatalog": "linecatalogs/linecatalogamazedvacuum_H1.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
                 "linewidthtype": "combined",
-                "fittingmethod": "hybrid",
                 "polynomialdegree": 2,
-                "velocityfit": false,
                 "ampoffsetfit": true,
                 "lbdaoffsetfit": true,
                 "lineRatioType": "rules",
                 "rules": "no",
                 "igmfit": false,
                 "improveBalmerFit": true,
-                "lyaforcedisablefit": false
+                "lyaforcedisablefit": false,		
+		"fittingmethod": "lbfgs",
+                "velocityfit": true,
+		"emvelocityfitmin" : 10,
+		"emvelocityfitmax" : 400,
+		"absvelocityfitmin" : 150,
+		"absvelocityfitmax" : 500
             }
         },
         "enable_reliability": false
@@ -192,7 +196,7 @@
         "redshiftstep": 0.001,
         "redshiftsampling": "log",
         "method": "LineModelSolve",
-        "linemeas_method": null,
+        "linemeas_method": "LineMeasSolve",
         "template_dir": "templates/QSO_linemodel_continuum/",
         "TemplateFittingSolve": {
             "fftprocessing": false,
@@ -305,18 +309,22 @@
                 "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v6.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
-                "nsigmasupport": 8,
+                "nsigmasupport": 14,
                 "linewidthtype": "combined",
-                "fittingmethod": "hybrid",
+                "fittingmethod": "lbfgs",
                 "polynomialdegree": 2,
-                "velocityfit": false,
+                "velocityfit": true,
                 "ampoffsetfit": true,
                 "lbdaoffsetfit": true,
                 "lineRatioType": "rules",
                 "rules": "no",
                 "igmfit": false,
                 "improveBalmerFit": true,
-                "lyaforcedisablefit": false
+                "lyaforcedisablefit": false,
+                "emvelocityfitmin": 10,
+                "emvelocityfitmax": 400,
+                "absvelocityfitmin": 150,
+                "absvelocityfitmax": 500
             }
         }
     }
