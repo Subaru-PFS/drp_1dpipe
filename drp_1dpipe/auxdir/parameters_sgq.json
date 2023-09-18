@@ -146,20 +146,20 @@
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
                 "linewidthtype": "combined",
+                "fittingmethod": "lbfgs",
                 "polynomialdegree": 2,
+                "velocityfit": true,
                 "ampoffsetfit": true,
                 "lbdaoffsetfit": true,
                 "lineRatioType": "rules",
                 "rules": "no",
                 "igmfit": false,
                 "improveBalmerFit": true,
-                "lyaforcedisablefit": false,		
-		"fittingmethod": "lbfgs",
-                "velocityfit": true,
-		"emvelocityfitmin" : 10,
-		"emvelocityfitmax" : 400,
-		"absvelocityfitmin" : 150,
-		"absvelocityfitmax" : 500
+                "lyaforcedisablefit": false,
+                "emvelocityfitmin": 10,
+                "emvelocityfitmax": 400,
+                "absvelocityfitmin": 150,
+                "absvelocityfitmax": 500
             }
         },
         "enable_reliability": false
@@ -213,7 +213,7 @@
         },
         "LineModelSolve": {
             "linemodel": {
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v6.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v7.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "linewidthtype": "combined",
@@ -306,7 +306,7 @@
         "LineMeasSolve": {
             "linemodel": {
                 "continuumcomponent": "nocontinuum",
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v6.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v7.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,

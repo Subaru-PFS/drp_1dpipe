@@ -9,6 +9,7 @@ import traceback
 from pylibamazed.CalibrationLibrary import CalibrationLibrary
 from pylibamazed.ResultStoreOutput import ResultStoreOutput
 from pylibamazed.Context import Context
+from pylibamazed.Parameters import Parameters
 
 from drp_1dpipe import VERSION
 from drp_1dpipe.core.logger import init_logger
@@ -132,7 +133,7 @@ def _setup_pass(config):
                                 f"{config.calibration_dir}")
     params['calibrationDir'] = config.calibration_dir
 
-    context = Context(vars(config), params)
+    context = Context(vars(config), Parameters(params))
 
     return context, user_params
 

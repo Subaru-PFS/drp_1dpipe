@@ -66,8 +66,8 @@ class RedshiftCandidates:
                   fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json")
                   ]
         params = self.calibration_library.parameters
-        for ot in ["galaxy","qso","star"]:
-            meth = params[ot]["method"]
+        redshift_methods = params.get_objects_solve_methods()
+        for ot,meth in redshift_methods.items():
             try:
                 header.append(fits.Card(f'hierarch {ot.upper()}_ZWARNING',
                                         self.drp1d_output.get_attribute(ot,
@@ -75,17 +75,24 @@ class RedshiftCandidates:
                                                                         meth+"WarningFlags"),
                                         f'Quality flag for {ot} redshift solver'))
             except Exception as e:
-                raise Exception(f"Could not write quality flag for {ot} and {meth} : {e}") 
+                raise Exception(f"Could not write quality flag for {ot} and {meth} : {e}")
+        linemeas_methods = params.get_objects_linemeas_methods()
+        for ot in linemeas_methods.keys():
             try:
-                if params[ot]["linemeas_method"]:
-                    if not self.drp1d_output.has_error(ot,"linemeas_solver"):
-                        w = self.drp1d_output.get_attribute(ot,
-                                                            "warningFlag",
-                                                            "LineMeasSolveWarningFlags")
-                    else:
-                        w = 0
-                    header.append(fits.Card(f'hierarch {ot.upper()}_LWARNING',w,
-                                            f'Quality flag for {ot} linemeas solver'))
+                if not self.drp1d_output.has_error(ot,"linemeas_solver"):
+                    w = self.drp1d_output.get_attribute(ot,
+                                                        "warningFlag",
+                                                        "LineMeasSolveWarningFlags")
+                else:
+                    w = 0
+                header.append(fits.Card(f'hierarch {ot.upper()}_LWARNING',w,
+                                        f'Quality flag for {ot} linemeas solver'))
+                if self.drp1d_output.has_error(ot,"linemeas_solver"):
+                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',
+                                            self.drp1d_output.get_error(ot,"linemeas_solver")["code"])
+                                  )
+                else:
+                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',""))
             except Exception as e:
                 raise Exception(f"Could not write linemeas quality flag for {ot} : {e}")
         header.append(fits.Card(f'hierarch CLASSIFICATION_WARNING',
@@ -101,13 +108,7 @@ class RedshiftCandidates:
                               )
             else:
                 header.append(fits.Card(f'hierarch {ot.upper()}_ZERROR',""))
-            if params[ot]["linemeas_method"]:
-                if self.drp1d_output.has_error(ot,"linemeas_solver"):
-                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',
-                                            self.drp1d_output.get_error(ot,"linemeas_solver")["code"])
-                                  )
-                else:
-                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',""))
+
         if self.drp1d_output.has_error(None,"classification"):
             header.append(fits.Card(f'hierarch CLASSIFICATION_ERROR',
                                     self.drp1d_output.get_error(None,"classification")["code"])
