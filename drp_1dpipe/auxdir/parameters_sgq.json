@@ -283,7 +283,7 @@
                     "multiplecontinuumfit_disable": true
                 },
                 "secondpass": {
-                    "halfwindowsize": 0.005,
+                    "halfwindowsize": 0.02,
                     "continuumfit": "refitfirstpass"
                 },
                 "secondpasslcfittingmethod": -1,
