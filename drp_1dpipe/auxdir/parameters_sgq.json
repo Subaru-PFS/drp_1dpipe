@@ -20,9 +20,7 @@
     "continuumRemoval": {
         "method": "IrregularSamplingMedian",
         "medianKernelWidth": 400,
-        "medianEvenReflection": true,
-        "decompScales": 9,
-        "binPath": ""
+        "medianEvenReflection": true
     },
     "LSF": {
         "LSFType": "GaussianConstantResolution",
@@ -34,7 +32,6 @@
         "star",
         "qso"
     ],
-    "calibrationDir": "",
     "autocorrectinput": false,
     "galaxy": {
         "redshiftrange": [
@@ -47,7 +44,7 @@
         "template_dir": "templates/BC03_sdss_tremonti21",
         "LineModelSolve": {
             "linemodel": {
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H1.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H2.tsv",
                 "linetypefilter": "no",
                 "lineforcefilter": "no",
                 "fittingmethod": "individual",
@@ -83,7 +80,7 @@
                 "lineRatioType": "tplratio",
                 "rules": "all",
                 "improveBalmerFit": true,
-                "tplratio_catalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v17_emission",
+                "tplratio_catalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v18_emission",
                 "tplratio_ismfit": true,
                 "continuumcomponent": "tplfitauto",
                 "continuumreestimation": "no",
@@ -136,17 +133,17 @@
             }
         },
         "linemeas_method": "LineMeasSolve",
-        "linemeas_dzhalf": 0.0003,
+        "linemeas_dzhalf": 0,
         "linemeas_redshiftstep": 1e-05,
         "LineMeasSolve": {
             "linemodel": {
-              "continuumcomponent": "nocontinuum",
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H1.tsv",
+                "continuumcomponent": "nocontinuum",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H2.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
                 "linewidthtype": "combined",
-                "fittingmethod": "lbfgs",
+                "fittingmethod": "lbfgsb",
                 "polynomialdegree": 2,
                 "velocityfit": true,
                 "ampoffsetfit": true,
@@ -165,6 +162,7 @@
         "enable_reliability": false
     },
     "star": {
+        "enable_reliability": false,
         "redshiftrange": [
             -0.003,
             0.003
@@ -189,6 +187,7 @@
         }
     },
     "qso": {
+        "enable_reliability": false,
         "redshiftrange": [
             0.1,
             8
@@ -213,7 +212,7 @@
         },
         "LineModelSolve": {
             "linemodel": {
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v7.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v9.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "linewidthtype": "combined",
@@ -230,7 +229,7 @@
                 "lbdaoffsetfit": false,
                 "haprior": -1,
                 "lineRatioType": "tplratio",
-                "tplratio_catalog": "linecatalogs_tplshapes/QSO_LineRatios_v1",
+                "tplratio_catalog": "linecatalogs_tplshapes/QSO_LineRatios_v2",
                 "tplratio_ismfit": true,
                 "improveBalmerFit": false,
                 "fittingmethod": "hybrid",
@@ -283,7 +282,7 @@
                     "multiplecontinuumfit_disable": true
                 },
                 "secondpass": {
-                    "halfwindowsize": 0.02,
+                    "halfwindowsize": 0.005,
                     "continuumfit": "refitfirstpass"
                 },
                 "secondpasslcfittingmethod": -1,
@@ -301,7 +300,7 @@
                 "enablephotometry": false
             }
         },
-        "linemeas_dzhalf": 0.001,
+        "linemeas_dzhalf": 0,
         "linemeas_redshiftstep": 0.0001,
         "LineMeasSolve": {
             "linemodel": {
@@ -311,7 +310,7 @@
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
                 "linewidthtype": "combined",
-                "fittingmethod": "lbfgs",
+                "fittingmethod": "lbfgsb",
                 "polynomialdegree": 2,
                 "velocityfit": true,
                 "ampoffsetfit": true,
@@ -321,8 +320,8 @@
                 "igmfit": false,
                 "improveBalmerFit": true,
                 "lyaforcedisablefit": false,
-                "emvelocityfitmin": 10,
-                "emvelocityfitmax": 400,
+                "emvelocityfitmin": 150,
+                "emvelocityfitmax": 2500,
                 "absvelocityfitmin": 150,
                 "absvelocityfitmax": 500
             }
