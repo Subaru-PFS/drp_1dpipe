@@ -29,22 +29,34 @@ class RedshiftCandidates:
         self.header_to_fits(hdul)
         if not self.drp1d_output.has_error(None,"classification"):
             self.classification_to_fits(hdul)
+        else:
+            hdul.append(fits.BinTableHDU(header=hdr, name="CLASSIFICATION"))
         if not self.drp1d_output.has_error("galaxy","redshift_solver"):
             self.galaxy_candidates_to_fits(hdul)
             self.object_pdf_to_fits("galaxy", hdul)
+        else:
+            hdul.append(fits.BinTableHDU(name='GALAXY_CANDIDATES'))
+            hdul.append(fits.BinTableHDU(name='GALAXY_PDF'))
         if not self.drp1d_output.has_error("galaxy","linemeas_solver"):
-            try:
-                self.object_lines_to_fits("galaxy", hdul)
-            except Exception as e:
-                raise Exception(f"Could not write line meas, available datasets are {self.drp1d_output.object_results['galaxy'].keys()} : {e}")
+            self.object_lines_to_fits("galaxy", hdul)
+        else:
+            hdulist.append(fits.BinTableHDU(name="GALAXY_LINES"))
         if not self.drp1d_output.has_error("qso","redshift_solver"):
             self.qso_candidates_to_fits(hdul)
             self.object_pdf_to_fits("qso", hdul)
+        else:
+            hdul.append(fits.BinTableHDU(name='QSO_CANDIDATES'))
+            hdul.append(fits.BinTableHDU(name='QSO_PDF'))
         if not self.drp1d_output.has_error("qso","linemeas_solver"):
             self.qso_lines_to_fits("qso", hdul)
-        if not self.drp1d_output.has_error("star","redshift_solver"):    
+        else:
+            hdulist.append(fits.BinTableHDU(name="QSO_LINES"))
+        if not self.drp1d_output.has_error("star","redshift_solver"):
             self.star_candidates_to_fits(hdul)
             self.object_pdf_to_fits("star", hdul)
+        else:
+            hdul.append(fits.BinTableHDU(name='STAR_CANDIDATES'))
+            hdul.append(fits.BinTableHDU(name='STAR_PDF'))
 
         fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
                                    overwrite=True)
