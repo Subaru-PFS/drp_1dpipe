@@ -181,7 +181,7 @@ class RedshiftCandidates:
             zcandidates[rank]['Z_ERR'] = self.drp1d_output.get_candidate_data("galaxy", rank, "RedshiftUncertainty")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['Z_PROBA'] = self.drp1d_output.get_candidate_data("galaxy", rank, "RedshiftProba")
-            zcandidates[rank]['SUBCLASS'] = ''
+            zcandidates[rank]['SUBCLASS'] = self.drp1d_output.get_candidate_data("galaxy", rank, "SubType")
             zcandidates[rank]['CFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "ContinuumName")
             zcandidates[rank]['LFILE'] = self.drp1d_output.get_candidate_data("galaxy", rank, "LinesRatioName")
             zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("galaxy", rank)
@@ -208,7 +208,7 @@ class RedshiftCandidates:
             zcandidates[rank]['Z_ERR'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftUncertainty")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['Z_PROBA'] = self.drp1d_output.get_candidate_data("qso", rank, "RedshiftProba")
-            zcandidates[rank]['SUBCLASS'] = ''
+            zcandidates[rank]['SUBCLASS'] = self.drp1d_output.get_candidate_data("qso", rank, "SubType")
             zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("qso", rank)
 
         hdulist.append(fits.BinTableHDU(name='QSO_CANDIDATES', data=zcandidates))
@@ -234,7 +234,7 @@ class RedshiftCandidates:
             zcandidates[rank]['V_ERR'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['T_PROBA'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
-            zcandidates[rank]['SUBCLASS'] = ''
+            zcandidates[rank]['SUBCLASS'] = "" # self.drp1d_output.get_candidate_data("star", rank, "ContinuumName").split("_")[0]
             zcandidates[rank]['TFILE'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumName")
             zcandidates[rank]['MODELFLUX'] = self._get_model_on_lambda_range("star", rank)
 
