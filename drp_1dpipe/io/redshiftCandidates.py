@@ -40,7 +40,7 @@ class RedshiftCandidates:
         if not self.drp1d_output.has_error("galaxy","linemeas_solver"):
             self.object_lines_to_fits("galaxy", hdul)
         else:
-            hdulist.append(fits.BinTableHDU(name="GALAXY_LINES"))
+            hdul.append(fits.BinTableHDU(name="GALAXY_LINES"))
         if not self.drp1d_output.has_error("qso","redshift_solver"):
             self.qso_candidates_to_fits(hdul)
             self.object_pdf_to_fits("qso", hdul)
@@ -50,7 +50,7 @@ class RedshiftCandidates:
         if not self.drp1d_output.has_error("qso","linemeas_solver"):
             self.qso_lines_to_fits("qso", hdul)
         else:
-            hdulist.append(fits.BinTableHDU(name="QSO_LINES"))
+            hdul.append(fits.BinTableHDU(name="QSO_LINES"))
         if not self.drp1d_output.has_error("star","redshift_solver"):
             self.star_candidates_to_fits(hdul)
             self.object_pdf_to_fits("star", hdul)
@@ -87,6 +87,9 @@ class RedshiftCandidates:
                                                                         meth+"WarningFlags"),
                                         f'Quality flag for {ot} redshift solver'))
             except Exception as e:
+                header.append(fits.Card(f'hierarch {ot.upper()}_ZWARNING',
+                                        0,
+                                        f'Quality flag for {ot} redshift solver'))
                 raise Exception(f"Could not write quality flag for {ot} and {meth} : {e}")
         linemeas_methods = params.get_objects_linemeas_methods()
         for ot in linemeas_methods.keys():
@@ -145,11 +148,8 @@ class RedshiftCandidates:
         o_proba = dict()
         classification = ""
         for o in ["galaxy","star","qso"]:
-            try:
-                o_proba[o] = self.drp1d_output.get_attribute(None,"classification",f"{o}Proba")
-            except Exception as e:
-                o_proba[o]= 0
-        
+            o_proba[o] = self.drp1d_output.get_attribute(None,"classification",f"{o}Proba")
+                    
         classification = [fits.Card('CLASS', self.get_classification_type(),
                                     "Spectro classification: GALAXY, QSO, STAR"),
                           fits.Card('P_GALAXY',o_proba["galaxy"],
