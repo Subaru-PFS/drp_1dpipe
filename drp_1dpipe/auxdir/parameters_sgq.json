@@ -23,8 +23,8 @@
         "medianEvenReflection": true
     },
     "LSF": {
-        "LSFType": "GaussianConstantResolution",
-        "resolution": 4300
+        "LSFType": "GaussianConstantWidth",
+        "width": 0.7
     },
     "extremaredshiftseparation": 0.01,
     "objects": [
