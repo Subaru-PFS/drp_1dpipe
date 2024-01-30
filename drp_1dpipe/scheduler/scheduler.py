@@ -210,6 +210,7 @@ def main_method(config):
         try:
             # runner.parallel('process_spectra', bunch_list,
             #                 'spectra-listfile', ['output-dir','logdir'],
+            print("run parallel")
             runner.parallel('process_spectra',
                             parallel_args={
                                 'spectra_listfile': bunch_list,
@@ -221,12 +222,14 @@ def main_method(config):
                                 'spectra_dir': normpath(config.spectra_dir),
                                 'parameters_file': config.parameters_file,
                             })
+            print("parallel ran")
         except Exception as e:
             traceback.print_exc()
             notifier.update('root', 'ERROR')
         else:
             notifier.update('root', 'SUCCESS')
-        
+
+        print("reduce")
         json_reduce = normpath(config.output_dir, 'reduce.json')
         reduce_process_spectra_output(json_bunch_list, config.output_dir, json_reduce)
         try:

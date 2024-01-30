@@ -30,7 +30,7 @@ class RedshiftCandidates:
         if not self.drp1d_output.has_error(None,"classification"):
             self.classification_to_fits(hdul)
         else:
-            hdul.append(fits.BinTableHDU(header=hdr, name="CLASSIFICATION"))
+            hdul.append(fits.BinTableHDU(name="CLASSIFICATION"))
         if not self.drp1d_output.has_error("galaxy","redshift_solver"):
             self.galaxy_candidates_to_fits(hdul)
             self.object_pdf_to_fits("galaxy", hdul)
@@ -164,7 +164,7 @@ class RedshiftCandidates:
 
     def galaxy_candidates_to_fits(self, hdulist):
         nb_candidates = self.drp1d_output.get_nb_candidates("galaxy")
-        npix = len(self.spectrum_reader.pfs_object.wavelength)
+        npix = len(self.spectrum_reader.full_wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('Z', 'f4'),
@@ -193,7 +193,7 @@ class RedshiftCandidates:
             nb_candidates = self.drp1d_output.get_nb_candidates("qso")
         else:
             nb_candidates = 0
-        npix = len(self.spectrum_reader.pfs_object.wavelength)
+        npix = len(self.spectrum_reader.full_wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('Z', 'f4'),
@@ -218,7 +218,7 @@ class RedshiftCandidates:
             nb_candidates = self.drp1d_output.get_nb_candidates("star")
         else:
             nb_candidates = 0
-        npix = len(self.spectrum_reader.pfs_object.wavelength)
+        npix = len(self.spectrum_reader.full_wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('V', 'f4'),
@@ -325,10 +325,10 @@ class RedshiftCandidates:
         hdulist.append(fits.BinTableHDU(name=object_type.upper() + "_LINES", data=zlines))
 
     def _get_model_on_lambda_range(self, object_type, rank):
-        model = np.array(self.spectrum_reader.pfs_object.wavelength, dtype=np.float64, copy=True)
+        model = np.array(self.spectrum_reader.full_wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
-        np.place(model, self.spectrum_reader.pfs_object.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
-        model = np.multiply(np.array(self.spectrum_reader.pfs_object.wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
+        np.place(model, self.spectrum_reader.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
+        model = np.multiply(np.array(self.spectrum_reader.full_wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
         return np.float32(model)
 
 

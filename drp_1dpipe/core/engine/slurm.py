@@ -26,7 +26,7 @@ class Slurm(BatchQueue):
                 #!/bin/bash
                 #SBATCH --export=NONE
                 #SBATCH --job-name={executor_script}
-                #SBATCH --time=01:00:00
+                #SBATCH --time=02:00:00
                 #SBATCH --ntasks=1
                 #SBATCH --array=1-{jobs}
 
