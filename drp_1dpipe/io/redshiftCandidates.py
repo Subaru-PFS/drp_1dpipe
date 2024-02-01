@@ -10,21 +10,21 @@ import pandas as pd
 
 class RedshiftCandidates:
 
-    def __init__(self, drp1d_output, spectrum_reader, logger, user_param, calibration_library):
+    def __init__(self, drp1d_output, spectrum_storage, logger, user_param, calibration_library):
         self.drp1d_output = drp1d_output
-        self.spectrum_reader = spectrum_reader
+        self.spectrum_storage = spectrum_storage
         self.logger = logger
         self.user_param = user_param
         self.calibration_library = calibration_library
 
     def write_fits(self, output_dir):
         path = "pfsZcandidates-%05d-%05d-%s-%016x-%03d-0x%016x.fits" % (
-            self.spectrum_reader.pfs_object_id["catId"],
-            self.spectrum_reader.pfs_object_id["tract"],
-            self.spectrum_reader.pfs_object_id["patch"],
-            self.spectrum_reader.pfs_object_id["objId"],
-            self.spectrum_reader.pfs_object_id["nVisit"] % 1000,
-            self.spectrum_reader.pfs_object_id["pfsVisitHash"])
+            self.spectrum_storage.pfs_object_id["catId"],
+            self.spectrum_storage.pfs_object_id["tract"],
+            self.spectrum_storage.pfs_object_id["patch"],
+            self.spectrum_storage.pfs_object_id["objId"],
+            self.spectrum_storage.pfs_object_id["nVisit"] % 1000,
+            self.spectrum_storage.pfs_object_id["pfsVisitHash"])
         hdul = []
         self.header_to_fits(hdul)
         if not self.drp1d_output.has_error(None,"classification"):
@@ -63,18 +63,18 @@ class RedshiftCandidates:
 
     def header_to_fits(self, hdulist):
         quality_flag = 2 # no linemeas active
-        header = [fits.Card('tract', self.spectrum_reader.pfs_object_id["tract"], 'Area of the sky'),
-                  fits.Card('patch', self.spectrum_reader.pfs_object_id["patch"], 'Region within tract'),
-                  fits.Card('catId', self.spectrum_reader.pfs_object_id["catId"], 'Source of the objId'),
-                  fits.Card('objId', self.spectrum_reader.pfs_object_id["objId"], 'Unique ID for object'),
-                  fits.Card('nvisit', self.spectrum_reader.pfs_object_id["nVisit"], 'Number of visit'),
-                  fits.Card('vHash', self.spectrum_reader.pfs_object_id["pfsVisitHash"], '63-bit SHA-1 list of visits'),
-                  fits.Card('CRPIX1',self.spectrum_reader.wl_infos["CRPIX1"],'Pixel coordinate of reference point'),
-                  fits.Card('CRVAL1',self.spectrum_reader.wl_infos["CRVAL1"],'[m] Coordinate value at reference point'),
-                  fits.Card('CDELT1',self.spectrum_reader.wl_infos["CDELT1"],'[m] Coordinate increment at reference point'),
+        header = [fits.Card('tract', self.spectrum_storage.pfs_object_id["tract"], 'Area of the sky'),
+                  fits.Card('patch', self.spectrum_storage.pfs_object_id["patch"], 'Region within tract'),
+                  fits.Card('catId', self.spectrum_storage.pfs_object_id["catId"], 'Source of the objId'),
+                  fits.Card('objId', self.spectrum_storage.pfs_object_id["objId"], 'Unique ID for object'),
+                  fits.Card('nvisit', self.spectrum_storage.pfs_object_id["nVisit"], 'Number of visit'),
+                  fits.Card('vHash', self.spectrum_storage.pfs_object_id["pfsVisitHash"], '63-bit SHA-1 list of visits'),
+                  fits.Card('CRPIX1',self.spectrum_storage.spectrum_infos["wl_infos"]["CRPIX1"],'Pixel coordinate of reference point'),
+                  fits.Card('CRVAL1',self.spectrum_storage.spectrum_infos["wl_infos"]["CRVAL1"],'[m] Coordinate value at reference point'),
+                  fits.Card('CDELT1',self.spectrum_storage.spectrum_infos["wl_infos"]["CDELT1"],'[m] Coordinate increment at reference point'),
                   fits.Card('D1D_VER', get_version()[0:7], 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
-                  fits.Card('DAMD_VER', self.spectrum_reader.damd_version, 'Version of the data model'),
+                  fits.Card('DAMD_VER', self.spectrum_storage.global_infos["damd_version"], 'Version of the data model'),
                   fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json")
                   ]
         params = self.calibration_library.parameters
@@ -164,7 +164,7 @@ class RedshiftCandidates:
 
     def galaxy_candidates_to_fits(self, hdulist):
         nb_candidates = self.drp1d_output.get_nb_candidates("galaxy")
-        npix = len(self.spectrum_reader.full_wavelength)
+        npix = len(self.spectrum_storage.full_wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('Z', 'f4'),
@@ -193,7 +193,7 @@ class RedshiftCandidates:
             nb_candidates = self.drp1d_output.get_nb_candidates("qso")
         else:
             nb_candidates = 0
-        npix = len(self.spectrum_reader.full_wavelength)
+        npix = len(self.spectrum_storage.full_wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('Z', 'f4'),
@@ -218,7 +218,7 @@ class RedshiftCandidates:
             nb_candidates = self.drp1d_output.get_nb_candidates("star")
         else:
             nb_candidates = 0
-        npix = len(self.spectrum_reader.full_wavelength)
+        npix = len(self.spectrum_storage.full_wavelength)
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('CRANK', 'i4'),
                                         ('V', 'f4'),
@@ -325,10 +325,10 @@ class RedshiftCandidates:
         hdulist.append(fits.BinTableHDU(name=object_type.upper() + "_LINES", data=zlines))
 
     def _get_model_on_lambda_range(self, object_type, rank):
-        model = np.array(self.spectrum_reader.full_wavelength, dtype=np.float64, copy=True)
+        model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
-        np.place(model, self.spectrum_reader.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
-        model = np.multiply(np.array(self.spectrum_reader.full_wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
+        np.place(model, self.spectrum_storage.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
+        model = np.multiply(np.array(self.spectrum_storage.full_wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
         return np.float32(model)
 
 

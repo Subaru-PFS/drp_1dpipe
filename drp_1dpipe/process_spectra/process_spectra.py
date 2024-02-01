@@ -18,7 +18,9 @@ from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config
 from drp_1dpipe.process_spectra.config import config_defaults
 
 from drp_1dpipe.core.utils import normpath, TemporaryFilesSet
-from drp_1dpipe.io.reader import PfsObjectReader
+from drp_1dpipe.io.PFSReader import PFSReader
+from drp_1dpipe.io.PFSExternalStorage import PFSExternalStorage
+
 from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
 
@@ -89,24 +91,20 @@ def _output_path(args, *path):
     return normpath(args.workdir, args.output_dir, *path)
 
 
-def _process_spectrum(output_dir, reader, context, user_param) :
-
+def _process_spectrum(output_dir, reader, context, user_param, storage) :
     try:
-        reader.load_all(None)
+        output = context.run(reader) 
     except Exception as e:
-        raise Exception(f"Failed to prepare reader for {reader.source_id} : {e}")
-
-
-    output = context.run(reader)
-    
+        logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
+        return 0
     try:
-        rc = RedshiftCandidates(output, reader, logger, user_param, context.calibration_library)
+        rc = RedshiftCandidates(output, storage, logger, user_param, context.calibration_library)
         logger.log(logging.INFO, "write fits")
 
         rc.write_fits(output_dir)
     except Exception as e:
-        raise Exception("Failed to write fits result for spectrum "
-                          "{} : {}".format(reader.source_id, e))
+        logger.log(logging.ERROR,"Failed to write fits result for spectrum "
+                   "{} : {}".format(reader.source_id, e))
 
 
 def _setup_pass(config):
@@ -164,31 +162,25 @@ def amazed(config):
     os.makedirs(data_dir, exist_ok=True)
 
     products = []
+    
     for i, spectrum_path in enumerate(spectra_list):
-        spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path["fits"])
-        reader = PfsObjectReader(spectrum, context.calibration_library)
-        nb_valid_points = reader.get_nb_valid_points()
-        if nb_valid_points < 3000:
-            logger.log(logging.WARNING,
-                       "Invalid spectrum, only " + str(nb_valid_points) + " valid points, not processed")
-            to_process = False
-        else:
-            to_process = True
-        proc_id, ext = os.path.splitext(spectrum_path["fits"])
-        spc_out_dir = os.path.join(outdir, proc_id )
-        if to_process:
-            # first step : compute redshift
-            to_process = True
-            if os.path.exists(spc_out_dir):
-                if config.continue_:
-                    to_process = False
-                else:
-                    shutil.rmtree(spc_out_dir)
-            if to_process:
-                try:
-                    _process_spectrum(data_dir, reader,context, user_parameters)
-                except Exception as e:
-                    logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
+        try:
+            spectrum_id = ""
+            spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path["fits"])
+            spectrum_id = spectrum_path["fits"][len("PfsObject-"):-len(".fits")]
+            storage = PFSExternalStorage(config, spectrum_id)
+            reader = PFSReader(spectrum_id,
+                               context.calibration_library.parameters,
+                               context.calibration_library,
+                               spectrum_id)
+            resource = storage.read()
+            reader.load_all(resource)
+            storage.close(resource)
+        except Exception as e:
+            logger.log(logging.ERROR, "Could not read spectrum at {spectrum_path} with id {spectrum_id} : {e}")
+
+        _process_spectrum(data_dir, reader,context, user_parameters, storage)
+        
 
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
 
@@ -268,6 +260,14 @@ def main():
     config_save(config, "process_spectra_config.json")
     return main_method(config)
 
+def main_no_parse(args):
+    config = config_update(
+        config_defaults,
+        args=args,
+        install_conf_path=get_conf_path('process_spectra.json')
+        )
+    config_save(config, "process_spectra_config.json")
+    return main_method(config)
 
 if __name__ == '__main__':
     main()
