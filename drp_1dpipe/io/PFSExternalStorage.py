@@ -42,7 +42,7 @@ class PFSExternalStorage:
 #        spectrum_path = f'{self.config.spectrum_dir}/{catId:05}/{tract:05}/{patch}/pfsObject-{self.spectrum_id.ProcessingID}.fits'
         pfs_object = PfsObject.readFits(spectrum_path)
         self.pfs_object_id = pfs_object.getIdentity()
-        self.source_id = f'{self.pfs_object_id["catId"]:05}-{self.pfs_object_id["tract"]:05}-{self.pfs_object_id["patch"]}-{self.pfs_object_id["objId"]:016x}'
+        self.astronomical_source_id = f'{self.pfs_object_id["catId"]:05}-{self.pfs_object_id["tract"]:05}-{self.pfs_object_id["patch"]}-{self.pfs_object_id["objId"]:016x}'
         self.mask = pfs_object.mask
         self.full_wavelength= pfs_object.wavelength
 

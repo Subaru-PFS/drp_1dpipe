@@ -23,7 +23,7 @@ from drp_1dpipe.core.engine.runner import get_runner, list_runners
 from drp_1dpipe.core.engine import local, pbs, slurm
 from drp_1dpipe.core.notifier import init_notifier
 from drp_1dpipe.scheduler.config import config_defaults
-
+from drp_1dpipe.process_spectra.process_spectra import main_no_parse
 
 # logger = logging.getLogger("scheduler")
 
@@ -62,6 +62,8 @@ def define_specific_program_options():
     parser.add_argument('--get_default_parameters',  action=ShowParametersAction,
                         choices=["galaxy+star+qso", "galaxy", "star"],
                         help='Show example parameters ')
+    parser.add_argument('--debug', metavar='DEBUG', action='store_true',
+                        help=argparse.SUPPRESS)
 
     return parser
 
@@ -210,19 +212,30 @@ def main_method(config):
         try:
             # runner.parallel('process_spectra', bunch_list,
             #                 'spectra-listfile', ['output-dir','logdir'],
-            print("run parallel")
-            runner.parallel('process_spectra',
-                            parallel_args={
-                                'spectra_listfile': bunch_list,
-                                'output_dir': output_list,
-                                'logdir': logdir_list
-                            },
-                            args={
-                                'workdir': normpath(config.workdir),
-                                'spectra_dir': normpath(config.spectra_dir),
-                                'parameters_file': config.parameters_file,
-                            })
-            print("parallel ran")
+            if args.debug:
+                main_no_parse(
+                              args={
+                                     'workdir': normpath(config.workdir),
+                                     'spectra_dir': normpath(config.spectra_dir),
+                                     'parameters_file': config.parameters_file,
+                                     'spectra_dir': normpath(config.spectra_dir),
+                    'spectra_listfile': bunch_list[0],
+                    'output_dir': output_list[0],
+                    'logdir': logdir_list[0]
+                                 })
+            else:
+                runner.parallel('process_spectra',
+                                parallel_args={
+                                    'spectra_listfile': bunch_list,
+                                    'output_dir': output_list,
+                                    'logdir': logdir_list
+                                },
+                                args={
+                                    'workdir': normpath(config.workdir),
+                                    'spectra_dir': normpath(config.spectra_dir),
+                                    'parameters_file': config.parameters_file,
+                                })
+
         except Exception as e:
             traceback.print_exc()
             notifier.update('root', 'ERROR')
