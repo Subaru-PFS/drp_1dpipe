@@ -36,9 +36,8 @@ class PFSExternalStorage:
         except:
             spectra_dir = self.config.spectrum_dir # for LAM client compatibility
         spectrum_path = glob.glob(os.path.join(spectra_dir,"*","*","*",f'pfsObject-{self.spectrum_id}.fits'))
-        print(spectra_dir)
-        print(self.spectrum_id)
-        print(spectrum_path,file=sys.stderr)
+        if len(spectrum_path) != 1:
+            raise Exception(f"{self.spectrum_id} cannot be found in {spectra_dir}")
         spectrum_path = spectrum_path[0]
 #        spectrum_path = f'{self.config.spectrum_dir}/{catId:05}/{tract:05}/{patch}/pfsObject-{self.spectrum_id.ProcessingID}.fits'
         pfs_object = PfsObject.readFits(spectrum_path)

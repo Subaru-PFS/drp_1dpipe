@@ -70,10 +70,9 @@ def bunch(bunch_size, spectra_dir):
         A generator woth the max number of sources
     """    
     _list = []
-    for source in glob.glob(os.path.join(spectra_dir,"*","00001","1,1","*.fits")):
+    for source in glob.glob(os.path.join(spectra_dir,"*","*","*","*.fits")):
         prefix_length = len(spectra_dir) 
-        _list.append({"fits": source[len(spectra_dir)+1:]})
-        print(_list)
+        _list.append({"fits": source.split(os.sep)[-1]})
         if len(_list) >= int(bunch_size):
             yield _list
             _list = []
