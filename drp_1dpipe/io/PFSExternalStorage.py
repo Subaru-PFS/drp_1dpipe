@@ -11,12 +11,13 @@ class PFSExternalStorage:
     def __init__(self, config, spectrum_id):
         self.config = config
 
-        if hasattr(spectrum_id,'ProcessingID'):
-            self.spectrum_id = spectrum_id.ProcessingID  # for LAM client compatibility
-        else:
-            self.spectrum_id = spectrum_id
+        self.spectrum_id = spectrum_id
         self.spectrum_infos = dict()
         self.global_infos = dict()
+
+    # for LAM client compatibility    
+    def set_spectrum_id(self, spectrum_id): 
+        self.spectrum_id = spectrum_id.ProcessingID
         
     def read(
         self,
@@ -35,6 +36,8 @@ class PFSExternalStorage:
         except:
             spectra_dir = self.config.spectrum_dir # for LAM client compatibility
         spectrum_path = glob.glob(os.path.join(spectra_dir,"*","*","*",f'pfsObject-{self.spectrum_id}.fits'))
+        print(spectra_dir)
+        print(self.spectrum_id)
         print(spectrum_path,file=sys.stderr)
         spectrum_path = spectrum_path[0]
 #        spectrum_path = f'{self.config.spectrum_dir}/{catId:05}/{tract:05}/{patch}/pfsObject-{self.spectrum_id.ProcessingID}.fits'
