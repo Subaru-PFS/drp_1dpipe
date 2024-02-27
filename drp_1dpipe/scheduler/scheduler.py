@@ -60,10 +60,11 @@ def define_specific_program_options():
     parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
                         help='Output directory.')
     parser.add_argument('--get_default_parameters',  action=ShowParametersAction,
-                        choices=["galaxy+star+qso", "galaxy", "star"],
-                        help='Show example parameters ')
-    parser.add_argument('--debug', metavar='DEBUG', action='store_true',
-                        help=argparse.SUPPRESS)
+                        choices=["galaxy+star+qso", "galaxy", "star"], default="galaxy+star+qso",
+                        const="galaxy+star+qso",
+                        help='Show example parameters ',nargs='?')
+    parser.add_argument('--debug', action='store_true',
+                        help="Debug mode, no worker")
 
     return parser
 

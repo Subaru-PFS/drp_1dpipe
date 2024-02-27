@@ -4,6 +4,9 @@ import logging
 
 from drp_1dpipe import VERSION
 from pylibamazed.redshift import get_version
+from drp_1dpipe.core.get_default_parameter import get_default_parameter
+import json
+import pprint
 
 _loglevels = {
     'ERROR': logging.ERROR,
@@ -43,24 +46,18 @@ class LogLevelAction(argparse.Action):
 
 class ShowParametersAction(argparse.Action):
 
-    def __init__(self, option_strings, dest, nargs=None, **kwargs):
-        if nargs is not None:
-            raise ValueError("nargs not allowed")
+    def __init__(self, option_strings, dest, **kwargs):
         super(ShowParametersAction, self).__init__(option_strings, dest, **kwargs)
 
     def __call__(self, parser, namespace, values, option_string=None):
         if values == 'galaxy+star+qso':
-            params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
-                                       "../auxdir/parameters_stellar_galaxy_qso.json")
+            print(json.dumps(get_default_parameter(), indent=4))
         elif values == 'galaxy':
             params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../auxdir/parameters_galaxy.json")
         elif values == 'star':
             params_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../auxdir/parameters_stellar.json")
         else:
-            raise logging.ArgumentError(f'Invalid parameter confi {values}')
-        setattr(namespace, self.dest, values)
-        with open(params_path, 'r') as f:
-            print(f.read())
+            raise logging.ArgumentError(f'Invalid parameter {values}')
     
     
 def define_global_program_options(parser):
