@@ -1,8 +1,8 @@
 {
     "multiobsmethod": "",
     "lambdarange": [
-        3900,
-        12500
+        4000,
+        13000
     ],
     "smoothWidth": 0.0,
     "templateCatalog": {
@@ -305,7 +305,7 @@
         "LineMeasSolve": {
             "linemodel": {
                 "continuumcomponent": "nocontinuum",
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v7.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v9.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
