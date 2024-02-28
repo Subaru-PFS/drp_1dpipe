@@ -48,7 +48,7 @@ class RedshiftCandidates:
             hdul.append(fits.BinTableHDU(name='QSO_CANDIDATES'))
             hdul.append(fits.BinTableHDU(name='QSO_PDF'))
         if not self.drp1d_output.has_error("qso","linemeas_solver"):
-            self.qso_lines_to_fits("qso", hdul)
+            self.object_lines_to_fits("qso", hdul)
         else:
             hdul.append(fits.BinTableHDU(name="QSO_LINES"))
         if not self.drp1d_output.has_error("star","redshift_solver"):
@@ -75,7 +75,9 @@ class RedshiftCandidates:
                   fits.Card('D1D_VER', get_version()[0:7], 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
                   fits.Card('DAMD_VER', self.spectrum_storage.global_infos["damd_version"], 'Version of the data model'),
-                  fits.Card('U_PARAM', json.dumps(self.user_param), "User Parameters content, json")
+                  fits.Card('U_PARAM',
+                            json.dumps(self.user_param),
+                            "User Parameters content, json")
                   ]
         params = self.calibration_library.parameters
         redshift_methods = params.get_objects_solve_methods()
@@ -90,7 +92,7 @@ class RedshiftCandidates:
                 header.append(fits.Card(f'hierarch {ot.upper()}_ZWARNING',
                                         0,
                                         f'Quality flag for {ot} redshift solver'))
-                raise Exception(f"Could not write quality flag for {ot} and {meth} : {e}")
+                
         linemeas_methods = params.get_objects_linemeas_methods()
         for ot in linemeas_methods.keys():
             try:
@@ -103,11 +105,19 @@ class RedshiftCandidates:
                 header.append(fits.Card(f'hierarch {ot.upper()}_LWARNING',w,
                                         f'Quality flag for {ot} linemeas solver'))
                 if self.drp1d_output.has_error(ot,"linemeas_solver"):
-                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',
-                                            self.drp1d_output.get_error(ot,"linemeas_solver")["code"])
-                                  )
+                    message = self.drp1d_output.get_error(ot,"linemeas_solver")["message"]
+                    code = self.drp1d_output.get_error(ot,"linemeas_solver")["code"] 
                 else:
-                    header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',""))
+                    message = ""
+                    code = ""                    
+                header.append(fits.Card(f'{ot.upper()[0]}_LERR',
+                                        message,
+                                        f"Error message {ot} linemeas solver" )
+                             )
+                header.append(fits.Card(f'hierarch {ot.upper()}_LERROR',
+                                        code,
+                                        f"Error code {ot} linemeas solver" )
+                                  )
             except Exception as e:
                 raise Exception(f"Could not write linemeas quality flag for {ot} : {e}")
         header.append(fits.Card(f'hierarch CLASSIFICATION_WARNING',
@@ -118,12 +128,20 @@ class RedshiftCandidates:
                                 f'Quality flag for classification solver'))
         for ot in ["galaxy","qso","star"]:
             if self.drp1d_output.has_error(ot,"redshift_solver"):
-                header.append(fits.Card(f'hierarch {ot.upper()}_ZERROR',
-                                        self.drp1d_output.get_error(ot,"redshift_solver")["code"])
-                              )
+                message = self.drp1d_output.get_error(ot,"redshift_solver")["message"]
+                code = self.drp1d_output.get_error(ot,"redshift_solver")["code"]
             else:
-                header.append(fits.Card(f'hierarch {ot.upper()}_ZERROR',""))
-
+                message = ""
+                code = ""
+            header.append(fits.Card(f'hierarch {ot.upper()}_ZERROR',
+                                    code,
+                                    f"Error code {ot} redshift solver" )
+            )
+            header.append(fits.Card(f'{ot.upper()[0]}_ZERR',
+                                    message,
+                                    f"Error message for {ot} redshift solver")
+            )
+                              
         if self.drp1d_output.has_error(None,"classification"):
             header.append(fits.Card(f'hierarch CLASSIFICATION_ERROR',
                                     self.drp1d_output.get_error(None,"classification")["code"])
@@ -268,7 +286,7 @@ class RedshiftCandidates:
         fr = fr.set_index("LinemeasLineID")
         line_catalog = self.calibration_library.line_catalogs_df[object_type]["LineMeasSolve"]
         fr = pd.merge(fr, line_catalog[["PfsName", "WaveLength"]], left_index=True, right_index=True)
-        fr = fr[fr["PfsName"] != "None"]
+        fr = fr[fr["PfsName"] != "undefined"]
 
         zlines = np.ndarray((fr.index.size,),
                             dtype=[('LINENAME', 'S15'),
@@ -305,24 +323,6 @@ class RedshiftCandidates:
             zi = zi+1
 
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES", data=zlines))
-
-    def qso_lines_to_fits(self, object_type, hdulist):
-        zlines = np.ndarray((0,),
-                            dtype=[('LINENAME', 'S15'),
-                                   ('LINEWAVE', 'f4'),
-                                   ('LINEZ', 'f4'),
-                                   ('LINEZ_ERR', 'f4'),
-                                   ('LINESIGMA', 'f4'),
-                                   ('LINESIGMA_ERR', 'f4'),
-                                   ('LINEVEL', 'f4'),
-                                   ('LINEVEL_ERR', 'f4'),
-                                   ('LINEFLUX', 'f4'),
-                                   ('LINEFLUX_ERR', 'f4'),
-                                   ('LINEEW', 'f4'),
-                                   ('LINEEW_ERR', 'f4'),
-                                   ('LINECONTLEVEL', 'f4'),
-                                   ('LINECONTLEVEL_ERR', 'f4')])
-        hdulist.append(fits.BinTableHDU(name=object_type.upper() + "_LINES", data=zlines))
 
     def _get_model_on_lambda_range(self, object_type, rank):
         model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
