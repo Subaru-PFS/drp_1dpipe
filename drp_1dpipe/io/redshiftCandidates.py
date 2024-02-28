@@ -328,7 +328,7 @@ class RedshiftCandidates:
         model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
         np.place(model, self.spectrum_storage.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
-        model = np.multiply(np.array(self.spectrum_storage.full_wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
+        model = np.multiply(np.array(self.spectrum_storage.full_wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
         return np.float32(model)
 
 
