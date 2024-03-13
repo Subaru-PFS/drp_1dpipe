@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from pylibamazed.redshift import get_version
-from pylibamazed.PdfHandler import buildPdfHandler
+from pylibamazed.PdfHandler import BuilderPdfHandler
 from drp_1dpipe import VERSION
 from astropy.io import fits
 import json
@@ -264,7 +264,8 @@ class RedshiftCandidates:
                 ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFProbaLog"))
             except Exception as e:
                 raise Exception(f"Failed to get {object_type} pdf : {e}")
-            pdfHandler = buildPdfHandler(self.drp1d_output, object_type, True)
+            builder = BuilderPdfHandler(self.drp1d_output, object_type, True)
+            pdfHandler = builder.build()
             
             pdf_grid = np.float32(pdfHandler.redshifts)
             grid_size = len(pdf_grid)
