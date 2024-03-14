@@ -213,7 +213,7 @@ def main_method(config):
         try:
             # runner.parallel('process_spectra', bunch_list,
             #                 'spectra-listfile', ['output-dir','logdir'],
-            if args.debug:
+            if config.debug:
                 main_no_parse(
                               args={
                                      'workdir': normpath(config.workdir),
@@ -276,12 +276,11 @@ def main():
     define_global_program_options(parser)
     args = parser.parse_args()
     if args.get_default_parameters is not None:
-        return
-    config = config_update(
-        config_defaults,
-        args=vars(args),
-        install_conf_path=get_conf_path("drp_1dpipe.json"),
-        environ_var='DRP_1DPIPE_STARTUP'
+        config = config_update(
+            config_defaults,
+            args=vars(args),
+            install_conf_path=get_conf_path("drp_1dpipe.json"),
+            environ_var='DRP_1DPIPE_STARTUP'
         )
     auto_dir(config)
     config_save(config, "config.json")
