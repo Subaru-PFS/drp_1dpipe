@@ -26,38 +26,59 @@ class RedshiftCandidates:
             self.spectrum_storage.pfs_object_id["nVisit"] % 1000,
             self.spectrum_storage.pfs_object_id["pfsVisitHash"])
         hdul = []
-        self.header_to_fits(hdul)
-        if not self.drp1d_output.has_error(None,"classification"):
-            self.classification_to_fits(hdul)
-        else:
-            hdul.append(fits.BinTableHDU(name="CLASSIFICATION"))
-        if not self.drp1d_output.has_error("galaxy","redshift_solver"):
-            self.galaxy_candidates_to_fits(hdul)
-            self.object_pdf_to_fits("galaxy", hdul)
-        else:
-            hdul.append(fits.BinTableHDU(name='GALAXY_CANDIDATES'))
-            hdul.append(fits.BinTableHDU(name='GALAXY_PDF'))
-        if not self.drp1d_output.has_error("galaxy","linemeas_solver"):
-            self.object_lines_to_fits("galaxy", hdul)
-        else:
-            hdul.append(fits.BinTableHDU(name="GALAXY_LINES"))
-        if not self.drp1d_output.has_error("qso","redshift_solver"):
-            self.qso_candidates_to_fits(hdul)
-            self.object_pdf_to_fits("qso", hdul)
-        else:
-            hdul.append(fits.BinTableHDU(name='QSO_CANDIDATES'))
-            hdul.append(fits.BinTableHDU(name='QSO_PDF'))
-        if not self.drp1d_output.has_error("qso","linemeas_solver"):
-            self.object_lines_to_fits("qso", hdul)
-        else:
-            hdul.append(fits.BinTableHDU(name="QSO_LINES"))
-        if not self.drp1d_output.has_error("star","redshift_solver"):
-            self.star_candidates_to_fits(hdul)
-            self.object_pdf_to_fits("star", hdul)
-        else:
-            hdul.append(fits.BinTableHDU(name='STAR_CANDIDATES'))
-            hdul.append(fits.BinTableHDU(name='STAR_PDF'))
-
+        try:
+            self.header_to_fits(hdul)
+        except Exception as e:
+            raise Exception(f'failed to write header : {e}')
+        try:
+            if not self.drp1d_output.has_error(None,"classification"):
+                self.classification_to_fits(hdul)
+            else:
+                hdul.append(fits.BinTableHDU(name="CLASSIFICATION"))
+        except Exception as e:
+            raise Exception(f'failed to write classification : {e}')
+        try:
+            if not self.drp1d_output.has_error("galaxy","redshift_solver"):
+                self.galaxy_candidates_to_fits(hdul)
+                self.object_pdf_to_fits("galaxy", hdul)
+            else:
+                hdul.append(fits.BinTableHDU(name='GALAXY_CANDIDATES'))
+                hdul.append(fits.BinTableHDU(name='GALAXY_PDF'))
+        except Exception as e:
+            raise Exception(f'failed to write galaxy : {e}')
+        try:
+            if not self.drp1d_output.has_error("galaxy","linemeas_solver"):
+                self.object_lines_to_fits("galaxy", hdul)
+            else:
+                hdul.append(fits.BinTableHDU(name="GALAXY_LINES"))
+        except Exception as e:
+            raise Exception(f'failed to write galaxy lines : {e}')
+        try:
+            if not self.drp1d_output.has_error("qso","redshift_solver"):
+                self.qso_candidates_to_fits(hdul)
+                self.object_pdf_to_fits("qso", hdul)
+            else:
+                hdul.append(fits.BinTableHDU(name='QSO_CANDIDATES'))
+                hdul.append(fits.BinTableHDU(name='QSO_PDF'))
+        except Exception as e:
+            raise Exception(f'failed to write qso : {e}')
+        try:
+            if not self.drp1d_output.has_error("qso","linemeas_solver"):
+                self.object_lines_to_fits("qso", hdul)
+            else:
+                hdul.append(fits.BinTableHDU(name="QSO_LINES"))
+        except Exception as e:
+            raise Exception(f'failed to write qso lines : {e}')
+        try:
+            if not self.drp1d_output.has_error("star","redshift_solver"):
+                self.star_candidates_to_fits(hdul)
+                self.object_pdf_to_fits("star", hdul)
+            else:
+                hdul.append(fits.BinTableHDU(name='STAR_CANDIDATES'))
+                hdul.append(fits.BinTableHDU(name='STAR_PDF'))
+        except Exception as e:
+            raise Exception(f'failed to write star : {e}')
+        
         fits.HDUList(hdul).writeto(os.path.join(output_dir, path),
                                    overwrite=True)
 
