@@ -26,6 +26,8 @@ class RedshiftCandidates:
             self.spectrum_storage.pfs_object_id["nVisit"] % 1000,
             self.spectrum_storage.pfs_object_id["pfsVisitHash"])
         hdul = []
+        params = self.calibration_library.parameters
+        object_types = params.get_spectrum_models()
         try:
             self.header_to_fits(hdul)
         except Exception as e:
@@ -37,8 +39,9 @@ class RedshiftCandidates:
                 hdul.append(fits.BinTableHDU(name="CLASSIFICATION"))
         except Exception as e:
             raise Exception(f'failed to write classification : {e}')
-        try:
-            if not self.drp1d_output.has_error("galaxy","redshift_solver"):
+        try:            
+            has_galaxy= "galaxy" in object_types and params.stage_enabled("galaxy","redshift_solver")
+            if has_galaxy and not self.drp1d_output.has_error("galaxy","redshift_solver"):
                 self.galaxy_candidates_to_fits(hdul)
                 self.object_pdf_to_fits("galaxy", hdul)
             else:
@@ -47,14 +50,16 @@ class RedshiftCandidates:
         except Exception as e:
             raise Exception(f'failed to write galaxy : {e}')
         try:
-            if not self.drp1d_output.has_error("galaxy","linemeas_solver"):
+            has_galaxy_lines=  "galaxy" in object_types and params.stage_enabled("galaxy","linemeas_solver")
+            if has_galaxy_lines and not self.drp1d_output.has_error("galaxy","linemeas_solver"):
                 self.object_lines_to_fits("galaxy", hdul)
             else:
                 hdul.append(fits.BinTableHDU(name="GALAXY_LINES"))
         except Exception as e:
             raise Exception(f'failed to write galaxy lines : {e}')
         try:
-            if not self.drp1d_output.has_error("qso","redshift_solver"):
+            has_qso= "qso" in object_types and params.stage_enabled("qso","redshift_solver")
+            if has_qso and not self.drp1d_output.has_error("qso","redshift_solver"):
                 self.qso_candidates_to_fits(hdul)
                 self.object_pdf_to_fits("qso", hdul)
             else:
@@ -63,14 +68,16 @@ class RedshiftCandidates:
         except Exception as e:
             raise Exception(f'failed to write qso : {e}')
         try:
-            if not self.drp1d_output.has_error("qso","linemeas_solver"):
+            has_qso_lines= "qso" in object_types and params.stage_enabled("qso","linemeas_solver")
+            if has_qso_lines and not self.drp1d_output.has_error("qso","linemeas_solver"):
                 self.object_lines_to_fits("qso", hdul)
             else:
                 hdul.append(fits.BinTableHDU(name="QSO_LINES"))
         except Exception as e:
             raise Exception(f'failed to write qso lines : {e}')
         try:
-            if not self.drp1d_output.has_error("star","redshift_solver"):
+            has_star= "star" in object_types and params.stage_enabled("star","redshift_solver")            
+            if has_star and not self.drp1d_output.has_error("star","redshift_solver"):
                 self.star_candidates_to_fits(hdul)
                 self.object_pdf_to_fits("star", hdul)
             else:
