@@ -54,7 +54,7 @@ class PFSReader(AbstractSpectrumReader):
         try:
             lsf = np.ndarray((1,),dtype=np.dtype([("width",'<f8')]))
             lsf["width"] = pfs_object.lsf
-            self.lsf_type = "GaussianConstantWidth"
+            self.lsf_type = "gaussianConstantWidth"
             self.lsf_data.append(lsf,obs_id)
         except:
             print(f"No lsf found on {self.observation_id}",file=sys.stderr)
