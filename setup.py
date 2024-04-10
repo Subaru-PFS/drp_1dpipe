@@ -18,7 +18,8 @@ entry_points['console_scripts'] = [
     'pre_process = drp_1dpipe.pre_process.pre_process:main',
     'process_spectra = drp_1dpipe.process_spectra.process_spectra:main',
     'merge_results = drp_1dpipe.merge_results.merge_results:main',
-    'drp_1dpipe = drp_1dpipe.scheduler.scheduler:main'
+    'drp_1dpipe = drp_1dpipe.scheduler.scheduler:main',
+    'drp_info = drp_1dpipe.io.infos:main'
 ]
 
 setup(name=NAME,

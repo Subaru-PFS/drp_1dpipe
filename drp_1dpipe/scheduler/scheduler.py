@@ -24,7 +24,7 @@ from drp_1dpipe.core.engine import local, pbs, slurm
 from drp_1dpipe.core.notifier import init_notifier
 from drp_1dpipe.scheduler.config import config_defaults
 from drp_1dpipe.process_spectra.process_spectra import main_no_parse
-
+from drp_1dpipe.io.infos import get_infos
 # logger = logging.getLogger("scheduler")
 
 
@@ -132,8 +132,11 @@ def reduce_process_spectra_output(json_bunch_list, output_dir, json_reduce):
     # create json containing list of product
     with open(json_reduce, 'w') as f:
         json.dump(bunch_dir_list, f)
+        
+    with open(os.path.join(output_dir,"infos.json"),'w') as f:
+        json.dump(get_infos(), f)
 
-
+            
 def list_aux_data(json_bunch_list, output_dir):
     """List all aux data directories
 
