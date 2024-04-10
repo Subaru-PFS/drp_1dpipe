@@ -138,7 +138,7 @@
         "LineMeasSolve": {
             "linemodel": {
                 "continuumcomponent": "nocontinuum",
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H2.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H2b.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
@@ -305,7 +305,7 @@
         "LineMeasSolve": {
             "linemodel": {
                 "continuumcomponent": "nocontinuum",
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v9.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v10.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
