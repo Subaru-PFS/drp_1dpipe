@@ -80,6 +80,22 @@ def bunch(bunch_size, spectra_dir):
         yield _list
 
 
+def pre_process(workdir,logdir,log_level, spectra_dir,output_dir, bunch_size, bunch_list):
+    # initialize logger
+    logger = init_logger("pre_process", logdir, log_level)
+    start_message = "Running pre_process {}".format(VERSION)
+    logger.info(start_message)
+
+    spectra_dir = normpath(workdir, spectra_dir)
+    nb_bunches = 0
+    for i, spc_list in enumerate(bunch(bunch_size, spectra_dir)):
+        nb_bunches= i + 1
+        spectralist_file = os.path.join(output_dir, 'spectralist_B{}.json'.format(str(i)))
+        with open(spectralist_file, "w") as ff:
+            json.dump(spc_list, ff)
+    return nb_bunches
+    
+    
 def main_method(config):
     """main_method
 
@@ -93,27 +109,9 @@ def main_method(config):
     int
         0 on success
     """    
-
-    # initialize logger
-    logger = init_logger("pre_process", config.logdir, config.log_level)
-    start_message = "Running pre_process {}".format(VERSION)
-    logger.info(start_message)
-
-    spectra_dir = normpath(config.workdir, config.spectra_dir)
-
-    # bunch
-    bunch_list = []
-    for i, spc_list in enumerate(bunch(config.bunch_size, spectra_dir)):
-        spectralist_file = os.path.join(config.output_dir, 'spectralist_B{}.json'.format(str(i)))
-        with open(spectralist_file, "w") as ff:
-            json.dump(spc_list, ff)
-        bunch_list.append(spectralist_file)
-
-    # create json containing list of bunches
-    with open(config.bunch_list, 'w') as f:
-        json.dump(bunch_list, f)
-
-    return 0
+    pre_process(config.workdir,config.logdir, config.log_level,
+                config.spectra_dir,config.output_dir,
+                config.bunch_size,config.bunch_list)
 
 
 def main():
