@@ -40,8 +40,8 @@ class RedshiftCandidates:
         except Exception as e:
             raise Exception(f'failed to write classification : {e}')
         try:            
-            has_galaxy= "galaxy" in object_types and params.stage_enabled("galaxy","redshift_solver")
-            if has_galaxy and not self.drp1d_output.has_error("galaxy","redshift_solver"):
+            has_galaxy= "galaxy" in object_types and params.stage_enabled("galaxy","redshiftSolver")
+            if has_galaxy and not self.drp1d_output.has_error("galaxy","redshiftSolver"):
                 self.galaxy_candidates_to_fits(hdul)
                 self.object_pdf_to_fits("galaxy", hdul)
             else:
@@ -50,16 +50,16 @@ class RedshiftCandidates:
         except Exception as e:
             raise Exception(f'failed to write galaxy : {e}')
         try:
-            has_galaxy_lines=  "galaxy" in object_types and params.stage_enabled("galaxy","linemeas_solver")
-            if has_galaxy_lines and not self.drp1d_output.has_error("galaxy","linemeas_solver"):
+            has_galaxy_lines=  "galaxy" in object_types and params.stage_enabled("galaxy","lineMeasSolver")
+            if has_galaxy_lines and not self.drp1d_output.has_error("galaxy","lineMeasSolver"):
                 self.object_lines_to_fits("galaxy", hdul)
             else:
                 hdul.append(fits.BinTableHDU(name="GALAXY_LINES"))
         except Exception as e:
             raise Exception(f'failed to write galaxy lines : {e}')
         try:
-            has_qso= "qso" in object_types and params.stage_enabled("qso","redshift_solver")
-            if has_qso and not self.drp1d_output.has_error("qso","redshift_solver"):
+            has_qso= "qso" in object_types and params.stage_enabled("qso","redshiftSolver")
+            if has_qso and not self.drp1d_output.has_error("qso","redshiftSolver"):
                 self.qso_candidates_to_fits(hdul)
                 self.object_pdf_to_fits("qso", hdul)
             else:
@@ -68,16 +68,16 @@ class RedshiftCandidates:
         except Exception as e:
             raise Exception(f'failed to write qso : {e}')
         try:
-            has_qso_lines= "qso" in object_types and params.stage_enabled("qso","linemeas_solver")
-            if has_qso_lines and not self.drp1d_output.has_error("qso","linemeas_solver"):
+            has_qso_lines= "qso" in object_types and params.stage_enabled("qso","lineMeasSolver")
+            if has_qso_lines and not self.drp1d_output.has_error("qso","lineMeasSolver"):
                 self.object_lines_to_fits("qso", hdul)
             else:
                 hdul.append(fits.BinTableHDU(name="QSO_LINES"))
         except Exception as e:
             raise Exception(f'failed to write qso lines : {e}')
         try:
-            has_star= "star" in object_types and params.stage_enabled("star","redshift_solver")            
-            if has_star and not self.drp1d_output.has_error("star","redshift_solver"):
+            has_star= "star" in object_types and params.stage_enabled("star","redshiftSolver")            
+            if has_star and not self.drp1d_output.has_error("star","redshiftSolver"):
                 self.star_candidates_to_fits(hdul)
                 self.object_pdf_to_fits("star", hdul)
             else:
@@ -124,17 +124,18 @@ class RedshiftCandidates:
         linemeas_methods = params.get_objects_linemeas_methods()
         for ot in linemeas_methods.keys():
             try:
-                if not self.drp1d_output.has_error(ot,"linemeas_solver"):
+                meth = linemeas_methods[ot]
+                if not self.drp1d_output.has_error(ot,"lineMeasSolver"):
                     w = self.drp1d_output.get_attribute(ot,
                                                         "warningFlag",
-                                                        "LineMeasSolveWarningFlags")
+                                                        f"{meth}WarningFlags")
                 else:
                     w = 0
                 header.append(fits.Card(f'hierarch {ot.upper()}_LWARNING',w,
                                         f'Quality flag for {ot} linemeas solver'))
-                if self.drp1d_output.has_error(ot,"linemeas_solver"):
-                    message = self.drp1d_output.get_error(ot,"linemeas_solver")["message"]
-                    code = self.drp1d_output.get_error(ot,"linemeas_solver")["code"] 
+                if self.drp1d_output.has_error(ot,"lineMeasSolver"):
+                    message = self.drp1d_output.get_error(ot,"lineMeasSolver")["message"]
+                    code = self.drp1d_output.get_error(ot,"lineMeasSolver")["code"] 
                 else:
                     message = ""
                     code = ""                    
@@ -155,9 +156,9 @@ class RedshiftCandidates:
                                 #                                 "classificationWarningFlags"),
                                 f'Quality flag for classification solver'))
         for ot in ["galaxy","qso","star"]:
-            if self.drp1d_output.has_error(ot,"redshift_solver"):
-                message = self.drp1d_output.get_error(ot,"redshift_solver")["message"]
-                code = self.drp1d_output.get_error(ot,"redshift_solver")["code"]
+            if self.drp1d_output.has_error(ot,"redshiftSolver"):
+                message = self.drp1d_output.get_error(ot,"redshiftSolver")["message"]
+                code = self.drp1d_output.get_error(ot,"redshiftSolver")["code"]
             else:
                 message = ""
                 code = ""
@@ -194,8 +195,14 @@ class RedshiftCandidates:
         o_proba = dict()
         classification = ""
         for o in ["galaxy","star","qso"]:
-            o_proba[o] = self.drp1d_output.get_attribute(None,"classification",f"{o}Proba")
-                    
+            try:
+                if self.drp1d_output.has_attribute(None,"classification",f"{o}Proba"):
+                    o_proba[o] = self.drp1d_output.get_attribute(None,"classification",f"{o}Proba")
+                else:
+                    o_proba[o] = 0
+            except:
+                o_proba[o] = 0
+                
         classification = [fits.Card('CLASS', self.get_classification_type(),
                                     "Spectro classification: GALAXY, QSO, STAR"),
                           fits.Card('P_GALAXY',o_proba["galaxy"],
@@ -289,11 +296,11 @@ class RedshiftCandidates:
     def object_pdf_to_fits(self, object_type, hdulist):
         if object_type in self.drp1d_output.object_results:
             try:
-                ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","PDFProbaLog"))
+                ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","LogZPdfNative"))
             except Exception as e:
                 raise Exception(f"Failed to get {object_type} pdf : {e}")
-            builder = BuilderPdfHandler(self.drp1d_output, object_type, True)
-            pdfHandler = builder.build()
+            builder = BuilderPdfHandler()
+            pdfHandler = builder.add_params(self.drp1d_output, object_type, True).build()
             
             pdf_grid = np.float32(pdfHandler.redshifts)
             grid_size = len(pdf_grid)
@@ -313,7 +320,7 @@ class RedshiftCandidates:
         fr = pd.DataFrame(self.drp1d_output.get_dataset(object_type, "linemeas"))
         fr = fr[fr["LinemeasLineLambda"] > 0]
         fr = fr.set_index("LinemeasLineID")
-        line_catalog = self.calibration_library.line_catalogs_df[object_type]["LineMeasSolve"]
+        line_catalog = self.calibration_library.line_catalogs_df[object_type]["lineMeasSolve"]
         fr = pd.merge(fr, line_catalog[["Name", "WaveLength"]], left_index=True, right_index=True)
 
 
@@ -340,16 +347,16 @@ class RedshiftCandidates:
             zlines[zi]['LINEZ_ERR'] = self.drp1d_output.get_candidate_data(object_type, 0, "RedshiftUncertainty")
             zlines[zi]['LINESIGMA'] = fr.at[i,"LinemeasLineWidth"]/10.
             zlines[zi]['LINESIGMA_ERR'] = -1
-            zlines[zi]['LINEVEL'] = fr.at[i,"LinemeasVelocity"]
+            zlines[zi]['LINEVEL'] = fr.at[i,"LinemeasLineVelocity"]
             zlines[zi]['LINEVEL_ERR'] = -1
             # erg/cm2/s -> 10^-35 W/m2 : erg/cm2/s=10^-7W/cm2=10^-3W/m2 -> *10^-3
             zlines[zi]['LINEFLUX'] = fr.at[i, "LinemeasLineFlux"]*10**-3
-            zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasLineFluxError"]*10**-3
+            zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasLineFluxUncertainty"]*10**-3
             zlines[zi]['LINEEW'] = -1
             zlines[zi]['LINEEW_ERR'] = -1
-            zlines[zi]['LINECONTLEVEL'] = fr.at[i,"LinemeasLineCenterContinuumFlux"]
-            zlines[zi]['LINECONTLEVEL_ERR'] = -1
-            zi = zi+1
+            zlines[zi]['LINECONTLEVEL'] = fr.at[i,"LinemeasLineContinuumFlux"]
+            zlines[zi]['LINECONTLEVEL_ERR'] = fr.at[i,"LinemeasLineContinuumFluxUncertainty"]
+            zi = zi+1                                  
 
         hdulist.append(fits.BinTableHDU(name=object_type.upper()+"_LINES", data=zlines))
 
