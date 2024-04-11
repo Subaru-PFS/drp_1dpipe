@@ -19,10 +19,11 @@ from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.utils import ( get_args_from_file,
                                     normpath, get_auxiliary_path, get_conf_path,
                                     TemporaryFilesSet, config_update, config_save )
-from drp_1dpipe.core.engine.runner import get_runner, list_runners
-from drp_1dpipe.core.engine import local, pbs, slurm
-from drp_1dpipe.core.notifier import init_notifier
+from drp_1dpipe.core.workers import get_worker,list_workers
+
+
 from drp_1dpipe.scheduler.config import config_defaults
+from drp_1dpipe.pre_process.pre_process import pre_process
 from drp_1dpipe.process_spectra.process_spectra import main_no_parse
 from drp_1dpipe.io.infos import get_infos
 # logger = logging.getLogger("scheduler")
@@ -42,7 +43,7 @@ def define_specific_program_options():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
     parser.add_argument('--scheduler',
-                        choices=list_runners(),
+                        choices=list_workers(),
                         help='The scheduler to use.')
     parser.add_argument('--venv', metavar='DIR', action=AbspathAction,
                         help='Virtual environment path to load before running batch job')
@@ -84,35 +85,7 @@ def auto_dir(config):
         config.logdir = os.path.join(config.output_dir, 'log')
 
 
-def map_process_spectra_entries(json_bunch_list, output_dir, logdir):
-    """Prepare arguments list for process spectra command
-
-    Parameters
-    ----------
-    json_bunch_file : str
-        Path to JSON file of bunch list
-    output_dir : str
-        Path to output directory
-    logdir : str
-        Path to log directory
-    
-    Return
-    ------
-    list, list, list
-        Packed list for bunch list, output directory list, logdir list
-    """
-    with open(json_bunch_list, 'r') as f:
-            bunch_list = json.load(f)
-
-    output_list = []
-    logdir_list = []
-    for i, arg_value in enumerate(bunch_list):
-        output_list.append(os.path.join(output_dir, 'B{}'.format(str(i))))
-        logdir_list.append(os.path.join(logdir, 'B{}'.format(str(i))))
-    return bunch_list, output_list, logdir_list
-
-
-def reduce_process_spectra_output(json_bunch_list, output_dir, json_reduce):
+def reduce_process_spectra_output(output_dir):
     """Prepare arguments for merge result command
 
     Parameters
@@ -122,16 +95,6 @@ def reduce_process_spectra_output(json_bunch_list, output_dir, json_reduce):
     output_dir : str
         Path to output directory
     """
-    with open(json_bunch_list, 'r') as f:
-            bunch_list = json.load(f)
-
-    bunch_dir_list = []
-    for i, arg_value in enumerate(bunch_list):
-        bunch_dir_list.append(os.path.join(output_dir, 'B{}'.format(str(i))))
-    
-    # create json containing list of product
-    with open(json_reduce, 'w') as f:
-        json.dump(bunch_dir_list, f)
         
     with open(os.path.join(output_dir,"infos.json"),'w') as f:
         json.dump(get_infos(), f)
@@ -175,95 +138,43 @@ def main_method(config):
     # Launch banner
     print(start_message)
 
-    runner_class = get_runner(config.scheduler)
-    # if not runner_class:
-    #     error_message = "Unknown runner {}".format(config.scheduler)
-    #     logger.error(error_message)
-    #     raise error_message
-
-    notifier = init_notifier(config.notification_url)
 
     json_bunch_list = normpath(config.output_dir, 'bunchlist.json')
 
-    notifier.update('root', 'RUNNING')
-    notifier.update('pre_process', 'RUNNING')
+    # prepare workdir
+    try:
+        nb_bunches=pre_process(normpath(config.workdir), normpath(config.logdir),config.log_level,
+                    normpath(config.spectra_dir),normpath(config.output_dir),
+                    config.bunch_size, json_bunch_list)
+    except Exception as e:
+        traceback.print_exc()
+        return 1
 
-    with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.DEBUG) as tmpcontext:
+    worker = get_worker(config.scheduler)(config)
+    
+    # process spectra
 
-        runner = runner_class(config, tmpcontext)
-
-        # prepare workdir
-        try:
-            runner.single('pre_process',
-                        args={'workdir': normpath(config.workdir),
-                                'logdir': normpath(config.logdir),
-                                'bunch_size': config.bunch_size,
-                                'spectra_dir': normpath(config.spectra_dir),
-                                'bunch_list': json_bunch_list,
-                                'output_dir': normpath(config.output_dir)
-                                })
-        except Exception as e:
-            traceback.print_exc()
-            notifier.update('pre_process', 'ERROR')
-            return 1
+    try:
+        if config.debug:
+            main_no_parse(
+                          args={
+                                 'workdir': normpath(config.workdir),
+                                 'spectra_dir': normpath(config.spectra_dir),
+                                 'parameters_file': config.parameters_file,
+                'spectra_listfile': os.path.join(config.output_dir,'spectralist_B0.json'),
+                'output_dir': os.path.join(config.output_dir,'B0'),
+                'logdir': os.path.join(config.output_dir,'log','B0'),
+                             })
         else:
-            notifier.update('pre_process', 'SUCCESS')
-            # tmpcontext.add_files(json_bunch_list)
+            for i in range(nb_bunches):
+                worker.run(['process_spectra',i])
+    except Exception as e:
+        traceback.print_exc()
 
-        # process spectra
-        bunch_list, output_list, logdir_list = map_process_spectra_entries(
-            json_bunch_list, config.output_dir, config.logdir)
-        try:
-            # runner.parallel('process_spectra', bunch_list,
-            #                 'spectra-listfile', ['output-dir','logdir'],
-            if config.debug:
-                main_no_parse(
-                              args={
-                                     'workdir': normpath(config.workdir),
-                                     'spectra_dir': normpath(config.spectra_dir),
-                                     'parameters_file': config.parameters_file,
-                                     'spectra_dir': normpath(config.spectra_dir),
-                    'spectra_listfile': bunch_list[0],
-                    'output_dir': output_list[0],
-                    'logdir': logdir_list[0]
-                                 })
-            else:
-                runner.parallel('process_spectra',
-                                parallel_args={
-                                    'spectra_listfile': bunch_list,
-                                    'output_dir': output_list,
-                                    'logdir': logdir_list
-                                },
-                                args={
-                                    'workdir': normpath(config.workdir),
-                                    'spectra_dir': normpath(config.spectra_dir),
-                                    'parameters_file': config.parameters_file,
-                                })
-
-        except Exception as e:
-            traceback.print_exc()
-            notifier.update('root', 'ERROR')
-        else:
-            notifier.update('root', 'SUCCESS')
-
-        print("reduce")
-        json_reduce = normpath(config.output_dir, 'reduce.json')
-        reduce_process_spectra_output(json_bunch_list, config.output_dir, json_reduce)
-        try:
-            runner.single('merge_results',
-                            args={
-                                'workdir': normpath(config.workdir),
-                                'logdir': normpath(config.logdir),
-                                'output_dir': normpath(config.output_dir),
-                                'bunch_listfile': json_reduce
-                        })
-        except Exception as e:
-            traceback.print_exc()
-            notifier.update('merge_results', 'ERROR')
-            return 1
-        else:
-            notifier.update('merge_results', 'SUCCESS')
-
+    worker.wait_all()
+    json_reduce = normpath(config.output_dir, 'reduce.json')
+    reduce_process_spectra_output(config.output_dir)
+    worker.run(['merge_results'])
     return 0
 
 

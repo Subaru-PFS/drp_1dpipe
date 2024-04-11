@@ -3,6 +3,7 @@ import logging
 import argparse
 import shutil
 import json
+import sys
 
 from drp_1dpipe import VERSION
 from drp_1dpipe.core.logger import init_logger
@@ -10,6 +11,7 @@ from drp_1dpipe.core.argparser import define_global_program_options, AbspathActi
 from drp_1dpipe.core.utils import get_conf_path, config_update, config_save
 from drp_1dpipe.merge_results.config import config_defaults
 
+import glob
 logger = logging.getLogger("mergs_results")
 
 
@@ -54,19 +56,13 @@ def main_method(config):
     logger = init_logger("merge_results", config.logdir, config.log_level)
     start_message = "Running merge_results {}".format(VERSION)
     logger.info(start_message)
-
-    if not os.path.exists(config.bunch_listfile):
-        raise FileNotFoundError("Bunch list file not found : {}".format(config.bunch_listfile))
-    
-    with open(config.bunch_listfile, "r") as ff :
-        bunch_list = json.load(ff)
     
     data_dir = os.path.join(config.output_dir, 'data')
     os.makedirs(data_dir, exist_ok=True)
-    for bunch in bunch_list:
-        if not os.path.exists(bunch):
-            raise FileNotFoundError("Bunch directory not found : {}".format(bunch))
-        bunch_data_dir = os.path.join(bunch,"data")
+    nb_bunches = len(glob.glob(os.path.join(config.output_dir,f'spectralist_B*.json'))) 
+    for bunch_id in range(nb_bunches):
+        bunch_dir = os.path.join(config.output_dir,f'B{bunch_id}')
+        bunch_data_dir = os.path.join(bunch_dir,"data")
         if not os.path.exists(bunch_data_dir):
             raise FileNotFoundError("Bunch data directory not found : {}".format(bunch_data_dir))
         to_merge = os.listdir(bunch_data_dir)
@@ -74,7 +70,16 @@ def main_method(config):
             shutil.move(
                 os.path.join(bunch_data_dir, pfs_candidate),
                 os.path.join(data_dir, pfs_candidate))
-
+        ps_path = os.path.join(config.output_dir,f"process_spectra_{bunch_id}.sh")
+        if os.path.isfile(ps_path):
+            os.remove(ps_path)
+        ps_path = os.path.join(config.output_dir,f"spectralist_B{bunch_id}.json")
+        if os.path.isfile(ps_path):
+            os.remove(ps_path)
+        try:
+            shutil.rmtree(os.path.join(config.output_dir,f"B{bunch_id}"))
+        except Exception as e:
+            print(f'could not clean bunch dir : {e}',file=sys.stderr)
     return 0
 
 
