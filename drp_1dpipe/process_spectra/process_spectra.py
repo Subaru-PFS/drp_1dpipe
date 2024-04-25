@@ -18,6 +18,8 @@ from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config
 from drp_1dpipe.process_spectra.config import config_defaults
 
 from drp_1dpipe.core.utils import normpath, TemporaryFilesSet
+from drp_1dpipe.core.get_default_summary import get_default_summary_columns
+
 from drp_1dpipe.io.PFSReader import PFSReader
 from drp_1dpipe.io.PFSExternalStorage import PFSExternalStorage
 
@@ -27,7 +29,7 @@ from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.redshift import (CLog,
                                   CLogFileHandler,
                                   get_version)
-
+import pandas as pd
 import collections.abc
 
 zlog = CLog.GetInstance()
@@ -105,7 +107,8 @@ def _process_spectrum(output_dir, reader, context, user_param, storage) :
     except Exception as e:
         logger.log(logging.ERROR,"Failed to write fits result for spectrum "
                    "{} : {}".format(reader.source_id, e))
-
+        return 0
+    return output
 
 def _setup_pass(config):
 
@@ -160,9 +163,11 @@ def amazed(config):
 
     data_dir = os.path.join(outdir, 'data')
     os.makedirs(data_dir, exist_ok=True)
+    summary_columns = get_default_summary_columns()
+    lines_ids = context.calibration_library.get_lines_ids(summary_columns)
 
     products = []
-    
+    redshifts = []    
     for i, spectrum_path in enumerate(spectra_list):
         try:
             spectrum_id = ""
@@ -179,9 +184,15 @@ def amazed(config):
         except Exception as e:
             logger.log(logging.ERROR, "Could not read spectrum at {spectrum_path} with id {spectrum_id} : {e}")
 
-        _process_spectrum(data_dir, reader,context, user_parameters, storage)
+        output = _process_spectrum(data_dir, reader,context, user_parameters, storage)
         
+        if output !=0:
+            redshift_row = output.get_attributes(summary_columns,lines_ids)
+            redshift_row["ProcessingID"]=spectrum_id
+            redshifts.append(redshift_row)
 
+    pd.DataFrame(redshifts).to_pickle(os.path.join(outdir,"redshifts.df"))
+    
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
 
         # save amazed version and parameters file to output dir
