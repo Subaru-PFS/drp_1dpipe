@@ -44,7 +44,7 @@
         "template_dir": "templates/BC03_sdss_tremonti21",
         "LineModelSolve": {
             "linemodel": {
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H2.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H3.tsv",
                 "linetypefilter": "no",
                 "lineforcefilter": "no",
                 "fittingmethod": "individual",
@@ -82,7 +82,7 @@
                 "lineRatioType": "tplratio",
                 "rules": "all",
                 "improveBalmerFit": true,
-                "tplratio_catalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v18_emission",
+                "tplratio_catalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v19_emission",
                 "tplratio_ismfit": true,
                 "continuumcomponent": "tplfitauto",
                 "continuumreestimation": "no",
@@ -141,7 +141,7 @@
         "LineMeasSolve": {
             "linemodel": {
                 "continuumcomponent": "nocontinuum",
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H2b.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_H3.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "nsigmasupport": 14,
@@ -229,7 +229,7 @@
         },
         "LineModelSolve": {
             "linemodel": {
-                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v9.tsv",
+                "linecatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v10.tsv",
                 "linetypefilter": "E",
                 "lineforcefilter": "no",
                 "linewidthtype": "combined",
@@ -246,7 +246,7 @@
                 "lbdaoffsetfit": false,
                 "haprior": -1,
                 "lineRatioType": "tplratio",
-                "tplratio_catalog": "linecatalogs_tplshapes/QSO_LineRatios_v2",
+                "tplratio_catalog": "linecatalogs_tplshapes/QSO_LineRatios_v3",
                 "tplratio_ismfit": true,
                 "improveBalmerFit": false,
                 "fittingmethod": "hybrid",
