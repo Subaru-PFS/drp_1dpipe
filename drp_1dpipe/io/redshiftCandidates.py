@@ -6,7 +6,7 @@ from drp_1dpipe import VERSION
 from astropy.io import fits
 import json
 import pandas as pd
-
+from scipy.constants import speed_of_light
 
 class RedshiftCandidates:
 
@@ -283,7 +283,7 @@ class RedshiftCandidates:
                                         ])
 
         for rank in range(nb_candidates):
-            zcandidates[rank]['V'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift")
+            zcandidates[rank]['V'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light
             zcandidates[rank]['V_ERR'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty")
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['T_PROBA'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
@@ -307,6 +307,7 @@ class RedshiftCandidates:
             grid_name = 'REDSHIFT'
             if object_type == "star":
                 grid_name = 'VELOCITY'
+                pdf_grid = pdf_grid * speed_of_light
             zpdf_hdu = np.ndarray(grid_size, 
                                   dtype=[('ln PDF', 'f4'), (grid_name, 'f4')])
             zpdf_hdu['ln PDF']=pdfHandler.valProbaLog
