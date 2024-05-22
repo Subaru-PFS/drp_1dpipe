@@ -1,2 +1,2 @@
 # top init
-VERSION = '0.46.0.2'
+VERSION = '1.2.0'
