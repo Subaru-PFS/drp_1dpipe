@@ -155,20 +155,7 @@
                 "rules": "no",
                 "improveBalmerFit": true,
                 "lya": {
-                    "profile": "asym",
-                    "asymProfile": {
-                        "switchFitToFixed": false,
-                        "switchFixedToFit": false,
-                        "asymfitmin": 0,
-                        "asymfitmax": 4,
-                        "asymfitstep": 1,
-                        "widthfitmin": 1,
-                        "widthfitmax": 4,
-                        "widthfitstep": 1,
-                        "deltafitmin": 0,
-                        "deltafitmax": 0,
-                        "deltafitstep": 1
-                    }
+                    "profile": "igm"
                 },
                 "emvelocityfitmin": 10,
                 "emvelocityfitmax": 400,
@@ -330,20 +317,7 @@
                 "absvelocityfitmin": 150,
                 "absvelocityfitmax": 500,
                 "lya": {
-                    "profile": "asym",
-                    "asymProfile": {
-                        "switchFitToFixed": false,
-                        "switchFixedToFit": false,
-                        "asymfitmin": 0,
-                        "asymfitmax": 4,
-                        "asymfitstep": 1,
-                        "widthfitmin": 1,
-                        "widthfitmax": 4,
-                        "widthfitstep": 1,
-                        "deltafitmin": 0,
-                        "deltafitmax": 0,
-                        "deltafitstep": 1
-                    }
+                    "profile": "igm"
                 }
             }
         }
