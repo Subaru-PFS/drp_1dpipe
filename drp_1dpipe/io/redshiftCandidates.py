@@ -8,6 +8,7 @@ import json
 import pandas as pd
 from scipy.constants import speed_of_light
 
+
 class RedshiftCandidates:
 
     def __init__(self, drp1d_output, spectrum_storage, logger, user_param, calibration_library):
@@ -109,6 +110,25 @@ class RedshiftCandidates:
                   ]
         params = self.calibration_library.parameters
         redshift_methods = params.get_objects_solve_methods()
+        header.append(fits.Card(f'hierarch INIT_WARNING',
+                                        self.drp1d_output.get_attribute(None,
+                                                                        "init_warningFlag",
+                                                                        "InitWarningFlags"),
+                                        f'Quality flag for spectrum initialization'))
+        if self.drp1d_output.has_error(None,"init"):
+            message = self.get_error(None,"init","message")
+            code = self.get_error(None,"init","code")
+        else:
+            code = ""
+            message = ""
+        header.append(fits.Card(f'INIT_ERR',
+                                message,
+                                f"Error message for spectrum initialization" )
+                             )
+        header.append(fits.Card(f'hierarch INIT_ERROR',
+                                code,
+                                f"Error code spectrum initialization" )
+                      )
         for ot,meth in redshift_methods.items():
             try:
                 header.append(fits.Card(f'hierarch {ot.upper()}_ZWARNING',
