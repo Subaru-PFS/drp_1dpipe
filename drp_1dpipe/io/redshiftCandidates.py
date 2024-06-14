@@ -116,8 +116,8 @@ class RedshiftCandidates:
                                                                         "InitWarningFlags"),
                                         f'Quality flag for spectrum initialization'))
         if self.drp1d_output.has_error(None,"init"):
-            message = self.get_error(None,"init","message")
-            code = self.get_error(None,"init","code")
+            message = self.drp1d_output.get_error(None,"init","message")
+            code = self.drp1d_output.get_error(None,"init","code")
         else:
             code = ""
             message = ""
