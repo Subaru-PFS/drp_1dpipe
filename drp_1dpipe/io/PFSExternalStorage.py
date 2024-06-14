@@ -48,11 +48,8 @@ class PFSExternalStorage:
 
         try:
             with fits.open(spectrum_path) as f:
-                try:
+                if "LSF" in f[1].header:
                     pfs_object.lsf = f[1].header["LSF"] * 0.8 # this is only for pfsObjects processed at LAM, which have integrated lsf pickle files content
-                except:
-                    print("Could not retrieve lsf",file = sys.stderr)
-                    pass
                 self.global_infos["VERSION_drp_stella"] =f[1].header["VERSION_drp_stella"]
                 self.global_infos["damd_version"] = f[1].header["DAMD_VER"]
                 self.spectrum_infos["fiberId"] = f[7].data["fiberId"][0]

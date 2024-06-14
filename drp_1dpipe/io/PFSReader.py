@@ -51,13 +51,11 @@ class PFSReader(AbstractSpectrumReader):
             raise Exception("Could not load error : {e}")
 
     def load_lsf(self, pfs_object,obs_id=""):
-        try:
+        if hasattr(pfs_object,"lsf"):
             lsf = np.ndarray((1,),dtype=np.dtype([("width",'<f8')]))
             lsf["width"] = pfs_object.lsf
             self.lsf_type = "gaussianConstantWidth"
             self.lsf_data.append(lsf,obs_id)
-        except:
-            print(f"No lsf found on {self.observation_id}",file=sys.stderr)
             
     def load_photometry(self, pfs_object):
         pass
