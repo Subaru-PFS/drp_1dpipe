@@ -304,7 +304,7 @@ class RedshiftCandidates:
 
         for rank in range(nb_candidates):
             zcandidates[rank]['V'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light
-            zcandidates[rank]['V_ERR'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty")
+            zcandidates[rank]['V_ERR'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light
             zcandidates[rank]['CRANK'] = rank
             zcandidates[rank]['T_PROBA'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['SUBCLASS'] = "" # self.drp1d_output.get_candidate_data("star", rank, "ContinuumName").split("_")[0]
