@@ -93,20 +93,20 @@ def _output_path(args, *path):
     return normpath(args.workdir, args.output_dir, *path)
 
 
-def _process_spectrum(output_dir, reader, context, user_param, storage) :
+def _process_spectrum(output_dir, spectrum, process_flow, user_param, storage) :
     try:
-        output = context.run(reader) 
+        output = process_flow.run(spectrum) 
     except Exception as e:
         logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
         return 0
     try:
-        rc = RedshiftCandidates(output, storage, logger, user_param, context.calibration_library)
+        rc = RedshiftCandidates(output, storage, logger, user_param, process_flow.calibration_library)
         logger.log(logging.INFO, "write fits")
 
         rc.write_fits(output_dir)
     except Exception as e:
         logger.log(logging.ERROR,"Failed to write fits result for spectrum "
-                   "{} : {}".format(reader.source_id, e))
+                   "{} : {}".format(spectrum.source_id, e))
         return 0
     return output
 
@@ -134,9 +134,9 @@ def _setup_pass(config):
                                 f"{config.calibration_dir}")
     params['calibrationDir'] = config.calibration_dir
 
-    context = ProcessFlow(vars(config), Parameters(params))
+    process_flow = ProcessFlow(vars(config), Parameters(params))
 
-    return context, user_params
+    return process_flow, user_params
 
 
 def amazed(config):
@@ -153,7 +153,7 @@ def amazed(config):
     #
     # Set up param and linecatalog for redshift pass
     #
-    context, user_parameters = _setup_pass(config)
+    process_flow, user_parameters = _setup_pass(config)
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
@@ -164,27 +164,25 @@ def amazed(config):
     data_dir = os.path.join(outdir, 'data')
     os.makedirs(data_dir, exist_ok=True)
     summary_columns = get_default_summary_columns()
-    lines_ids = context.calibration_library.get_lines_ids(summary_columns)
+    lines_ids = process_flow.calibration_library.get_lines_ids(summary_columns)
 
     products = []
     redshifts = []    
     for i, spectrum_path in enumerate(spectra_list):
         try:
-            spectrum_id = ""
-            spectrum = normpath(config.workdir, config.spectra_dir, spectrum_path["fits"])
             spectrum_id = spectrum_path["fits"][len("PfsObject-"):-len(".fits")]
             storage = PFSExternalStorage(config, spectrum_id)
-            reader = PFSReader(spectrum_id,
-                               context.calibration_library.parameters,
-                               context.calibration_library,
+            reader = PFSReader(process_flow.calibration_library.parameters,
+                               process_flow.calibration_library,
                                spectrum_id)
             resource = storage.read()
             reader.load_all(resource)
+            spectrum = reader.get_spectrum()
             storage.close(resource)
         except Exception as e:
-            logger.log(logging.ERROR, "Could not read spectrum at {spectrum_path} with id {spectrum_id} : {e}")
+            logger.log(logging.ERROR, f"Could not read spectrum at {spectrum_path} with id {spectrum_id} : {e}")
 
-        output = _process_spectrum(data_dir, reader,context, user_parameters, storage)
+        output = _process_spectrum(data_dir, spectrum,process_flow, user_parameters, storage)
         
         if output !=0:
             redshift_row = output.get_attributes(summary_columns,lines_ids)
@@ -202,7 +200,7 @@ def amazed(config):
         parameters_file = os.path.join(normpath(config.workdir, config.output_dir),
                                        'parameters.json')
         with open(parameters_file,'w') as f:
-            json.dump(context.parameters.parameters, f)
+            json.dump(process_flow.parameters.parameters, f)
         tmpcontext.add_files(parameters_file)
 
         # write list of created products

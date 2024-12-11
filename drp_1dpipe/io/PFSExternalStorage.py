@@ -6,7 +6,7 @@ import glob
 import sys
 
 class PFSExternalStorage:
-    """Opener for FITS files that should be treated with an AmazedSpectrumReader."""
+    """Opener for FITS files that should be treated with an PFSSpectrumReader."""
 
     def __init__(self, config, spectrum_id):
         self.config = config
@@ -80,3 +80,19 @@ class PFSExternalStorage:
     def close(self, resource: PfsObject):
         pass
         
+    #  to be used as context manager
+    def __enter__(self):
+        obs_id, kwargs = self._read_param
+        self.resource = self.read(obs_id, **kwargs)
+        return self.resource
+
+    def __call__(self, obs_id="", **kwargs):
+        # store read parameters
+        self._read_param = (obs_id, kwargs)
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self._read_param = None
+        self.close(self.resource)
+        self.resource = None
+        return False
