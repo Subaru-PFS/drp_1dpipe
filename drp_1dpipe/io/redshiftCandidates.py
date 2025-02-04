@@ -91,7 +91,6 @@ class RedshiftCandidates:
                                    overwrite=True)
 
     def header_to_fits(self, hdulist):
-        quality_flag = 2 # no linemeas active
         header = [fits.Card('tract', self.spectrum_storage.pfs_object_id["tract"], 'Area of the sky'),
                   fits.Card('patch', self.spectrum_storage.pfs_object_id["patch"], 'Region within tract'),
                   fits.Card('catId', self.spectrum_storage.pfs_object_id["catId"], 'Source of the objId'),
@@ -361,15 +360,17 @@ class RedshiftCandidates:
                                    ('LINECONTLEVEL', 'f4'),
                                    ('LINECONTLEVEL_ERR', 'f4')])
         zi = 0
+        z = self.drp1d_output.get_candidate_data(object_type, 0, "LinemeasRedshift" )
         for i in list(fr.index):
             zlines[zi]['LINENAME'] = fr.at[i, "Name"]
             zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasLineLambda"]*0.1
-            zlines[zi]['LINEZ'] = self.drp1d_output.get_candidate_data(object_type, 0, "Redshift" )
-            zlines[zi]['LINEZ_ERR'] = self.drp1d_output.get_candidate_data(object_type, 0, "RedshiftUncertainty")
+            offset = fr.at[i, "LinemeasLineOffset"]
+            zlines[zi]['LINEZ'] = z + offset/speed_of_light + z*offset/speed_of_light
+            zlines[zi]['LINEZ_ERR'] = fr.at[i, "LinemeasLineOffsetUncertainty"]/speed_of_light
             zlines[zi]['LINESIGMA'] = fr.at[i,"LinemeasLineWidth"]/10.
             zlines[zi]['LINESIGMA_ERR'] = -1
             zlines[zi]['LINEVEL'] = fr.at[i,"LinemeasLineVelocity"]
-            zlines[zi]['LINEVEL_ERR'] = -1
+            zlines[zi]['LINEVEL_ERR'] = fr.at[i,"LinemeasLineVelocityUncertainty"]
             # erg/cm2/s -> 10^-35 W/m2 : erg/cm2/s=10^-7W/cm2=10^-3W/m2 -> *10^-3
             zlines[zi]['LINEFLUX'] = fr.at[i, "LinemeasLineFlux"]*10**-3
             zlines[zi]['LINEFLUX_ERR'] = fr.at[i, "LinemeasLineFluxUncertainty"]*10**-3

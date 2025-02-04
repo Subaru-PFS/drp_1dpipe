@@ -1,11 +1,12 @@
 from astropy.io import fits
 from pfs.datamodel.drp import PfsObject
+from pylibamazed.AbstractExternalStorage import AbstractExternalStorage
 import os
 import glob
 
 import sys
 
-class PFSExternalStorage:
+class PFSExternalStorage(AbstractExternalStorage):
     """Opener for FITS files that should be treated with an PFSSpectrumReader."""
 
     def __init__(self, config, spectrum_id):
