@@ -4,17 +4,18 @@
         4000,
         13000
     ],
-      "additionalCols": [
-	  "mask"],
-      "filters": [
-    {
-      "key": "mask",
-	"instruction" : "=",
-	"value": 0
-    }
-      ],
-    
+   "additionalCols": [
+      "mask"],
+   "filters": [
+ {
+   "key": "mask",
+    "instruction" : "=",
+    "value": 0
+ }
+   ],
+
     "smoothWidth": 0.0,
+    "nbSamplesMin": 1,
     "templateCatalog": {
         "continuumRemoval": {
             "method": "zero",
@@ -72,6 +73,8 @@
                     "fittingMethod": "lbfgsb",
                     "polynomialDegree": 2,
                     "velocityFit": true,
+                    "velocityEmission": 100,
+                    "velocityAbsorption": 100,
                     "ampOffsetFit": true,
                     "lbdaOffsetFit": true,
                     "lineRatioType": "rules",
@@ -95,7 +98,7 @@
                     },
                     "emVelocityFitMin": 10,
                     "emVelocityFitMax": 400,
-                    "absVelocityFitMin": 150,
+                    "absVelocityFitMin": 100,
                     "absVelocityFitMax": 500
                 }
             }
@@ -116,7 +119,7 @@
                     "emVelocityFitMin": 10,
                     "emVelocityFitMax": 400,
                     "emVelocityFitStep": 20,
-                    "absVelocityFitMin": 150,
+                    "absVelocityFitMin": 100,
                     "absVelocityFitMax": 500,
                     "absVelocityFitStep": 50,
                     "ampOffsetFit": false,
@@ -137,7 +140,6 @@
                             "deltaStepMax": 1
                         }
                     },
-                    "extremaCountB": 0,
                     "hAlphaPrior": -1,
                     "lineRatioType": "tplRatio",
                     "rules": "all",
@@ -207,7 +209,8 @@
                 "igmFit": true,
                 "ismFit": true,
                 "pdfCombination": "marg",
-                "enablePhotometry": false
+                "enablePhotometry": false,
+                "singlePass": true
             }
         }
     },
@@ -235,7 +238,8 @@
                 "interpolation": "lin",
                 "ismFit": true,
                 "igmFit": false,
-                "enablePhotometry": false
+                "enablePhotometry": false,
+                "singlePass": true
             }
         }
     },
@@ -264,7 +268,8 @@
                 "interpolation": "preComputedFineGrid",
                 "ismFit": true,
                 "igmFit": true,
-                "enablePhotometry": false
+                "enablePhotometry": false,
+                "singlePass": true
             },
             "lineModelSolve": {
                 "lineModel": {
@@ -278,7 +283,7 @@
                     "emVelocityFitStep": 50,
                     "emVelocityFitMin": 150,
                     "emVelocityFitMax": 2500,
-                    "absVelocityFitMin": 150,
+                    "absVelocityFitMin": 100,
                     "absVelocityFitMax": 500,
                     "absVelocityFitStep": 50,
                     "ampOffsetFit": false,
@@ -311,7 +316,6 @@
                     "lya": {
                         "profile": "igm"
                     },
-                    "extremaCountB": 0,
                     "pdfCombination": "marg",
                     "useLogLambdaSampling": false,
                     "skipSecondPass": false,
@@ -368,9 +372,11 @@
                     "lineRatioType": "rules",
                     "rules": "no",
                     "improveBalmerFit": true,
+                    "velocityEmission": 1500,
+                    "velocityAbsorption": 100,
                     "emVelocityFitMin": 150,
                     "emVelocityFitMax": 2500,
-                    "absVelocityFitMin": 150,
+                    "absVelocityFitMin": 100,
                     "absVelocityFitMax": 500,
                     "lya": {
                         "profile": "igm"

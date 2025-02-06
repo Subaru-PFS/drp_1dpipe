@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools-scm>=8"] 
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["drp_1dpipe"]
+
+[project]
+name = "drp_1dpipe"
+dynamic = ["version"]
+requires-python = ">= 3.9"
+dependencies = [
+#    'pylibamazed>=1.6.0',
+    'astropy>=3.1.1',
+    'h5py>=2.9',
+    'numpy>=1.16.0,<2',
+    'pandas>=1.0.3',
+    'tables'
+]
+
+authors = [
+    {name = "LAM - Laboratoire d'Astrophysique de Marseille", email = "amazed-support@lam.fr"}]
+description = "drp1d python client."
+readme = "README.md"
+license = {text = "GPLv3+"}
+classifiers = [
+        "Development Status :: 4 - Production/Stable",
+        "Topic :: Scientific/Engineering",
+        "Programming Language :: Python :: 3.9",
+        "License :: OSI Approved :: GNU General Public License v3 or later(GPLv3+)",
+    ]
+
+
+[project.urls]
+homepage = "https://www.lam.fr"
+
+[project.scripts]
+pre_process = 'drp_1dpipe.pre_process.pre_process:main'
+process_spectra = 'drp_1dpipe.process_spectra.process_spectra:main'
+merge_results = 'drp_1dpipe.merge_results.merge_results:main'
+drp_1dpipe = 'drp_1dpipe.scheduler.scheduler:main'
+drp_info = 'drp_1dpipe.io.infos:main'
+
+[tool.setuptools_scm]
+version_file="drp_1dpipe/_version.py"
+fallback_version = "1.6.0"
