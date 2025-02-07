@@ -50,7 +50,10 @@ def define_specific_program_options():
     parser.add_argument('--concurrency', '-j', type=int,
                         help='Concurrency level for local parallel run. -1 means maximum.')
     parser.add_argument('--spectra_dir', metavar='DIR', action=AbspathAction,
-                        help='Base path where to find spectra. '
+                        help='Base path where to find pfsObjects. '
+                        'Relative to workdir.')
+    parser.add_argument('--coadd_file', metavar='DIR', action=AbspathAction,
+                        help='Base path where to find pfsCoadd file '
                         'Relative to workdir.')
     parser.add_argument('--bunch_size', '-n', metavar='SIZE',
                         help='Maximum number of spectra per bunch.')
@@ -143,9 +146,7 @@ def main_method(config):
 
     # prepare workdir
     try:
-        nb_bunches=pre_process(normpath(config.workdir), normpath(config.logdir),config.log_level,
-                    normpath(config.spectra_dir),normpath(config.output_dir),
-                    config.bunch_size, json_bunch_list)
+        nb_bunches=pre_process(config, json_bunch_list)
     except Exception as e:
         traceback.print_exc()
         return 1

@@ -17,6 +17,7 @@ from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
 from drp_1dpipe.pre_process.config import config_defaults
+from pfs.datamodel.drp import PfsCoadd
 
 
 logger = logging.getLogger("pre_process")
@@ -47,7 +48,7 @@ def define_specific_program_options():
     return parser
 
 
-def bunch(bunch_size, spectra_dir):
+def bunch_pfsobject_dir(bunch_size, spectra_dir):
     """Split the list of files in bunches of `bunch_size` files 
 
     Get the list of spectra files located into `spectra_dir` directory.
@@ -79,20 +80,68 @@ def bunch(bunch_size, spectra_dir):
     if _list:
         yield _list
 
+        
+def bunch_pfscoadd_file(bunch_size, pfscoadd_file):
+    """Split the list of files in bunches of `bunch_size` files 
 
-def pre_process(workdir,logdir,log_level, spectra_dir,output_dir, bunch_size, bunch_list):
+    Get the list of spectra files located into `spectra_dir` directory.
+    Split the liste of files in bunches. The size of bunch is given by
+    the "bunch_size" argument.
+
+    Ex: for 85 files and bunch_size=20, the generator gives 4 bunches of 
+    20 files and 1 bunch of 5 file.
+
+    Parameters
+    ----------
+    bunch_size : int
+        The number of spectra per bunch
+    spectra_dir : str
+        Path to spectra directoryt
+
+    Yields
+    -------
+    :obj:`generator`
+        A generator woth the max number of sources
+    """    
+    _list = []
+    coadd = PfsCoadd.readFits(pfscoadd_file)
+    for source in coadd:
+        object_id = int(source.objId)
+        _list.append(object_id)
+        if len(_list) >= int(bunch_size):
+            yield _list
+            _list = []
+    if _list:
+        yield _list
+
+        
+def pre_process(config, bunch_list):
     # initialize logger
+    workdir = normpath(config.workdir)
+    logdir = normpath(config.logdir)
+    log_level = config.log_level
+    spectra_dir = normpath(config.spectra_dir)
+    output_dir = normpath(config.output_dir)
+    bunch_size = config.bunch_size
     logger = init_logger("pre_process", logdir, log_level)
     start_message = "Running pre_process {}".format(VERSION)
     logger.info(start_message)
-
+    
     spectra_dir = normpath(workdir, spectra_dir)
     nb_bunches = 0
-    for i, spc_list in enumerate(bunch(bunch_size, spectra_dir)):
-        nb_bunches= i + 1
-        spectralist_file = os.path.join(output_dir, 'spectralist_B{}.json'.format(str(i)))
-        with open(spectralist_file, "w") as ff:
-            json.dump(spc_list, ff)
+    if config.coadd_file:
+        coadd_file = normpath(config.coadd_file)
+        for i, objid_list in enumerate(bunch_pfscoadd_file(bunch_size,coadd_file)):
+            nb_bunches = i + 1
+            spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')
+            with open(spectralist_file, "w") as ff:
+                json.dump({'coadd_file':coadd_file,'objIdList':objid_list}, ff)
+    else:
+        for i, spc_list in enumerate(bunch(bunch_size, spectra_dir)):
+            nb_bunches= i + 1
+            spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')
+            with open(spectralist_file, "w") as ff:
+                json.dump(spc_list, ff)
     return nb_bunches
     
     

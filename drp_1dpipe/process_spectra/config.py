@@ -17,5 +17,6 @@ config_defaults = {
     'output_dir': 'output',
     'continue_': False,
     'parameters_file': '',
-    'extended_results': True
+    'extended_results': True,
+    'coadd_file': ''
     }

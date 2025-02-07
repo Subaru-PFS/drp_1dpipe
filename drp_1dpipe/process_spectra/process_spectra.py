@@ -157,7 +157,11 @@ def amazed(config):
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
-
+    if 'coadd_file' in spectra_list.keys():
+        config.coadd_file = spectra_list['coadd_file']
+        spectra_list = spectra_list['objIdList']
+    
+        
     outdir = normpath(config.workdir, config.output_dir)
     os.makedirs(outdir, exist_ok=True)
 
@@ -170,7 +174,10 @@ def amazed(config):
     redshifts = []    
     for i, spectrum_path in enumerate(spectra_list):
         try:
-            spectrum_id = spectrum_path["fits"][len("PfsObject-"):-len(".fits")]
+            if config.coadd_file:
+                spectrum_id = spectrum_path
+            else:
+                spectrum_id = spectrum_path["fits"][len("PfsObject-"):-len(".fits")]
             storage = PFSExternalStorage(config, spectrum_id)
             reader = PFSReader(process_flow.calibration_library.parameters,
                                process_flow.calibration_library,
@@ -181,7 +188,8 @@ def amazed(config):
             storage.close(resource)
         except Exception as e:
             logger.log(logging.ERROR, f"Could not read spectrum at {spectrum_path} with id {spectrum_id} : {e}")
-
+            continue
+        
         output = _process_spectrum(data_dir, spectrum,process_flow, user_parameters, storage)
         
         if output !=0:

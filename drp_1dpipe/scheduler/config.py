@@ -15,6 +15,7 @@ config_defaults = {
     'venv': '',
     'concurrency': 1,
     'spectra_dir': 'spectra',
+    'coadd_file': '',
     'bunch_size': 8,
     'notification_url': '',
     'output_dir':'@AUTO@',
