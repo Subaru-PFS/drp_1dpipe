@@ -97,9 +97,6 @@ class RedshiftCandidates:
                   fits.Card('objId', self.spectrum_storage.pfs_object_id["objId"], 'Unique ID for object'),
                   fits.Card('nvisit', self.spectrum_storage.pfs_object_id["nVisit"], 'Number of visit'),
                   fits.Card('vHash', self.spectrum_storage.pfs_object_id["pfsVisitHash"], '63-bit SHA-1 list of visits'),
-                  fits.Card('CRPIX1',self.spectrum_storage.spectrum_infos["wl_infos"]["CRPIX1"],'Pixel coordinate of reference point'),
-                  fits.Card('CRVAL1',self.spectrum_storage.spectrum_infos["wl_infos"]["CRVAL1"],'[m] Coordinate value at reference point'),
-                  fits.Card('CDELT1',self.spectrum_storage.spectrum_infos["wl_infos"]["CDELT1"],'[m] Coordinate increment at reference point'),
                   fits.Card('D1D_VER', get_version()[0:7], 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
                   fits.Card('DAMD_VER', self.spectrum_storage.global_infos["damd_version"], 'Version of the data model'),
@@ -360,7 +357,7 @@ class RedshiftCandidates:
                                    ('LINECONTLEVEL', 'f4'),
                                    ('LINECONTLEVEL_ERR', 'f4')])
         zi = 0
-        z = self.drp1d_output.get_candidate_data(object_type, 0, "LinemeasRedshift" )
+        z = self.drp1d_output.get_attribute(object_type, "linemeas_parameters", "LinemeasRedshift" )
         for i in list(fr.index):
             zlines[zi]['LINENAME'] = fr.at[i, "Name"]
             zlines[zi]['LINEWAVE'] = fr.at[i, "LinemeasLineLambda"]*0.1

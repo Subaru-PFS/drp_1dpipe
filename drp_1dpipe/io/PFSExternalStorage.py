@@ -59,28 +59,23 @@ class PFSExternalStorage(AbstractExternalStorage):
         self.mask = pfs_object.mask
         self.full_wavelength= pfs_object.wavelength
 
-        self.global_infos["VERSION_drp_stella"] = pfs_object.metadata["VERSION_DRP_STELLA"]
-        self.global_infos["damd_version"] = pfs_object.metadata["VERSION_DATAMODEL"]
-        self.spectrum_infos["fiberId"] = -1
-        self.spectrum_infos["wl_infos"] = {"CRPIX1": 0,
-                                           "CRVAL1": 0,
-                                           "CDELT1": 0}
-        # arms = (
-        #     str(set(f[7].data["arm"]))
-        #     .replace("'", "")
-        #     .replace("{", "")
-        #     .replace(",", "")
-        #     .replace("}", "")
-        #     .replace(" ", "")
-        # )
-        #self.spectrum_infos["arms"] = "".join(sorted(arms)) 
+        self.global_infos["VERSION_drp_stella"] = ""
+        self.global_infos["damd_version"] = ""
+        try:
+            self.global_infos["VERSION_drp_stella"] = pfs_object.metadata["VERSION_DRP_STELLA"]
+            self.global_infos["damd_version"] = pfs_object.metadata["VERSION_DATAMODEL"]
+        except:
+            print("could not retrieve 2D and or damd version",file =sys.stderr)
+        
+        arms = list(set(pfs_object.observations.arm))
+        self.spectrum_infos["arms"] = "".join(sorted(arms)) 
         self.spectrum_infos["nVisit"] = pfs_object.nVisit
         self.spectrum_infos["fiberFlux"] = pfs_object.target.fiberFlux
         self.spectrum_infos["RA"]=pfs_object.target.ra
         self.spectrum_infos["DEC"]=pfs_object.target.dec
-        #self.spectrum_infos["designIds"]=list(f[7].data['pfsDesignId'])
-        #self.spectrum_infos["visits"]=list(f[7].data['visit'])
-                
+        self.spectrum_infos["designIds"]=list(pfs_object.observations.pfsDesignId)
+        self.spectrum_infos["visits"]=list(pfs_object.observations.visit)
+        self.spectrum_infos["fiberId"] = list(pfs_object.observations.fiberId)
         return pfs_object
 
     def close(self, resource: PfsObject):

@@ -157,7 +157,8 @@ def amazed(config):
 
     with open(normpath(config.workdir, config.spectra_listfile), 'r') as f:
         spectra_list = json.load(f)
-    if 'coadd_file' in spectra_list.keys():
+        
+    if type(spectra_list)==dict and 'coadd_file' in spectra_list.keys():
         config.coadd_file = spectra_list['coadd_file']
         spectra_list = spectra_list['objIdList']
     

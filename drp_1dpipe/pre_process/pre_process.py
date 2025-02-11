@@ -137,7 +137,7 @@ def pre_process(config, bunch_list):
             with open(spectralist_file, "w") as ff:
                 json.dump({'coadd_file':coadd_file,'objIdList':objid_list}, ff)
     else:
-        for i, spc_list in enumerate(bunch(bunch_size, spectra_dir)):
+        for i, spc_list in enumerate(bunch_pfsobject_dir(bunch_size, spectra_dir)):
             nb_bunches= i + 1
             spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')
             with open(spectralist_file, "w") as ff:
