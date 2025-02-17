@@ -17,7 +17,7 @@ from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
 from drp_1dpipe.pre_process.config import config_defaults
-from pfs.datamodel.drp import PfsCoadd
+from pfs.datamodel.drp import PfsCoadd,PfsCalibrated
 
 
 logger = logging.getLogger("pre_process")
@@ -81,7 +81,7 @@ def bunch_pfsobject_dir(bunch_size, spectra_dir):
         yield _list
 
         
-def bunch_pfscoadd_file(bunch_size, pfscoadd_file):
+def bunch_pfscoadd_file(bunch_size, coadd_file):
     """Split the list of files in bunches of `bunch_size` files 
 
     Get the list of spectra files located into `spectra_dir` directory.
@@ -104,8 +104,11 @@ def bunch_pfscoadd_file(bunch_size, pfscoadd_file):
         A generator woth the max number of sources
     """    
     _list = []
-    coadd = PfsCoadd.readFits(pfscoadd_file)
-    for source in coadd:
+    if os.path.basename(coadd_file).startswith("pfsCo"):
+        spectra = PfsCoadd.readFits(coadd_file)
+    else:
+        spectra = PfsCalibrated.readFits(coadd_file)
+    for source in spectra:
         object_id = int(source.objId)
         _list.append(object_id)
         if len(_list) >= int(bunch_size):

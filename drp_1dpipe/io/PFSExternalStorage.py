@@ -21,21 +21,13 @@ class PFSExternalStorage(AbstractExternalStorage):
     def set_spectrum_id(self, spectrum_id): 
         self.spectrum_id = spectrum_id.ProcessingID
 
-    def _get_pfsObject_from_dir(self):
-        try:
-            spectra_dir = self.config.spectra_dir
-        except:
-            spectra_dir = self.config.spectrum_dir # for LAM client compatibility
-        spectrum_path = glob.glob(os.path.join(spectra_dir,"*","*","*",f'pfsObject-{self.spectrum_id}.fits'))
-        if len(spectrum_path) != 1:
-            raise Exception(f"{self.spectrum_id} cannot be found in {spectra_dir}")
-        spectrum_path = spectrum_path[0]
-
-        return PfsObject.readFits(spectrum_path)
-
     def _get_pfsObject_from_coadd(self):
-        coadd = PfsCoadd.readFits(self.config.coadd_file)
-        return coadd.get(self.spectrum_id)
+        if os.path.basename(self.config.coadd_file).startswith("pfsCo"):
+            coadd = PfsCoadd.readFits(self.config.coadd_file)
+            return coadd.get(self.spectrum_id)
+        else:
+            calibrated = PfsCalibrated.readFits(self.config.coadd_file)
+            return calibrated.get(self.spectrum_id)
         
     def read(
         self,
@@ -50,10 +42,8 @@ class PFSExternalStorage(AbstractExternalStorage):
         :return: HDUList
         """
 
-        if self.config.coadd_file:
-            pfs_object = self._get_pfsObject_from_coadd()           
-        else:
-            pfs_object = self._get_pfsObject_from_dir()
+        pfs_object = self._get_pfsObject_from_coadd()           
+        
         self.pfs_object_id = pfs_object.getIdentity()
         self.astronomical_source_id = f'{self.pfs_object_id["catId"]:05}-{self.pfs_object_id["tract"]:05}-{self.pfs_object_id["patch"]}-{self.pfs_object_id["objId"]:016x}'
         self.mask = pfs_object.mask

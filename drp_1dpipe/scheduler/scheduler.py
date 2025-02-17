@@ -52,7 +52,7 @@ def define_specific_program_options():
     parser.add_argument('--spectra_dir', metavar='DIR', action=AbspathAction,
                         help='Base path where to find pfsObjects. '
                         'Relative to workdir.')
-    parser.add_argument('--coadd_file', metavar='DIR', action=AbspathAction,
+    parser.add_argument('--coadd_file', metavar='FILE', action=AbspathAction,
                         help='Base path where to find pfsCoadd file '
                         'Relative to workdir.')
     parser.add_argument('--bunch_size', '-n', metavar='SIZE',
