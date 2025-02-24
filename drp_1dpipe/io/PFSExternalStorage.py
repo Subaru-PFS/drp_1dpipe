@@ -67,6 +67,8 @@ class PFSExternalStorage(AbstractExternalStorage):
         self.spectrum_infos["designIds"]=list(pfs_object.observations.pfsDesignId)
         self.spectrum_infos["visits"]=list(pfs_object.observations.visit)
         self.spectrum_infos["fiberId"] = list(pfs_object.observations.fiberId)
+        self.spectrum_infos["targetType"]=pfs_object.target.targetType
+
         return pfs_object
 
     def close(self, resource: PfsObject):
