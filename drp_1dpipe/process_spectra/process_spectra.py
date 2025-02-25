@@ -23,7 +23,7 @@ from drp_1dpipe.core.get_default_summary import get_default_summary_columns
 from drp_1dpipe.io.PFSReader import PFSReader
 from drp_1dpipe.io.PFSExternalStorage import PFSExternalStorage
 
-from drp_1dpipe.io.redshiftCandidates import RedshiftCandidates
+from drp_1dpipe.io.redshiftCoCandidates import RedshiftCoCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
 
 from pylibamazed.redshift import (CLog,
@@ -100,7 +100,7 @@ def _process_spectrum(output_dir, spectrum, process_flow, user_param, storage) :
         logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
         return 0
     try:
-        rc = RedshiftCandidates(output, storage, logger, user_param, process_flow.calibration_library)
+        rc = RedshiftCoCandidates(output, storage, logger, process_flow.calibration_library)
         logger.log(logging.INFO, "write fits")
 
         rc.write_fits(output_dir)
@@ -172,13 +172,10 @@ def amazed(config):
     lines_ids = process_flow.calibration_library.get_lines_ids(summary_columns)
 
     products = []
-    redshifts = []    
-    for i, spectrum_path in enumerate(spectra_list):
+
+    for i, object_id in enumerate(spectra_list):
         try:
-            if config.coadd_file:
-                spectrum_id = spectrum_path
-            else:
-                spectrum_id = spectrum_path["fits"][len("PfsObject-"):-len(".fits")]
+            spectrum_id = object_id
             storage = PFSExternalStorage(config, spectrum_id)
             reader = PFSReader(process_flow.calibration_library.parameters,
                                process_flow.calibration_library,

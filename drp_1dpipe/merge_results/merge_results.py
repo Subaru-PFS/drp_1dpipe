@@ -66,14 +66,6 @@ def main_method(config):
     redshifts_dfs = []
     for bunch_id in range(nb_bunches):
         bunch_dir = os.path.join(config.output_dir,f'B{bunch_id}')
-        bunch_data_dir = os.path.join(bunch_dir,"data")
-        if not os.path.exists(bunch_data_dir):
-            raise FileNotFoundError("Bunch data directory not found : {}".format(bunch_data_dir))
-        to_merge = os.listdir(bunch_data_dir)
-        for pfs_candidate in to_merge:
-            shutil.move(
-                os.path.join(bunch_data_dir, pfs_candidate),
-                os.path.join(data_dir, pfs_candidate))
         ps_path = os.path.join(config.output_dir,f"process_spectra_{bunch_id}.sh")
         if os.path.isfile(ps_path):
             os.remove(ps_path)

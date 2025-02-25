@@ -18,7 +18,9 @@ from drp_1dpipe.core.argparser import define_global_program_options, AbspathActi
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
 from drp_1dpipe.pre_process.config import config_defaults
 from pfs.datamodel.drp import PfsCoadd,PfsCalibrated
-
+from drp_1dpipe.process_spectra.parameters import default_parameters
+from pylibamazed.Parameters import Parameters
+from drp_1dpipe.io.redshiftCoCandidates import init_output_file
 
 logger = logging.getLogger("pre_process")
 
@@ -46,39 +48,6 @@ def define_specific_program_options():
                         help='Output directory.')
 
     return parser
-
-
-def bunch_pfsobject_dir(bunch_size, spectra_dir):
-    """Split the list of files in bunches of `bunch_size` files 
-
-    Get the list of spectra files located into `spectra_dir` directory.
-    Split the liste of files in bunches. The size of bunch is given by
-    the "bunch_size" argument.
-
-    Ex: for 85 files and bunch_size=20, the generator gives 4 bunches of 
-    20 files and 1 bunch of 5 file.
-
-    Parameters
-    ----------
-    bunch_size : int
-        The number of spectra per bunch
-    spectra_dir : str
-        Path to spectra directoryt
-
-    Yields
-    -------
-    :obj:`generator`
-        A generator woth the max number of sources
-    """    
-    _list = []
-    for source in glob.glob(os.path.join(spectra_dir,"*","*","*","*.fits")):
-        prefix_length = len(spectra_dir) 
-        _list.append({"fits": source.split(os.sep)[-1]})
-        if len(_list) >= int(bunch_size):
-            yield _list
-            _list = []
-    if _list:
-        yield _list
 
         
 def bunch_pfscoadd_file(bunch_size, coadd_file):
@@ -109,15 +78,53 @@ def bunch_pfscoadd_file(bunch_size, coadd_file):
     else:
         spectra = PfsCalibrated.readFits(coadd_file)
     for source in spectra:
+        i = i + 1
         object_id = int(source.objId)
         _list.append(object_id)
-        if len(_list) >= int(bunch_size):
+#        if len(_list) >= int(bunch_size):
+        if i > 0:
             yield _list
             _list = []
     if _list:
         yield _list
 
-        
+def init_output(pfscoadd_file, output_dir, parameters_file):
+    if os.path.basename(pfscoadd_file).startswith("pfsCo"):
+        spectra = PfsCoadd.readFits(pfscoadd_file)
+    else:
+        spectra = PfsCalibrated.readFits(pfscoadd_file)
+    for source in spectra:
+        catId = source.catId
+        damd_version = spectra[source].metadata["VERSION_DATAMODEL"]
+        stella_version = spectra[source].metadata["VERSION_DRP_STELLA"]
+        obs_pfs_version = spectra[source].metadata["VERSION_OBS_PFS"]
+        wl_size = len(spectra[source].wavelength)
+        break
+    parameters_file = None
+    if parameters_file:
+        parameters_file = normpath(config.parameters_file)
+    user_params = None
+    params = default_parameters.copy()
+    if parameters_file:
+        try:
+            # override default parameters with those found in parameters_file
+            with open(parameters_file, 'r') as f:
+                user_params = json.load(f)
+                params = update(params, user_params )
+        except Exception as e:
+            logger.log(logging.INFO,
+                       f'unable to read parameter file : {e}, using defaults')
+            raise
+
+    os.mkdir(os.path.join(output_dir,"data"))
+    init_output_file(os.path.join(output_dir,"data"),
+                     catId,
+                     user_params,
+                     damd_version,
+                     Parameters(params),
+                     wl_size
+                     )
+    
 def pre_process(config):
     # initialize logger
     
@@ -138,19 +145,14 @@ def pre_process(config):
         with open(spectralist_file, "w") as ff:
             json.dump({'coadd_file':config.coadd_file,'objIdList':[config.object_id]}, ff)
         return 1
-    if config.coadd_file:
-        coadd_file = normpath(config.coadd_file)
-        for i, objid_list in enumerate(bunch_pfscoadd_file(bunch_size,coadd_file)):
-            nb_bunches = i + 1
-            spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')
-            with open(spectralist_file, "w") as ff:
-                json.dump({'coadd_file':coadd_file,'objIdList':objid_list}, ff)
-    else:
-        for i, spc_list in enumerate(bunch_pfsobject_dir(bunch_size, spectra_dir)):
-            nb_bunches= i + 1
-            spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')
-            with open(spectralist_file, "w") as ff:
-                json.dump(spc_list, ff)
+    coadd_file = normpath(config.coadd_file)
+    
+    init_output(coadd_file, config.output_dir, config.parameters_file) 
+    for i, objid_list in enumerate(bunch_pfscoadd_file(bunch_size,coadd_file)):
+        nb_bunches = i + 1
+        spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')
+        with open(spectralist_file, "w") as ff:
+            json.dump({'coadd_file':coadd_file,'objIdList':objid_list}, ff)
     return nb_bunches
     
     

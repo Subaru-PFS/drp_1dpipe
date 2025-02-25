@@ -147,9 +147,9 @@ def main_method(config):
                                  'workdir': normpath(config.workdir),
                                  'spectra_dir': normpath(config.spectra_dir),
                                  'parameters_file': config.parameters_file,
-                'spectra_listfile': os.path.join(config.output_dir,'spectralist_B0.json'),
-                'output_dir': os.path.join(config.output_dir,'B0'),
-                'logdir': os.path.join(config.output_dir,'log','B0'),
+                              'spectra_listfile': os.path.join(config.output_dir,'spectralist_B0.json'),
+                              'output_dir': os.path.join(config.output_dir,'B0'),
+                              'logdir': os.path.join(config.output_dir,'log','B0'),
                              })
         else:
             for i in range(nb_bunches):
