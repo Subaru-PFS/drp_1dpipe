@@ -1,6 +1,6 @@
 from astropy.io import fits
 from pfs.datamodel.drp import PfsObject,PfsCoadd
-from pylibamazed.AbstractExternalStorage import AbstractExternalStorage
+from pylibamazed.AbstractExternalStorage import AbstractExternalStorage, register_storage
 import os
 import glob
 
@@ -19,7 +19,8 @@ class PFSExternalStorage(AbstractExternalStorage):
 
     # for LAM client compatibility    
     def set_spectrum_id(self, spectrum_id): 
-        self.spectrum_id = spectrum_id.ProcessingID
+        self.spectrum_id = int((spectrum_id.ProcessingID).split('-')[-1],16)
+        self.config.coadd_file = os.path.join(self.config.spectrum_dir,spectrum_id.Path)
 
     def _get_pfsObject_from_coadd(self):
         if os.path.basename(self.config.coadd_file).startswith("pfsCo"):
@@ -87,3 +88,5 @@ class PFSExternalStorage(AbstractExternalStorage):
         self.close(self.resource)
         self.resource = None
         return False
+
+register_storage("pfs",PFSExternalStorage)
