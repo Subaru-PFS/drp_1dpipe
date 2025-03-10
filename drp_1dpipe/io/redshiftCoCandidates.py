@@ -89,15 +89,28 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
     galaxy_candidates_cols = fits.ColDefs([
         fits.Column(name="targetId", format="I", array=np.array([], dtype=np.int16)), 
         fits.Column(name="cRank", format="J", array=np.array([], dtype=np.int32)), 
-        fits.Column(name="Z", format="E", array=np.array([], dtype=np.float32)),  
-        fits.Column(name="ZError", format="E", array=np.array([], dtype=np.float32)),  
-        fits.Column(name="ZProba", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="redshift", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="redshifError", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="redshiftProba", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="subClass", format="20A", array=np.array([], dtype="S20")),  
         fits.Column(name="continuumFile", format="50A", array=np.array([], dtype="S50")),  
         fits.Column(name="lineCatalogRatioFile", format="50A", array=np.array([], dtype="S50")),
         fits.Column(name="modelId", format="I", array=np.array([], dtype=np.int16))
     ])
     hdul.append(fits.BinTableHDU.from_columns(galaxy_candidates_cols, name="GALAXY_CANDIDATES"))
+
+    
+    empty_models = np.empty((0,wl_size),dtype=np.float32)
+    hdul.append(fits.ImageHDU(name="GALAXY_MODELS",data=empty_models))
+
+    zgrid = get_fine_z_grid("galaxy", parameters)
+    hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="redshift",
+                                                          format="E",
+                                                           array=zgrid)
+                                               ],
+                                              name="GALAXY_REDSHIFT_GRID" ))
+    empty_pdf = np.empty((0,len(zgrid)),dtype=np.float32)
+    hdul.append(fits.ImageHDU(name="GALAXY_LN_PDF",data=empty_pdf))
 
     # Define GALAXY_LINES binary table columns
     galaxy_lines_cols = fits.ColDefs([
@@ -119,15 +132,41 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
     ])
     
     hdul.append(fits.BinTableHDU.from_columns(galaxy_lines_cols, name="GALAXY_LINES" ))
-    
+
+    hdul.append(fits.BinTableHDU.from_columns(galaxy_candidates_cols, name="QSO_CANDIDATES"))
     empty_models = np.empty((0,wl_size),dtype=np.float32)
-    hdul.append(fits.ImageHDU(name="GALAXY_MODELS",data=empty_models))
-    
+    hdul.append(fits.ImageHDU(name="QSO_MODELS",data=empty_models))
+    zgrid = get_fine_z_grid("qso", parameters)
     hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="redshift",
                                                           format="E",
-                                                           array=get_fine_z_grid("galaxy", parameters))
+                                                           array=zgrid)
                                                ],
-                                              name="GALAXY_REDSHIFT_GRID" ))
+                                              name="QSO_REDSHIFT_GRID" ))
+    empty_pdf = np.empty((0,len(zgrid)),dtype=np.float32)
+    hdul.append(fits.ImageHDU(name="QSO_LN_PDF",data=empty_pdf))
+    hdul.append(fits.BinTableHDU.from_columns(galaxy_lines_cols, name="QSO_LINES" ))
+
+    star_candidates_cols = fits.ColDefs([
+        fits.Column(name="targetId", format="I", array=np.array([], dtype=np.int16)), 
+        fits.Column(name="cRank", format="J", array=np.array([], dtype=np.int32)), 
+        fits.Column(name="velocity", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="velocityError", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="templateProba", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="subClass", format="20A", array=np.array([], dtype="S20")),  
+        fits.Column(name="templateFile", format="50A", array=np.array([], dtype="S50")),  
+        fits.Column(name="modelId", format="I", array=np.array([], dtype=np.int16))
+    ])
+    hdul.append(fits.BinTableHDU.from_columns(star_candidates_cols, name="STAR_CANDIDATES"))
+
+    zgrid = np.array(get_fine_z_grid("star", parameters)) * speed_of_light
+    hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="velocity",
+                                                          format="E",
+                                                           array=zgrid)
+                                               ],
+                                              name="STAR_REDSHIFT_GRID" ))
+    empty_pdf = np.empty((0,len(zgrid)),dtype=np.float32)
+    hdul.append(fits.ImageHDU(name="STAR_LN_PDF",data=empty_pdf))
+
     fits.HDUList(hdul).writeto(path) 
 
 class RedshiftCoCandidates:
@@ -172,9 +211,7 @@ class RedshiftCoCandidates:
             if has_galaxy and not self.drp1d_output.has_error("galaxy","redshiftSolver"):
                 self.add_object_candidates("galaxy", targetId)
                 self.add_model("galaxy")
-            else:
-                print("add pdf")
-#                hdul.append(fits.BinTableHDU(name='GALAXY_PDF'))
+            self.add_object_pdf("galaxy")            
         except Exception as e:
             raise Exception(f'failed to write galaxy : {e}')
         try:
@@ -184,34 +221,27 @@ class RedshiftCoCandidates:
         except Exception as e:
             raise Exception(f'failed to write galaxy lines : {e}')
         
-        return 0
+
         try:
             has_qso= "qso" in object_types and params.stage_enabled("qso","redshiftSolver")
             if has_qso and not self.drp1d_output.has_error("qso","redshiftSolver"):
-                self.qso_candidates_to_fits(hdul)
-                self.object_pdf_to_fits("qso", hdul)
-            else:
-                hdul.append(fits.BinTableHDU(name='QSO_CANDIDATES'))
-                hdul.append(fits.BinTableHDU(name='QSO_PDF'))
+                self.add_object_candidates("qso", targetId)
+                self.add_model("qso")
+            self.add_object_pdf("qso")
         except Exception as e:
             raise Exception(f'failed to write qso : {e}')
         try:
             has_qso_lines= "qso" in object_types and params.stage_enabled("qso","lineMeasSolver")
-
             if has_qso_lines and not self.drp1d_output.has_error("qso","lineMeasSolver"):
-                self.object_lines_to_fits("qso", hdul)
-            else:
-                hdul.append(fits.BinTableHDU(name="QSO_LINES"))
+                self.add_object_lines("qso",targetId)
         except Exception as e:
             raise Exception(f'failed to write qso lines : {e}')
         try:
             has_star= "star" in object_types and params.stage_enabled("star","redshiftSolver")            
             if has_star and not self.drp1d_output.has_error("star","redshiftSolver"):
-                self.star_candidates_to_fits(hdul)
-                self.object_pdf_to_fits("star", hdul)
-            else:
-                hdul.append(fits.BinTableHDU(name='STAR_CANDIDATES'))
-                hdul.append(fits.BinTableHDU(name='STAR_PDF'))
+                self.add_star_candidates(targetId)
+            self.add_object_pdf("star")
+            
         except Exception as e:
             raise Exception(f'failed to write star : {e}')
         
@@ -379,9 +409,9 @@ class RedshiftCoCandidates:
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('targetId', 'i4'),
                                         ('cRank', 'i4'),
-                                        ('Z', 'f4'),
-                                        ('ZError', 'f4'),
-                                        ('ZProba', 'f4'),
+                                        ('redshift', 'f4'),
+                                        ('redshiftError', 'f4'),
+                                        ('redshiftProba', 'f4'),
                                         ('subClass', 'S15'),
                                         ('continuumFile','S50'),
                                         ('lineCatalogRatioFile','S50'),
@@ -390,10 +420,10 @@ class RedshiftCoCandidates:
         model_index = self.get_binary_table_size(f"{object_type.upper()}_CANDIDATES")
         for rank in range(nb_candidates):
             zcandidates[rank]['targetId'] = targetId
-            zcandidates[rank]['Z'] = self.drp1d_output.get_candidate_data(object_type, rank, "Redshift")
-            zcandidates[rank]['ZError'] = self.drp1d_output.get_candidate_data(object_type, rank, "RedshiftUncertainty")
+            zcandidates[rank]['redshift'] = self.drp1d_output.get_candidate_data(object_type, rank, "Redshift")
+            zcandidates[rank]['redshiftError'] = self.drp1d_output.get_candidate_data(object_type, rank, "RedshiftUncertainty")
             zcandidates[rank]['cRank'] = rank
-            zcandidates[rank]['ZProba'] = self.drp1d_output.get_candidate_data(object_type, rank, "RedshiftProba")
+            zcandidates[rank]['redshiftProba'] = self.drp1d_output.get_candidate_data(object_type, rank, "RedshiftProba")
             zcandidates[rank]['subClass'] = self.drp1d_output.get_candidate_data(object_type, rank, "SubType")
             zcandidates[rank]['continuumFile'] = self.drp1d_output.get_candidate_data(object_type, rank, "ContinuumName")
             zcandidates[rank]['lineCatalogRatioFile'] = self.drp1d_output.get_candidate_data(object_type, rank, "LinesRatioName")
@@ -404,7 +434,7 @@ class RedshiftCoCandidates:
         self.add_lines_to_hdu(f"{object_type.upper()}_CANDIDATES",zcandidates)
 
         
-    def star_candidates_to_fits(self,targetId):
+    def add_star_candidates(self,targetId):
         if "star" in self.drp1d_output.object_results:
             nb_candidates = self.drp1d_output.get_nb_candidates("star")
         else:
@@ -412,25 +442,28 @@ class RedshiftCoCandidates:
 
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('targetId', 'i4'),
-                                        ('CRANK', 'i4'),
-                                        ('V', 'f4'),
-                                        ('V_ERR', 'f4'),
-                                        ('T_PROBA', 'f4'),
-                                        ('SUBCLASS', 'S15'),
-                                        ('TFILE','S50'),
-                                        ('MODELFLUX', 'f4', (npix,))
+                                        ('cRank', 'i4'),
+                                        ('velocity', 'f4'),
+                                        ('velocityError', 'f4'),
+                                        ('templateProba', 'f4'),
+                                        ('subClass', 'S15'),
+                                        ('templateFile','S50'),
+                                        ('modelId','i4')
                                         ])
+        model_index = self.get_binary_table_size(f"STAR_CANDIDATES")
 
         for rank in range(nb_candidates):
             zcandidates[rank]['targetId'] = targetId
             zcandidates[rank]['velocity'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light
             zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light
             zcandidates[rank]['cRank'] = rank
-            zcandidates[rank]['T_PROBA'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
+            zcandidates[rank]['templateProba'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['subClass'] = "" # self.drp1d_output.get_candidate_data("star", rank, "ContinuumName").split("_")[0]
-            zcandidates[rank]['TFILE'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumName")
-
-        self.add_lines_to_hdu('STAR_CANDIDATES')
+            zcandidates[rank]['templateFile'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumName")
+            zcandidates[rank]['modelId'] = model_index
+            model_index = model_index + 1
+            
+        self.add_lines_to_hdu('STAR_CANDIDATES', zcandidates)
 
     def add_object_lines(self, object_type, targetId):
         fr = pd.DataFrame(self.drp1d_output.get_dataset(object_type, "linemeas"))
@@ -486,9 +519,9 @@ class RedshiftCoCandidates:
             nb_candidates = 0
         for rank in range(nb_candidates):
             model = self._get_model_on_lambda_range(object_type, rank)
-            self.add_array_to_image_hdu(f'{object_type.upper()}_MODEL',model)
+            self.add_array_to_image_hdu(f'{object_type.upper()}_MODELS',model)
         
-    def object_pdf_to_fits(self, object_type, hdulist):
+    def add_object_pdf(self, object_type):
         if object_type in self.drp1d_output.object_results:
             try:
                 ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","LogZPdfNative"))
@@ -496,21 +529,14 @@ class RedshiftCoCandidates:
                 raise Exception(f"Failed to get {object_type} pdf : {e}")
             builder = BuilderPdfHandler()
             pdfHandler = builder.add_params(self.drp1d_output, object_type, True).build()
-            
-            pdf_grid = np.float32(pdfHandler.redshifts)
-            grid_size = len(pdf_grid)
-            grid_name = 'REDSHIFT'
-            if object_type == "star":
-                grid_name = 'VELOCITY'
-                pdf_grid = pdf_grid * speed_of_light
-            zpdf_hdu = np.ndarray(grid_size, 
-                                  dtype=[('ln PDF', 'f4'), (grid_name, 'f4')])
-            zpdf_hdu['ln PDF']=pdfHandler.valProbaLog
-            zpdf_hdu[grid_name]=pdf_grid
+            pdfHandler.convertToRegular()
+            pdf = pdfHandler.valProbaLog
         else:
-            zpdf_hdu = None
+            zgrid = get_fine_z_grid(object_type, parameters)
+            pdf = np.zeros(len(zgrid)) 
+        self.add_array_to_image_hdu(f'{object_type.upper()}_LN_PDF',
+                                    pdfHandler.valProbaLog)
 
-        hdulist.append(fits.BinTableHDU(name=object_type.upper()+'_PDF', data=zpdf_hdu))
 
     def _get_model_on_lambda_range(self, object_type, rank):
         model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
