@@ -2,7 +2,7 @@
     "multiObsMethod": "",
     "lambdaRange": [
         4000,
-        13000
+        9600
     ],
    "additionalCols": [
       "mask"],
@@ -151,12 +151,12 @@
                     "continuumFit": {
                         "negativeThreshold": -5.0,
                         "nullThreshold": 3,
-                        "badChi2Threshold": 100,
+                        "badChi2Threshold": 1000,
                         "fftProcessing": true,
                         "ismFit": true,
                         "igmFit": true,
                         "count": 1,
-                        "ignoreLineSupport": false,
+                        "ignoreLineSupport": true,
                         "priors": {
                             "betaA": 1,
                             "betaTE": 1,
@@ -177,7 +177,7 @@
                         "largeGridStepRatio": 5,
                         "tplRatioIsmFit": false,
                         "multipleContinuumFitDisable": true,
-                        "extremaCount": 5
+                        "extremaCount": 10
                     },
                     "secondPass": {
                         "halfWindowSize": 0.001,
@@ -303,9 +303,9 @@
                         "igmFit": true,
                         "ismFit": true,
                         "count": 1,
-                        "ignoreLineSupport": false,
+                        "ignoreLineSupport": true,
                         "nullThreshold": 3,
-                        "badChi2Threshold": 100,
+                        "badChi2Threshold": 1000,
                         "priors": {
                             "betaA": 1,
                             "betaTE": 1,
