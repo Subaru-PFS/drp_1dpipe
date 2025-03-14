@@ -22,6 +22,7 @@ from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.Parameters import Parameters
 from drp_1dpipe.io.redshiftCoCandidates import init_output_file
 
+from flufl.lock import Lock
 logger = logging.getLogger("pre_process")
 
 
@@ -78,11 +79,9 @@ def bunch_pfscoadd_file(bunch_size, coadd_file):
     else:
         spectra = PfsCalibrated.readFits(coadd_file)
     for source in spectra:
-        i = i + 1
         object_id = int(source.objId)
         _list.append(object_id)
-#        if len(_list) >= int(bunch_size):
-        if i > 0:
+        if len(_list) >= int(bunch_size):
             yield _list
             _list = []
     if _list:
@@ -117,6 +116,7 @@ def init_output(pfscoadd_file, output_dir, parameters_file):
             raise
 
     os.mkdir(os.path.join(output_dir,"data"))
+    fits_lock = Lock(os.path.join(output_dir,"data","coZcand.lock")) 
     init_output_file(os.path.join(output_dir,"data"),
                      catId,
                      user_params,

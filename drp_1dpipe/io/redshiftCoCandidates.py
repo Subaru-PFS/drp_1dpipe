@@ -90,7 +90,7 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
         fits.Column(name="targetId", format="I", array=np.array([], dtype=np.int16)), 
         fits.Column(name="cRank", format="J", array=np.array([], dtype=np.int32)), 
         fits.Column(name="redshift", format="E", array=np.array([], dtype=np.float32)),  
-        fits.Column(name="redshifError", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="redshiftError", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="redshiftProba", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="subClass", format="20A", array=np.array([], dtype="S20")),  
         fits.Column(name="continuumFile", format="50A", array=np.array([], dtype="S50")),  
@@ -183,7 +183,8 @@ class RedshiftCoCandidates:
         object_types = params.get_spectrum_models()
         self.path = os.path.join(output_dir, "pfsCoZcandidates-%05d.fits" % (
             self.spectrum_storage.pfs_object_id["catId"]))
-        self.logger.log(logging.INFO,f"add data to {self.path}")
+        objId = self.spectrum_storage.pfs_object_id["objId"]
+        self.logger.log(logging.INFO,f"add data to {self.path} from {objId}")
         try:
             targetId = self.add_target()
         except Exception as e:
@@ -246,7 +247,7 @@ class RedshiftCoCandidates:
             raise Exception(f'failed to write star : {e}')
         
     def add_line_to_hdu(self, hdu_name, line):
-        self.logger.log(logging.INFO,f"add {line} to {hdu_name}")
+        #self.logger.log(logging.INFO,f"add {line} to {hdu_name}") 
         with fits.open(self.path, "update") as hdulist:
             hdu_data = hdulist[hdu_name].data
             targetId = len(hdu_data)
@@ -259,7 +260,7 @@ class RedshiftCoCandidates:
         return targetId
 
     def add_lines_to_hdu(self, hdu_name, lines):
-        self.logger.log(logging.INFO,f"add {lines} to {hdu_name}")
+        #self.logger.log(logging.INFO,f"add {lines} to {hdu_name}")
         with fits.open(self.path, "update") as hdulist:
             hdu_data = hdulist[hdu_name].data
             new_data = np.append(hdu_data,
@@ -269,7 +270,7 @@ class RedshiftCoCandidates:
             hdulist.flush()
 
     def add_array_to_image_hdu(self, hdu_name, array):
-        self.logger.log(logging.INFO,f"add {array} to {hdu_name}")
+        #self.logger.log(logging.INFO,f"add {array} to {hdu_name}")
         with fits.open(self.path, "update") as hdulist:
             hdu_data = hdulist[hdu_name].data
             new_data = np.vstack([hdu_data,
@@ -522,7 +523,7 @@ class RedshiftCoCandidates:
             self.add_array_to_image_hdu(f'{object_type.upper()}_MODELS',model)
         
     def add_object_pdf(self, object_type):
-        if object_type in self.drp1d_output.object_results:
+        if not self.drp1d_output.has_error("star","redshiftSolver"):
             try:
                 ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","LogZPdfNative"))
             except Exception as e:
@@ -532,10 +533,10 @@ class RedshiftCoCandidates:
             pdfHandler.convertToRegular()
             pdf = pdfHandler.valProbaLog
         else:
-            zgrid = get_fine_z_grid(object_type, parameters)
+            zgrid = get_fine_z_grid(object_type, self.calibration_library.parameters)
             pdf = np.zeros(len(zgrid)) 
         self.add_array_to_image_hdu(f'{object_type.upper()}_LN_PDF',
-                                    pdfHandler.valProbaLog)
+                                    pdf)
 
 
     def _get_model_on_lambda_range(self, object_type, rank):

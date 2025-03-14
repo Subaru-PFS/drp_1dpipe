@@ -31,6 +31,8 @@ from pylibamazed.redshift import (CLog,
                                   get_version)
 import pandas as pd
 import collections.abc
+from flufl.lock import Lock
+from datetime import timedelta
 
 zlog = CLog.GetInstance()
 
@@ -101,12 +103,18 @@ def _process_spectrum(output_dir, spectrum, process_flow, user_param, storage) :
         return 0
     try:
         rc = RedshiftCoCandidates(output, storage, logger, process_flow.calibration_library)
+        logger.log(logging.INFO, "waiting to write fits")
+        l = Lock(os.path.join(output_dir,"coZcand.lock"))
+        l.lifetime = timedelta(hours=2)
+        l.lock()
         logger.log(logging.INFO, "write fits")
-
         rc.write_fits(output_dir)
+        logger.log(logging.INFO, "fits written")
+        l.unlock()
     except Exception as e:
         logger.log(logging.ERROR,"Failed to write fits result for spectrum "
                    "{} : {}".format(spectrum.source_id, e))
+        l.unlock()
         return 0
     return output
 
