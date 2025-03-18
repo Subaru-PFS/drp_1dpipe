@@ -32,7 +32,9 @@ from pylibamazed.redshift import (CLog,
 import pandas as pd
 import collections.abc
 from flufl.lock import Lock
-from datetime import timedelta
+from datetime import timedelta,datetime
+import resource
+
 
 zlog = CLog.GetInstance()
 
@@ -97,19 +99,37 @@ def _output_path(args, *path):
 
 def _process_spectrum(output_dir, spectrum, process_flow, user_param, storage) :
     try:
+        zlog.LogInfo(f"Processing spectrum {spectrum.source_id}")
         output = process_flow.run(spectrum) 
     except Exception as e:
         logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
         return 0
     try:
         rc = RedshiftCoCandidates(output, storage, logger, process_flow.calibration_library)
-        logger.log(logging.INFO, "waiting to write fits")
+
         l = Lock(os.path.join(output_dir,"coZcand.lock"))
         l.lifetime = timedelta(hours=2)
+        tstart = datetime.now()
+        debut_user_time = resource.getrusage(resource.RUSAGE_SELF).ru_utime
+        debut_system_time = resource.getrusage(resource.RUSAGE_SELF).ru_stime
+
         l.lock()
-        logger.log(logging.INFO, "write fits")
+        
+        end_user_time = resource.getrusage(resource.RUSAGE_SELF).ru_utime
+        end_system_time = resource.getrusage(resource.RUSAGE_SELF).ru_stime
+        tend = datetime.now()
+        memory_used = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        logger.log(logging.INFO, f"{spectrum.source_id}|waiting|{end_user_time - debut_user_time}|{end_system_time - debut_system_time}|{tend-tstart}|{memory_used}")
+
+        tstart = datetime.now()
+        debut_user_time = resource.getrusage(resource.RUSAGE_SELF).ru_utime
+        debut_system_time = resource.getrusage(resource.RUSAGE_SELF).ru_stime
         rc.write_fits(output_dir)
-        logger.log(logging.INFO, "fits written")
+        end_user_time = resource.getrusage(resource.RUSAGE_SELF).ru_utime
+        end_system_time = resource.getrusage(resource.RUSAGE_SELF).ru_stime
+        tend = datetime.now()
+        memory_used = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        logger.log(logging.INFO, f"{spectrum.source_id}|writing|{end_user_time - debut_user_time}|{end_system_time - debut_system_time}|{tend-tstart}|{memory_used}")
         l.unlock()
     except Exception as e:
         logger.log(logging.ERROR,"Failed to write fits result for spectrum "
@@ -198,7 +218,7 @@ def amazed(config):
         
         output = _process_spectrum(data_dir, spectrum,process_flow, user_parameters, storage)
         
-    
+    logger.log(logging.INFO, "Bunch terminated")
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
 
         # save amazed version and parameters file to output dir

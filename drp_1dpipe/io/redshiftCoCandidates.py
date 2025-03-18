@@ -1,7 +1,7 @@
 import os
 import numpy as np
 from pylibamazed.redshift import get_version, ErrorCode
-from pylibamazed.PdfHandler import BuilderPdfHandler,get_fine_z_grid
+from pylibamazed.PdfHandler import BuilderPdfHandler,get_final_regular_z_grid
 from drp_1dpipe import VERSION
 from astropy.io import fits
 import json
@@ -103,7 +103,7 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
     empty_models = np.empty((0,wl_size),dtype=np.float32)
     hdul.append(fits.ImageHDU(name="GALAXY_MODELS",data=empty_models))
 
-    zgrid = get_fine_z_grid("galaxy", parameters)
+    zgrid = get_final_regular_z_grid("galaxy", parameters)
     hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="redshift",
                                                           format="E",
                                                            array=zgrid)
@@ -134,9 +134,9 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
     hdul.append(fits.BinTableHDU.from_columns(galaxy_lines_cols, name="GALAXY_LINES" ))
 
     hdul.append(fits.BinTableHDU.from_columns(galaxy_candidates_cols, name="QSO_CANDIDATES"))
-    empty_models = np.empty((0,wl_size),dtype=np.float32)
+   
     hdul.append(fits.ImageHDU(name="QSO_MODELS",data=empty_models))
-    zgrid = get_fine_z_grid("qso", parameters)
+    zgrid = get_final_regular_z_grid("qso", parameters)
     hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="redshift",
                                                           format="E",
                                                            array=zgrid)
@@ -157,13 +157,15 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
         fits.Column(name="modelId", format="I", array=np.array([], dtype=np.int16))
     ])
     hdul.append(fits.BinTableHDU.from_columns(star_candidates_cols, name="STAR_CANDIDATES"))
+    
+    hdul.append(fits.ImageHDU(name="STAR_MODELS",data=empty_models))
 
-    zgrid = np.array(get_fine_z_grid("star", parameters)) * speed_of_light
+    zgrid = np.array(get_final_regular_z_grid("star", parameters)) * speed_of_light
     hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="velocity",
                                                           format="E",
                                                            array=zgrid)
                                                ],
-                                              name="STAR_REDSHIFT_GRID" ))
+                                              name="STAR_VELOCITY_GRID" ))
     empty_pdf = np.empty((0,len(zgrid)),dtype=np.float32)
     hdul.append(fits.ImageHDU(name="STAR_LN_PDF",data=empty_pdf))
 
@@ -212,7 +214,7 @@ class RedshiftCoCandidates:
             if has_galaxy and not self.drp1d_output.has_error("galaxy","redshiftSolver"):
                 self.add_object_candidates("galaxy", targetId)
                 self.add_model("galaxy")
-            self.add_object_pdf("galaxy")            
+            self.add_object_pdf("galaxy")
         except Exception as e:
             raise Exception(f'failed to write galaxy : {e}')
         try:
@@ -241,6 +243,7 @@ class RedshiftCoCandidates:
             has_star= "star" in object_types and params.stage_enabled("star","redshiftSolver")            
             if has_star and not self.drp1d_output.has_error("star","redshiftSolver"):
                 self.add_star_candidates(targetId)
+                self.add_model("star")
             self.add_object_pdf("star")
             
         except Exception as e:
@@ -337,9 +340,10 @@ class RedshiftCoCandidates:
             except:
                 error_codes.append(code)
                 error_messages.append(message)
-                
-        error_codes.append(self.get_error_code(None,"classification"))
-
+        if self.drp1d_output.has_error(None,"classification"):
+            error_codes.append(self.get_error_code(None,"classification"))
+        else:
+            error_codes.append(0)
         return self.add_line_to_hdu("ERRORS",error_codes + error_messages)
         
     def add_warnings(self):
@@ -533,7 +537,7 @@ class RedshiftCoCandidates:
             pdfHandler.convertToRegular()
             pdf = pdfHandler.valProbaLog
         else:
-            zgrid = get_fine_z_grid(object_type, self.calibration_library.parameters)
+            zgrid = get_final_regular_z_grid(object_type, self.calibration_library.parameters)
             pdf = np.zeros(len(zgrid)) 
         self.add_array_to_image_hdu(f'{object_type.upper()}_LN_PDF',
                                     pdf)

@@ -63,7 +63,7 @@ def main_method(config):
     data_dir = os.path.join(config.output_dir, 'data')
     os.makedirs(data_dir, exist_ok=True)
     nb_bunches = len(glob.glob(os.path.join(config.output_dir,f'spectralist_B*.json')))
-    redshifts_dfs = []
+
     for bunch_id in range(nb_bunches):
         bunch_dir = os.path.join(config.output_dir,f'B{bunch_id}')
         ps_path = os.path.join(config.output_dir,f"process_spectra_{bunch_id}.sh")
