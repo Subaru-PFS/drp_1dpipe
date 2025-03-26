@@ -25,7 +25,6 @@ from drp_1dpipe.core.workers import get_worker,list_workers
 from drp_1dpipe.scheduler.config import config_defaults
 from drp_1dpipe.pre_process.pre_process import pre_process
 from drp_1dpipe.process_spectra.process_spectra import main_no_parse
-from drp_1dpipe.io.infos import get_infos
 # logger = logging.getLogger("scheduler")
 
 
@@ -87,20 +86,6 @@ def auto_dir(config):
     if config.logdir.strip() == '@AUTO@':
         config.logdir = os.path.join(config.output_dir, 'log')
 
-
-def reduce_process_spectra_output(output_dir):
-    """Prepare arguments for merge result command
-
-    Parameters
-    ----------
-    json_bunch_list : str
-        Path to JSON file of bunch list
-    output_dir : str
-        Path to output directory
-    """
-        
-    with open(os.path.join(output_dir,"infos.json"),'w') as f:
-        json.dump(get_infos(), f)
 
             
 def list_aux_data(json_bunch_list, output_dir):
@@ -171,8 +156,7 @@ def main_method(config):
         traceback.print_exc()
 
     worker.wait_all()
-    json_reduce = normpath(config.output_dir, 'reduce.json')
-    reduce_process_spectra_output(config.output_dir)
+
     worker.run(['merge_results'])
     return 0
 

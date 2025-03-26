@@ -104,7 +104,6 @@ def main():
         args=vars(args),
         install_conf_path=get_conf_path("merge_results.json")
         )
-    config_save(config, "merge_results_config.json")
     return main_method(config)
 
 
