@@ -193,12 +193,6 @@ def amazed(config):
         
         output = _process_spectrum(data_dir, spectrum,process_flow, user_parameters, storage)
         
-        if output !=0:
-            redshift_row = output.get_attributes(summary_columns,lines_ids)
-            redshift_row["ProcessingID"]=spectrum_id
-            redshifts.append(redshift_row)
-
-    pd.DataFrame(redshifts).to_pickle(os.path.join(outdir,"redshifts.df"))
     
     with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
 

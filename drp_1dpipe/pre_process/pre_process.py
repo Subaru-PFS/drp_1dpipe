@@ -118,8 +118,9 @@ def bunch_pfscoadd_file(bunch_size, coadd_file):
         yield _list
 
         
-def pre_process(config, bunch_list):
+def pre_process(config):
     # initialize logger
+    
     workdir = normpath(config.workdir)
     logdir = normpath(config.logdir)
     log_level = config.log_level
@@ -161,10 +162,8 @@ def main_method(config):
     int
         0 on success
     """    
-    pre_process(config.workdir,config.logdir, config.log_level,
-                config.spectra_dir,config.output_dir,
-                config.bunch_size,config.bunch_list)
-
+    pre_process(config)
+    return 0
 
 def main():
     """Pre-Process entry point

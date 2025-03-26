@@ -11,7 +11,6 @@ from drp_1dpipe.core.argparser import define_global_program_options, AbspathActi
 from drp_1dpipe.core.utils import get_conf_path, config_update, config_save
 from drp_1dpipe.merge_results.config import config_defaults
 
-from astropy.table import Table
 from astropy.io import fits
 
 import glob
@@ -67,8 +66,6 @@ def main_method(config):
     redshifts_dfs = []
     for bunch_id in range(nb_bunches):
         bunch_dir = os.path.join(config.output_dir,f'B{bunch_id}')
-        rs_path = os.path.join(bunch_dir, "redshifts.df")
-        redshifts_dfs.append(pd.read_pickle(rs_path))
         bunch_data_dir = os.path.join(bunch_dir,"data")
         if not os.path.exists(bunch_data_dir):
             raise FileNotFoundError("Bunch data directory not found : {}".format(bunch_data_dir))
@@ -87,10 +84,6 @@ def main_method(config):
             shutil.rmtree(os.path.join(config.output_dir,f"B{bunch_id}"))
         except Exception as e:
             print(f'could not clean bunch dir : {e}',file=sys.stderr)
-    redshifts = pd.concat(redshifts_dfs)
-    t = Table.from_pandas(redshifts)
-    rs_path = os.path.join(config.output_dir,"redshifts.fits")
-    t.write(rs_path, format="fits")
     
     return 0
 

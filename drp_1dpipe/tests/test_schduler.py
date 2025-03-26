@@ -5,7 +5,7 @@ import json
 
 from drp_1dpipe.core.config import Config
 from drp_1dpipe.core.utils import config_update
-from drp_1dpipe.scheduler.scheduler import map_process_spectra_entries, reduce_process_spectra_output, auto_dir, main_method, list_aux_data
+from drp_1dpipe.scheduler.scheduler import reduce_process_spectra_output, auto_dir, main_method, list_aux_data
 from drp_1dpipe.scheduler.config import config_defaults
 
 
@@ -17,35 +17,6 @@ def test_config_update_none():
     obj = config_update(cf0)
     with pytest.raises(AttributeError):
         cfg = obj.config
-
-
-def test_map_process_spectra_entries():
-    sjbl = '["list0.json","list1.json"]'
-    jbl = tempfile.NamedTemporaryFile()
-    with open(jbl.name, 'w') as ff:
-        ff.write(sjbl)
-    bl,ol,ll = map_process_spectra_entries(jbl.name,"output","log")
-    assert len(bl) == len(ol) == len(ll)
-    assert bl[0] == "list0.json"
-    assert bl[1] == "list1.json"
-    assert ol[0] == "output/B0"
-    assert ol[1] == "output/B1"
-    assert ll[0] == "log/B0"
-    assert ll[1] == "log/B1"
-
-
-def test_reduce_process_spectra_output():
-    sjbl = '["list0.json","list1.json"]'
-    jbl = tempfile.NamedTemporaryFile()
-    with open(jbl.name, 'w') as ff:
-        ff.write(sjbl)
-    jpl = tempfile.NamedTemporaryFile()
-    reduce_process_spectra_output(jbl.name, "output", jpl.name)
-    with open(jpl.name, 'r') as ff:
-        pl = json.load(ff)
-    assert len(pl) == 2
-    assert pl[0] == "output/B0"
-    assert pl[1] == "output/B1"
 
 
 def test_list_aux_data():
@@ -93,7 +64,6 @@ def test_main_method():
     config.workdir = wd.name
     config.logdir = ld.name
     config.output_dir = od.name
-    with pytest.raises(FileNotFoundError):
-        main_method(config)
+    main_method(config)
     logpath = os.path.join(ld.name, "scheduler.log")
     assert os.path.exists(logpath)

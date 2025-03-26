@@ -142,14 +142,12 @@ def main_method(config):
     print(start_message)
 
 
-    json_bunch_list = normpath(config.output_dir, 'bunchlist.json')
-
     # prepare workdir
     try:
-        nb_bunches=pre_process(config, json_bunch_list)
+        nb_bunches=pre_process(config)
     except Exception as e:
         traceback.print_exc()
-        return 1
+        raise e
 
     worker = get_worker(config.scheduler)(config)
     
