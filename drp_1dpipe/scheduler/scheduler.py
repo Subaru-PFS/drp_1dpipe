@@ -68,6 +68,8 @@ def define_specific_program_options():
                         help='Show example parameters ',nargs='?')
     parser.add_argument('--debug', action='store_true',
                         help="Debug mode, no worker")
+    parser.add_argument('--object_id', '-oid', type=int,
+                        help='Run pipeline on a single object id belonging to coadd_file')
 
     return parser
 

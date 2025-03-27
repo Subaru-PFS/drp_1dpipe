@@ -133,6 +133,11 @@ def pre_process(config):
     
     spectra_dir = normpath(workdir, spectra_dir)
     nb_bunches = 0
+    if config.object_id:
+        spectralist_file = os.path.join(output_dir, f'spectralist_B0.json')
+        with open(spectralist_file, "w") as ff:
+            json.dump({'coadd_file':config.coadd_file,'objIdList':[config.object_id]}, ff)
+        return 1
     if config.coadd_file:
         coadd_file = normpath(config.coadd_file)
         for i, objid_list in enumerate(bunch_pfscoadd_file(bunch_size,coadd_file)):

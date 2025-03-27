@@ -22,6 +22,7 @@ config_defaults = {
     'stellar': 'on',
     'parameters_file': '',
     'get_default_parameters': None,
-    'debug':False
+    'debug':False,
+    'object_id':0
     }
 
