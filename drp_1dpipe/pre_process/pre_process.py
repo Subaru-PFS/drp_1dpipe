@@ -10,7 +10,7 @@ import json
 import logging
 import glob
 import argparse
-
+import math
 
 from drp_1dpipe import VERSION
 from drp_1dpipe.core.logger import init_logger
@@ -51,7 +51,7 @@ def define_specific_program_options():
     return parser
 
         
-def bunch_pfscoadd_file(bunch_size, coadd_file):
+def bunch_pfscoadd_file(bunch_size, coadd_file, nb_bunches):
     """Split the list of files in bunches of `bunch_size` files 
 
     Get the list of spectra files located into `spectra_dir` directory.
@@ -78,12 +78,19 @@ def bunch_pfscoadd_file(bunch_size, coadd_file):
         spectra = PfsCoadd.readFits(coadd_file)
     else:
         spectra = PfsCalibrated.readFits(coadd_file)
+    nb_bunches_remaining = nb_bunches
+    nb_remaining = len(spectra)
     for source in spectra:
+        if nb_remaining <= (bunch_size-1)*nb_bunches_remaining:
+            bunch_size = bunch_size -1
         object_id = int(source.objId)
         _list.append(object_id)
-        if len(_list) >= int(bunch_size):
+        nb_remaining  = nb_remaining -1
+        if len(_list) >= bunch_size:
             yield _list
             _list = []
+            nb_bunches = nb_bunches + 1
+            nb_bunches_remaining = nb_bunches_remaining - 1
     if _list:
         yield _list
 
@@ -133,11 +140,19 @@ def pre_process(config):
     log_level = config.log_level
     spectra_dir = normpath(config.spectra_dir)
     output_dir = normpath(config.output_dir)
-    bunch_size = config.bunch_size
+    bunch_size = int(config.bunch_size)
     logger = init_logger("pre_process", logdir, log_level)
     start_message = "Running pre_process {}".format(VERSION)
     logger.info(start_message)
-    
+    coadd_file = normpath(config.coadd_file)
+
+    if bunch_size == 0 and config.concurrency > 1:
+        if os.path.basename(coadd_file).startswith("pfsCo"):
+            spectra = PfsCoadd.readFits(coadd_file)
+        else:
+            spectra = PfsCalibrated.readFits(coadd_file)
+        bunch_size = math.ceil(len(spectra)/config.concurrency)
+        logger.info(f"bunch size = {len(spectra)}/{config.concurrency}={bunch_size}")
     spectra_dir = normpath(workdir, spectra_dir)
     nb_bunches = 0
     if config.object_id:
@@ -145,10 +160,10 @@ def pre_process(config):
         with open(spectralist_file, "w") as ff:
             json.dump({'coadd_file':config.coadd_file,'objIdList':[config.object_id]}, ff)
         return 1
-    coadd_file = normpath(config.coadd_file)
+    
     
     init_output(coadd_file, config.output_dir, config.parameters_file) 
-    for i, objid_list in enumerate(bunch_pfscoadd_file(bunch_size,coadd_file)):
+    for i, objid_list in enumerate(bunch_pfscoadd_file(bunch_size,coadd_file, config.concurrency)):
         nb_bunches = i + 1
         spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')
         with open(spectralist_file, "w") as ff:
