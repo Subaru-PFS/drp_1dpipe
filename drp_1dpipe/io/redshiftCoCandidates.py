@@ -179,15 +179,18 @@ class RedshiftCoCandidates:
         self.spectrum_storage = spectrum_storage
         self.logger = logger
         self.calibration_library = calibration_library
-        
+        self.hdulist = None
         
     def write_fits(self, output_dir):
+
         params = self.calibration_library.parameters
         object_types = params.get_spectrum_models()
         self.path = os.path.join(output_dir, "pfsCoZcandidates-%05d.fits" % (
             self.spectrum_storage.pfs_object_id["catId"]))
         objId = self.spectrum_storage.pfs_object_id["objId"]
         self.logger.log(logging.INFO,f"add data to {self.path} from {objId}")
+        
+        self.hdulist = fits.open(self.path, "update")
         try:
             targetId = self.add_target()
         except Exception as e:
@@ -249,39 +252,39 @@ class RedshiftCoCandidates:
             
         except Exception as e:
             raise Exception(f'failed to write star : {e}')
+        self.hdulist.flush()
+        self.hdulist.close()
         
     def add_line_to_hdu(self, hdu_name, line):
         #self.logger.log(logging.INFO,f"add {line} to {hdu_name}") 
-        with fits.open(self.path, "update") as hdulist:
-            hdu_data = hdulist[hdu_name].data
-            targetId = len(hdu_data)
-            new_data = np.append(hdu_data,
-                                 np.array([tuple([targetId]+line)],
-                                          dtype=hdu_data.dtype)
-                                 )
-            hdulist[hdu_name].data = new_data
-            hdulist.flush()
+        hdu_data = self.hdulist[hdu_name].data
+        targetId = len(hdu_data)
+        new_data = np.append(hdu_data,
+                             np.array([tuple([targetId]+line)],
+                                      dtype=hdu_data.dtype)
+                             )
+        self.hdulist[hdu_name].data = new_data
+#        self.hdulist.flush()
         return targetId
 
     def add_lines_to_hdu(self, hdu_name, lines):
         #self.logger.log(logging.INFO,f"add {lines} to {hdu_name}")
-        with fits.open(self.path, "update") as hdulist:
-            hdu_data = hdulist[hdu_name].data
-            new_data = np.append(hdu_data,
-                                 lines,
-                                 )
-            hdulist[hdu_name].data = new_data
-            hdulist.flush()
+        hdu_data = self.hdulist[hdu_name].data
+        new_data = np.append(hdu_data,
+                             lines,
+                             )
+        self.hdulist[hdu_name].data = new_data
+#        self.hdulist.flush()    
 
     def add_array_to_image_hdu(self, hdu_name, array):
         #self.logger.log(logging.INFO,f"add {array} to {hdu_name}")
-        with fits.open(self.path, "update") as hdulist:
-            hdu_data = hdulist[hdu_name].data
-            new_data = np.vstack([hdu_data,
-                                 np.array([array],dtype=np.float32)
-                                          ])
-            hdulist[hdu_name].data = new_data
-            hdulist.flush()
+
+        hdu_data = self.hdulist[hdu_name].data
+        new_data = np.vstack([hdu_data,
+                             np.array([array],dtype=np.float32)
+                                      ])
+        self.hdulist[hdu_name].data = new_data
+#        self.hdulist.flush()
         
     def add_target(self):
         pfsObjectId = self.spectrum_storage.pfs_object_id
