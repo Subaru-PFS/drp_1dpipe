@@ -230,10 +230,6 @@ def amazed(config):
             json.dump(process_flow.parameters.parameters, f)
         tmpcontext.add_files(parameters_file)
 
-        # write list of created products
-        with open(os.path.join(config.output_dir, "output.json"), 'w') as ff:
-            json.dump(products, ff)
-
 
 def dummy(config):
     """A dummy client, for pipeline testing purpose.
@@ -293,7 +289,6 @@ def main():
         args=vars(args),
         install_conf_path=get_conf_path('process_spectra.json')
         )
-    config_save(config, "process_spectra_config.json")
     return main_method(config)
 
 def main_no_parse(args):
@@ -302,7 +297,6 @@ def main_no_parse(args):
         args=args,
         install_conf_path=get_conf_path('process_spectra.json')
         )
-    config_save(config, "process_spectra_config.json")
     return main_method(config)
 
 if __name__ == '__main__':
