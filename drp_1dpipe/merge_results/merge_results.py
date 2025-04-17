@@ -15,7 +15,7 @@ from astropy.io import fits
 
 import glob
 import pandas as pd
-logger = logging.getLogger("mergs_results")
+logger = logging.getLogger("merge_results")
 
 
 def define_specific_program_options():
@@ -72,10 +72,6 @@ def main_method(config):
         ps_path = os.path.join(config.output_dir,f"spectralist_B{bunch_id}.json")
         if os.path.isfile(ps_path):
             os.remove(ps_path)
-        try:
-            shutil.rmtree(os.path.join(config.output_dir,f"B{bunch_id}"))
-        except Exception as e:
-            print(f'could not clean bunch dir : {e}',file=sys.stderr)
     
     return 0
 
