@@ -13,7 +13,6 @@ import traceback
 import json
 from datetime import datetime
 
-from drp_1dpipe import VERSION
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction, ShowParametersAction
 from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.utils import ( get_args_from_file,
@@ -25,6 +24,7 @@ from drp_1dpipe.core.workers import get_worker,list_workers
 from drp_1dpipe.scheduler.config import config_defaults
 from drp_1dpipe.pre_process.pre_process import pre_process
 from drp_1dpipe.process_spectra.process_spectra import main_no_parse
+from drp_1dpipe import version as drp_1dpipe_version
 # logger = logging.getLogger("scheduler")
 
 
@@ -122,7 +122,7 @@ def main_method(config):
 
     # initialize logger
     logger = init_logger('scheduler', config.logdir, config.log_level)
-    start_message = "Running drp_1dpipe {}".format(VERSION)
+    start_message = f"Running drp_1dpipe {drp_1dpipe_version}"
     logger.info(start_message)
 
     # Launch banner

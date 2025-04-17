@@ -2,7 +2,8 @@ import os
 import numpy as np
 from pylibamazed.redshift import get_version, ErrorCode
 from pylibamazed.PdfHandler import BuilderPdfHandler,get_final_regular_z_grid
-from drp_1dpipe import VERSION
+from drp_1dpipe import version as drp_1dpipe_version
+
 from astropy.io import fits
 import json
 import pandas as pd
@@ -15,8 +16,8 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
                         "pfsCoZcandidates-%05d.fits" % (catId))
     hdul = []
     try:
-        header = [fits.Card('D1D_VER', get_version()[0:7], 'Version of the DRP_1D library'),
-                  fits.Card('D1DP_VER', VERSION, 'Version of the DRP_1DPIPE pipeline'),
+        header = [fits.Card('D1D_VER', get_version(), 'Version of the DRP_1D library'),
+                  fits.Card('D1DP_VER', drp_1dpipe_version, 'Version of the DRP_1DPIPE pipeline'),
                   fits.Card('DAMD_VER', damd_version, 'Version of the data model'),
                   fits.Card('U_PARAM',
                             json.dumps(user_param),

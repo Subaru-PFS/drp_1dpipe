@@ -5,7 +5,6 @@ import shutil
 import json
 import sys
 
-from drp_1dpipe import VERSION
 from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import get_conf_path, config_update, config_save
@@ -57,7 +56,7 @@ def main_method(config):
 
     # initialize logger
     logger = init_logger("merge_results", config.logdir, config.log_level)
-    start_message = "Running merge_results {}".format(VERSION)
+    start_message = "Running merge_results"
     logger.info(start_message)
     
     data_dir = os.path.join(config.output_dir, 'data')

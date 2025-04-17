@@ -2,7 +2,7 @@ import os
 import argparse
 import logging
 
-from drp_1dpipe import VERSION
+from drp_1dpipe import version as drp_1dpipe_version
 from pylibamazed.redshift import get_version
 from drp_1dpipe.core.get_default_parameter import get_default_parameter
 import json
@@ -80,4 +80,5 @@ def define_global_program_options(parser):
                     # action=LogLevelAction,
                     help='The logging level. One of ERROR, WARNING, INFO or DEBUG.')
     parser.add_argument('-v', '--version', action='version',
-                        version='%(prog)s {} (pylibamazed {})'.format(VERSION, get_version()))
+                        version=f'%(prog)s {drp_1dpipe_version} (pylibamazed {get_version()})')
+

@@ -11,7 +11,6 @@ from pylibamazed.ResultStoreOutput import ResultStoreOutput
 from pylibamazed.ProcessFlow import ProcessFlow
 from pylibamazed.Parameters import Parameters
 
-from drp_1dpipe import VERSION
 from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
@@ -264,7 +263,7 @@ def main_method(config):
     """    
     # initialize logger
     init_logger("process_spectra", config.logdir, config.log_level)
-    start_message = "Running process_spectra {}".format(VERSION)
+    start_message = "Running process_spectra"
     logger.info(start_message)
 
 

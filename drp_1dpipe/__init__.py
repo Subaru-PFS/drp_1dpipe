@@ -1,2 +1,2 @@
 # top init
-VERSION = '1.6.0'
+from ._version import *

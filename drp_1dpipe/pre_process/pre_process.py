@@ -12,7 +12,6 @@ import glob
 import argparse
 import math
 
-from drp_1dpipe import VERSION
 from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import normpath, get_conf_path, config_update, config_save
@@ -142,7 +141,7 @@ def pre_process(config):
     output_dir = normpath(config.output_dir)
     bunch_size = int(config.bunch_size)
     logger = init_logger("pre_process", logdir, log_level)
-    start_message = "Running pre_process {}".format(VERSION)
+    start_message = "Running pre_process"
     logger.info(start_message)
     coadd_file = normpath(config.coadd_file)
 
