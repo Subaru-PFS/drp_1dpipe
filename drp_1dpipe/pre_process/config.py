@@ -13,5 +13,7 @@ config_defaults = {
     'bunch_size': 8,
     'spectra_dir': 'spectra',
     'bunch_list': 'spectralist.json',
-    'output_dir':'output'
+    'output_dir':'output',
+    'object_id':0,
+    'parameters_file': ''
     }
