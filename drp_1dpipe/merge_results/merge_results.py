@@ -40,7 +40,7 @@ def define_specific_program_options():
 def concat_summury_files():
     pass
 
-def main_method(config):
+def merge_results(config):
     """main_method
 
     Parameters
@@ -91,7 +91,7 @@ def main():
         args=vars(args),
         install_conf_path=get_conf_path("merge_results.json")
         )
-    return main_method(config)
+    return merge_results(config)
 
 
 if __name__ == '__main__':

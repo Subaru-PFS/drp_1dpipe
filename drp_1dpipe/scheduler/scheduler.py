@@ -23,6 +23,7 @@ from drp_1dpipe.core.workers import get_worker,list_workers
 
 from drp_1dpipe.scheduler.config import config_defaults
 from drp_1dpipe.pre_process.pre_process import pre_process
+from drp_1dpipe.merge_results.merge_results import merge_results
 from drp_1dpipe.process_spectra.process_spectra import main_no_parse
 from drp_1dpipe import version as drp_1dpipe_version
 # logger = logging.getLogger("scheduler")
@@ -159,7 +160,7 @@ def main_method(config):
 
     worker.wait_all()
 
-    worker.run(['merge_results'])
+    merge_results(config)
     return 0
 
 

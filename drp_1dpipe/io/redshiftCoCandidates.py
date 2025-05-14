@@ -11,7 +11,7 @@ from scipy.constants import speed_of_light
 import logging
 
 
-def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl_size):
+def init_output_file(output_dir, catId, user_param, damd_version,stella_version, obs_pfs_version, parameters, wl_size):
     path = os.path.join(output_dir,
                         "pfsCoZcandidates-%05d.fits" % (catId))
     hdul = []
@@ -19,6 +19,8 @@ def init_output_file(output_dir, catId, user_param, damd_version, parameters, wl
         header = [fits.Card('D1D_VER', get_version(), 'Version of the DRP_1D library'),
                   fits.Card('D1DP_VER', drp_1dpipe_version, 'Version of the DRP_1DPIPE pipeline'),
                   fits.Card('DAMD_VER', damd_version, 'Version of the data model'),
+                  fits.Card('STELLA_VER', stella_version, 'Version of stella'),
+                  fits.Card('OBS_PFS_VER', obs_pfs_version, 'Version of obs pfs'),
                   fits.Card('U_PARAM',
                             json.dumps(user_param),
                             "User Parameters content, json")
@@ -531,7 +533,7 @@ class RedshiftCoCandidates:
             self.add_array_to_image_hdu(f'{object_type.upper()}_MODELS',model)
         
     def add_object_pdf(self, object_type):
-        if not self.drp1d_output.has_error("star","redshiftSolver"):
+        if not self.drp1d_output.has_error(object_type,"redshiftSolver"):
             try:
                 ln_pdf = np.float32(self.drp1d_output.get_attribute(object_type,"pdf","LogZPdfNative"))
             except Exception as e:
@@ -550,7 +552,7 @@ class RedshiftCoCandidates:
     def _get_model_on_lambda_range(self, object_type, rank):
         model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
-        np.place(model, self.spectrum_storage.mask == 0, self.drp1d_output.object_results[object_type]["model"][rank]["ModelFlux"])
+        np.place(model, self.spectrum_storage.mask == 0, self.drp1d_output.get_dataset(object_type,"model",rank)["ModelFlux"])
         model = np.multiply(np.array(self.spectrum_storage.full_wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
         return np.float32(model)
 

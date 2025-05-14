@@ -18,5 +18,6 @@ config_defaults = {
     'continue_': False,
     'parameters_file': '',
     'extended_results': True,
-    'coadd_file': ''
+    'coadd_file': '',
+    'reader':'pfs'
     }

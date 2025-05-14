@@ -195,8 +195,6 @@ def amazed(config):
 
     data_dir = os.path.join(outdir, 'data')
     os.makedirs(data_dir, exist_ok=True)
-    summary_columns = get_default_summary_columns()
-    lines_ids = process_flow.calibration_library.get_lines_ids(summary_columns)
 
     products = []
 
@@ -218,17 +216,6 @@ def amazed(config):
         output = _process_spectrum(data_dir, spectrum,process_flow, user_parameters, storage)
         
     logger.log(logging.INFO, "Bunch terminated")
-    with TemporaryFilesSet(keep_tempfiles=config.log_level <= logging.INFO) as tmpcontext:
-
-        # save amazed version and parameters file to output dir
-        version_file = _output_path(config, 'version.json')
-        with open(version_file, 'w') as f:
-            json.dump({'amazed-version': get_version()}, f)
-        parameters_file = os.path.join(normpath(config.workdir, config.output_dir),
-                                       'parameters.json')
-        with open(parameters_file,'w') as f:
-            json.dump(process_flow.parameters.parameters, f)
-        tmpcontext.add_files(parameters_file)
 
 
 def dummy(config):

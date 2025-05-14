@@ -116,6 +116,8 @@ def init_output(pfscoadd_file, output_dir, parameters_file):
             with open(parameters_file, 'r') as f:
                 user_params = json.load(f)
                 params = update(params, user_params )
+            with open(os.path.join(config.output_dir,"parameters.json");"w") as f:
+                json.dump(params, f, indent=4)
         except Exception as e:
             logger.log(logging.INFO,
                        f'unable to read parameter file : {e}, using defaults')
@@ -127,6 +129,8 @@ def init_output(pfscoadd_file, output_dir, parameters_file):
                      catId,
                      user_params,
                      damd_version,
+                     stella_version,
+                     obs_pfs_version,
                      Parameters(params),
                      wl_size
                      )
