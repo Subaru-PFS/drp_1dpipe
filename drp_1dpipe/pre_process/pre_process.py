@@ -20,9 +20,17 @@ from pfs.datamodel.drp import PfsCoadd,PfsCalibrated
 from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.Parameters import Parameters
 from drp_1dpipe.io.redshiftCoCandidates import init_output_file
+import collections.abc
 
 from flufl.lock import Lock
-logger = logging.getLogger("pre_process")
+
+def update(d, u):
+    for k, v in u.items():
+        if isinstance(v, collections.abc.Mapping):
+            d[k] = update(d.get(k, {}), v)
+        else:
+            d[k] = v
+    return d
 
 
 def define_specific_program_options():
@@ -93,7 +101,7 @@ def bunch_pfscoadd_file(bunch_size, coadd_file, nb_bunches):
     if _list:
         yield _list
 
-def init_output(pfscoadd_file, output_dir, parameters_file):
+def init_output(pfscoadd_file, output_dir, parameters_file, logger):
     if os.path.basename(pfscoadd_file).startswith("pfsCo"):
         spectra = PfsCoadd.readFits(pfscoadd_file)
     else:
@@ -105,23 +113,22 @@ def init_output(pfscoadd_file, output_dir, parameters_file):
         obs_pfs_version = spectra[source].metadata["VERSION_OBS_PFS"]
         wl_size = len(spectra[source].wavelength)
         break
-    parameters_file = None
-    if parameters_file:
-        parameters_file = normpath(config.parameters_file)
+    
     user_params = None
     params = default_parameters.copy()
     if parameters_file:
         try:
+            logger.log(logging.INFO,f"update default parameter with user parameter {parameters_file}") 
             # override default parameters with those found in parameters_file
             with open(parameters_file, 'r') as f:
                 user_params = json.load(f)
                 params = update(params, user_params )
-            with open(os.path.join(config.output_dir,"parameters.json");"w") as f:
-                json.dump(params, f, indent=4)
         except Exception as e:
             logger.log(logging.INFO,
                        f'unable to read parameter file : {e}, using defaults')
             raise
+    with open(os.path.join(output_dir,"parameters.json"),"w") as f:
+        json.dump(params, f, indent=4)
 
     os.mkdir(os.path.join(output_dir,"data"))
     fits_lock = Lock(os.path.join(output_dir,"data","coZcand.lock")) 
@@ -158,14 +165,19 @@ def pre_process(config):
         logger.info(f"bunch size = {len(spectra)}/{config.concurrency}={bunch_size}")
     spectra_dir = normpath(workdir, spectra_dir)
     nb_bunches = 0
+    try:
+        init_output(coadd_file, config.output_dir, config.parameters_file, logger)
+    except Exception as e:
+        logger.info(f'Failed to init pfsCoZCandidate : {e}')
+        exit(-1)
+        
     if config.object_id:
         spectralist_file = os.path.join(output_dir, f'spectralist_B0.json')
         with open(spectralist_file, "w") as ff:
             json.dump({'coadd_file':config.coadd_file,'objIdList':[config.object_id]}, ff)
         return 1
     
-    
-    init_output(coadd_file, config.output_dir, config.parameters_file) 
+
     for i, objid_list in enumerate(bunch_pfscoadd_file(bunch_size,coadd_file, config.concurrency)):
         nb_bunches = i + 1
         spectralist_file = os.path.join(output_dir, f'spectralist_B{i}.json')

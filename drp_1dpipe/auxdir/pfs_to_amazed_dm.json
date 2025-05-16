@@ -1,0 +1,69 @@
+{
+    "errors":
+    {
+	"hdu_index" : 3,
+	"map" : {
+	    "galaxyZError":"error.galaxy.redshiftSolver.code",
+	    "galaxyLError":"error.galaxy.lineMeasSolver.code",
+	    "starZError":"error.star.redshiftSolver.code",
+	    "QSOZError":"error.qso.redshiftSolver.code",
+	    "QSOLError":"error.qso.lineMeasSolver.code",
+	    "galaxyZErrorMessage":"error.galaxy.redshiftSolver.message",
+	    "galaxyLErrorMessage":"error.galaxy.lineMeasSolver.message",
+	    "starZErrorMessage":"error.star.redshiftSolver.message",
+	    "QSOZErrorMessage":"error.qso.redshiftSolver.message",
+	    "QSOLErrorMessage":"error.qso.lineMeasSolver.message",
+	    "initError":"error.init.code",
+	    "initErrorMessage":"error.init.message"
+	}
+    }, 
+    "classification":
+    {
+	"hdu_index" : 4,
+	"map" : {
+	    "class":"classification.Type"
+	}
+    },
+    "galaxy_redshifts":
+    {
+	"hdu_index" : 5,
+	"rankCol":"cRank",
+	"map" : {
+	    "redshift":"galaxy.Redshift",
+	    "redshiftProba":"galaxy.RedshiftProba",
+	    "subClass":"galaxy.SubType",
+	    "continuumFile":"galaxy.ContinuumName"
+	}
+    },
+        "qso_redshifts":
+    {
+	"hdu_index" : 10,
+	"rankCol":"cRank",
+	"map" : {
+	    "redshift":"qso.Redshift",
+	    "redshiftProba":"qso.RedshiftProba",
+	    "subClass":"qso.SubType",
+	    "continuumFile":"qso.ContinuumName"
+	}
+    },
+    "star_redshifts":
+    {
+	"hdu_index" : 15,
+	"rankCol":"cRank",
+	"map" : {
+	    "velocity":"star.Redshift",
+	    "templateProba":"star.RedshiftProba",
+	    "templateFile":"star.ContinuumName"
+	}
+    },
+    "galaxy_lines":
+    {
+	"hdu_index" : 9,
+	"map":{
+	    "[OII]3726.lineFlux":"galaxy.[OII]3726.linemeasLineFlux",
+	    "[OII]3729.lineFlux":"galaxy.[OII]3729.linemeasLineFlux",
+	    "[OII]3726.lineSigma":"galaxy.[OII]3726.linemeasLineSigma",
+	    "[OII]3729.lineSigma":"galaxy.[OII]3729.linemeasLineSigma"
+	}
+    }
+}

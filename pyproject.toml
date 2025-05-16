@@ -2,8 +2,6 @@
 requires = ["setuptools>=64", "setuptools-scm>=8"] 
 build-backend = "setuptools.build_meta"
 
-[tool.setuptools]
-packages = ["drp_1dpipe"]
 
 [project]
 name = "drp_1dpipe"

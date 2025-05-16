@@ -9,6 +9,8 @@ from drp_1dpipe.core.logger import init_logger
 from drp_1dpipe.core.argparser import define_global_program_options, AbspathAction
 from drp_1dpipe.core.utils import get_conf_path, config_update, config_save
 from drp_1dpipe.merge_results.config import config_defaults
+from drp_1dpipe.merge_results.pfsOutputAnalyzer import PfsOutputAnalyzer
+from pylibamazed.Parameters import Parameters
 
 from astropy.io import fits
 
@@ -36,10 +38,42 @@ def define_specific_program_options():
 
     return parser
 
+def write_analysis(config):
+    with open(os.path.join(config.output_dir,"parameters.json")) as f:
+        params = Parameters(json.load(f))
 
-def concat_summury_files():
-    pass
 
+    po = PfsOutputAnalyzer(config.output_dir, None, params)
+    po.load_results_summary()
+    rs = po.redshifts
+    reliable_threshold = 0.9
+    report = dict()
+    report["ObjectCount"] = len(rs)
+    report["Count"] = dict()
+    report["Fraction"] = dict()
+    report["ZError"] = dict()
+    report["ZErrorFraction"] = dict()
+    report["LError"] = dict()
+    report["LErrorFraction"] = dict()
+    for o in ["galaxy","qso","star"]:
+        if o in rs["classification.Type"].unique():
+            report["Count"][o] = int(rs.groupby("classification.Type").count().at[o,"SpectrumID"])
+            report["Fraction"][o] = report["Count"][o]*100/report["ObjectCount"]
+        else:
+            report["Count"][o] = 0
+            report["Fraction"][o] = 0
+        report["ZError"][o] = int((rs[f'error.{o}.redshiftSolver.code'] > 0 ).values.sum())
+        report["ZErrorFraction"][o] = report["ZError"][o]*100/len(rs)
+        if o != "star":
+            report["LError"][o] = int((rs[f'error.{o}.redshiftSolver.code'] > 0 ).values.sum()) 
+            report["LErrorFraction"][o] = report["LError"][o]*100/len(rs)
+    report["ReliableFraction"] = len(rs[rs.RedshiftProba > reliable_threshold])*100/len(rs)
+    report["LinesGlobal"] = po.get_global_lines_infos() 
+    with open(os.path.join(config.output_dir, "report.json"),'w') as f:
+        json.dump(report,f,indent=4)
+
+
+    
 def merge_results(config):
     """main_method
 
@@ -71,7 +105,7 @@ def merge_results(config):
         ps_path = os.path.join(config.output_dir,f"spectralist_B{bunch_id}.json")
         if os.path.isfile(ps_path):
             os.remove(ps_path)
-    
+    write_analysis(config)
     return 0
 
 
