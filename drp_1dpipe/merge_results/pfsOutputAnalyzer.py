@@ -1,13 +1,15 @@
 from .abstractOutputAnalyzer import AbstractOutputAnalyzer
 from .abstractInputManager import AbstractInputManager
 from pylibamazed.Parameters import Parameters
+from pylibamazed.redshift import ErrorCode
 import pandas as pd
 import numpy as np
 from astropy.table import Table
+from astropy.io import fits
 import os
 import json
 import glob
-
+import logging
 
 class PfsOutputAnalyzer(AbstractOutputAnalyzer):
 
@@ -22,6 +24,8 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
         AbstractOutputAnalyzer.__init__(self, output_directory, input_manager, parameters, ref_remapping)
         self.output_subdirs = subdirs
         self.load_datamodel_conversion()
+        self.check_fits_integrity()
+            
 
     def load_datamodel_conversion(self) -> None:
         module_root_dir = os.path.split(__file__)[0]
@@ -35,6 +39,14 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
         pfsCoZPath = glob.glob(os.path.join(self.output_directory, "data", "pfsCoZcandid*.fits"))[0]
         return self._get_redshifts_from_path(pfsCoZPath)
 
+    def check_fits_integrity(self):
+        path = glob.glob(os.path.join(self.output_directory, "data", "pfsCoZcandid*.fits"))[0]
+        f = fits.open(path)
+        nb_targets = len(f[1].data)
+        for hdu in ["WARNINGS","ERRORS","GALAXY_LN_PDF","QSO_LN_PDF","STAR_LN_PDF"]:
+            if len(f[hdu].data) != nb_targets:
+                raise Exception(f'hdu {hdu} of size {len(f[hdu].data)} , should be {nb_targets}')
+        
     def get_global_lines_infos(self):
         path = glob.glob(os.path.join(self.output_directory, "data", "pfsCoZcandid*.fits"))[0]
         lines = dict()
@@ -96,7 +108,17 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
                 cols = list(cols_mapping.keys())
                 hdu_df = hdu_df[cols + ["targetId"]]
                 hdu_df.rename(columns=cols_mapping, inplace=True)
-                redshifts = pd.merge(redshifts, hdu_df, left_on="targetId", right_on="targetId")
+                redshifts = pd.merge(redshifts, hdu_df, left_on="targetId", right_on="targetId", how="outer")
+
         redshifts["classification.Type"] = redshifts["classification.Type"].str.lower()
+        for col in redshifts.columns:
+            if col.startswith("error") and col.endswith("code"):
+                try:
+                    redshifts[col] = [ErrorCode(i).name if i != 0 else None for i in redshifts[col]]
+                except ValueError as e:
+                    logging.getLogger("session_logger").error(
+                        f"Wrong Amazed error code in pfs product at col {col} : {e}"
+                    )
+                    exit(-1)
 
         return redshifts

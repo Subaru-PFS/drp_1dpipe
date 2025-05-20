@@ -6,7 +6,7 @@ from pylibamazed.CalibrationLibrary import CalibrationLibrary
 from pylibamazed.Parameters import Parameters
 from pylibamazed.Spectrum import Spectrum
 from pylibamazed.Exception import AmazedError
-from AmazedOutputAnalyzer.utils import init_user_config
+
 
 import json
 import numpy as np

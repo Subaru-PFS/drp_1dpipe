@@ -42,7 +42,7 @@ def write_analysis(config):
     with open(os.path.join(config.output_dir,"parameters.json")) as f:
         params = Parameters(json.load(f))
 
-
+    
     po = PfsOutputAnalyzer(config.output_dir, None, params)
     po.load_results_summary()
     rs = po.redshifts
@@ -105,7 +105,10 @@ def merge_results(config):
         ps_path = os.path.join(config.output_dir,f"spectralist_B{bunch_id}.json")
         if os.path.isfile(ps_path):
             os.remove(ps_path)
-    write_analysis(config)
+    try:
+        write_analysis(config)
+    except Exception as e:
+        logger.error("failed to write report : {e}")
     return 0
 
 
