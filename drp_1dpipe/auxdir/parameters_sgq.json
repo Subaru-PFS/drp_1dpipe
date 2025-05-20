@@ -140,7 +140,7 @@
                     "continuumFit": {
                         "negativeThreshold": -5.0,
                         "nullThreshold": 3,
-                        "badChi2Threshold": 100,
+                        "badChi2Threshold": 1000,
                         "fftProcessing": false,
                         "ismFit": true,
                         "igmFit": true,
@@ -186,20 +186,6 @@
                     "nSigmaSupport": 8,
                     "enablePhotometry": false
                 }
-            },
-            "templateFittingSolve": {
-                "extremaCount": 5,
-                "overlapThreshold": 1,
-                "spectrum": {
-                    "component": "raw"
-                },
-                "fftProcessing": false,
-                "interpolation": "preComputedFineGrid",
-                "igmFit": true,
-                "ismFit": true,
-                "pdfCombination": "marg",
-                "enablePhotometry": false,
-                "singlePass": true
             }
         }
     },
@@ -239,13 +225,13 @@
         ],
         "redshiftStep": 0.001,
         "redshiftSampling": "log",
-        "templateDir": "templates/QSO_linemodel_continuum/",
+        "templateDir": "templates/qso_sdss_meanqso_comp4/",
         "stages": [
             "redshiftSolver",
             "lineMeasSolver"
         ],
         "redshiftSolver": {
-            "method": "lineModelSolve",
+            "method": "templateFittingSolve",
             "templateFittingSolve": {
                 "fftProcessing": false,
                 "overlapThreshold": 1,
@@ -259,86 +245,6 @@
                 "igmFit": true,
                 "enablePhotometry": false,
                 "singlePass": true
-            },
-            "lineModelSolve": {
-                "lineModel": {
-                    "lineCatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v10.tsv",
-                    "lineTypeFilter": "E",
-                    "lineForceFilter": "no",
-                    "lineWidthType": "combined",
-                    "velocityEmission": 1500,
-                    "velocityAbsorption": 100,
-                    "velocityFit": true,
-                    "emVelocityFitStep": 50,
-                    "emVelocityFitMin": 150,
-                    "emVelocityFitMax": 2500,
-                    "absVelocityFitMin": 100,
-                    "absVelocityFitMax": 500,
-                    "absVelocityFitStep": 50,
-                    "ampOffsetFit": false,
-                    "lbdaOffsetFit": false,
-                    "hAlphaPrior": -1,
-                    "lineRatioType": "tplRatio",
-                    "tplRatioCatalog": "linecatalogs_tplshapes/QSO_LineRatios_v3",
-                    "tplRatioIsmFit": true,
-                    "improveBalmerFit": false,
-                    "fittingMethod": "hybrid",
-                    "rules": "no",
-                    "continuumComponent": "powerLawAuto",
-                    "continuumReestimation": "no",
-                    "continuumFit": {
-                        "negativeThreshold": -5.0,
-                        "fftProcessing": false,
-                        "igmFit": true,
-                        "ismFit": true,
-                        "count": 1,
-                        "ignoreLineSupport": true,
-                        "nullThreshold": 3,
-                        "badChi2Threshold": 100,
-                        "priors": {
-                            "betaA": 1,
-                            "betaTE": 1,
-                            "betaZ": 1,
-                            "catalogDirPath": ""
-                        }
-                    },
-                    "lya": {
-                        "profile": "igm"
-                    },
-                    "pdfCombination": "marg",
-                    "useLogLambdaSampling": false,
-                    "skipSecondPass": false,
-                    "extremaCount": 5,
-                    "extremaCutProbaThreshold": -1,
-                    "pdf": {
-                        "margAmpCorr": false,
-                        "bestZOption": "maxIntProba"
-                    },
-                    "firstPass": {
-                        "fittingMethod": "hybrid",
-                        "largeGridStepRatio": 5,
-                        "tplRatioIsmFit": false,
-                        "multipleContinuumFitDisable": true,
-                        "extremaCount": 5
-                    },
-                    "secondPass": {
-                        "halfWindowSize": 0.005,
-                        "continuumFit": "reFitFirstPass"
-                    },
-                    "secondPassLcFittingMethod": "-1",
-                    "strongLinesPrior": -1,
-                    "nOfZPriorStrength": -1,
-                    "tplRatio": {
-                        "priors": {
-                            "betaA": 1,
-                            "betaTE": 1,
-                            "betaZ": 1,
-                            "catalogDirPath": ""
-                        }
-                    },
-                    "nSigmaSupport": 8,
-                    "enablePhotometry": false
-                }
             }
         },
         "lineMeasSolver": {
@@ -366,7 +272,20 @@
                     "rules": "no",
                     "improveBalmerFit": true,
                     "lya": {
-                        "profile": "igm"
+                        "profile": "igm",
+                        "asymProfile": {
+                            "switchFitToFixed": false,
+                            "switchFixedToFit": false,
+                            "asymFitMin": 0,
+                            "asymFitMax": 4,
+                            "asymFitStep": 1,
+                            "widthFitMin": 1,
+                            "widthFitMax": 4,
+                            "widthFitStep": 1,
+                            "deltaFitMin": 0,
+                            "deltaFitMax": 0,
+                            "deltaStepMax": 1
+                        }
                     }
                 }
             }
@@ -375,6 +294,7 @@
         "lineMeasRedshiftStep": 0.0001
     },
     "version": 2,
+    "airVacuumMethod": "default",
     "additionalCols": [
         "mask"
     ],
