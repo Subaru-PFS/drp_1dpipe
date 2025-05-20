@@ -416,6 +416,7 @@ class RedshiftCoCandidates:
             nb_candidates = self.drp1d_output.get_nb_candidates(object_type)
         else:
             nb_candidates = 0
+        params = self.calibration_library.parameters
 
         zcandidates = np.ndarray((nb_candidates,),
                                  dtype=[('targetId', 'i4'),
@@ -435,9 +436,14 @@ class RedshiftCoCandidates:
             zcandidates[rank]['redshiftError'] = self.drp1d_output.get_candidate_data(object_type, rank, "RedshiftUncertainty")
             zcandidates[rank]['cRank'] = rank
             zcandidates[rank]['redshiftProba'] = self.drp1d_output.get_candidate_data(object_type, rank, "RedshiftProba")
-            zcandidates[rank]['subClass'] = self.drp1d_output.get_candidate_data(object_type, rank, "SubType")
+            if params.get_redshift_solver_method(object_type).value == "lineModelSolve":
+                zcandidates[rank]['subClass'] = self.drp1d_output.get_candidate_data(object_type, rank, "SubType")
+                zcandidates[rank]['lineCatalogRatioFile'] = self.drp1d_output.get_candidate_data(object_type, rank, "LinesRatioName")
+            else:
+                zcandidates[rank]['subClass'] = ""
+                zcandidates[rank]['lineCatalogRatioFile'] = ""
             zcandidates[rank]['continuumFile'] = self.drp1d_output.get_candidate_data(object_type, rank, "ContinuumName")
-            zcandidates[rank]['lineCatalogRatioFile'] = self.drp1d_output.get_candidate_data(object_type, rank, "LinesRatioName")
+                            
             zcandidates[rank]['modelId'] = model_index
             model_index = model_index + 1
             

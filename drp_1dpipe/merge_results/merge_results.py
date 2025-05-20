@@ -28,15 +28,25 @@ def define_specific_program_options():
         An ArgumentParser object
     """
     parser = argparse.ArgumentParser(
-        prog='merge_results',
+        prog='write_analysis',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
-    parser.add_argument('--bunch_listfile', metavar='FILE',
-                        help='List of bunch.')
     parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
                         help='Output directory.')
 
     return parser
+
+def write_report_cli():
+    parser = define_specific_program_options()
+    define_global_program_options(parser)
+    args = parser.parse_args()
+    config = config_update(
+        config_defaults,
+        args=vars(args),
+        install_conf_path=get_conf_path("merge_results.json")
+        )
+    write_analysis(config)
+
 
 def write_analysis(config):
     with open(os.path.join(config.output_dir,"parameters.json")) as f:
@@ -62,10 +72,10 @@ def write_analysis(config):
         else:
             report["Count"][o] = 0
             report["Fraction"][o] = 0
-        report["ZError"][o] = int((rs[f'error.{o}.redshiftSolver.code'] > 0 ).values.sum())
+        report["ZError"][o] = int((rs[f'error.{o}.redshiftSolver.code'] != "SUCCESS" ).values.sum())
         report["ZErrorFraction"][o] = report["ZError"][o]*100/len(rs)
         if o != "star":
-            report["LError"][o] = int((rs[f'error.{o}.redshiftSolver.code'] > 0 ).values.sum()) 
+            report["LError"][o] = int((rs[f'error.{o}.lineMeasSolver.code'] != "SUCCESS" ).values.sum()) 
             report["LErrorFraction"][o] = report["LError"][o]*100/len(rs)
     report["ReliableFraction"] = len(rs[rs.RedshiftProba > reliable_threshold])*100/len(rs)
     report["LinesGlobal"] = po.get_global_lines_infos() 
@@ -108,7 +118,7 @@ def merge_results(config):
     try:
         write_analysis(config)
     except Exception as e:
-        logger.error("failed to write report : {e}")
+        logger.error(f"failed to write report : {e}")
     return 0
 
 

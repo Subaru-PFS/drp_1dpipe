@@ -39,6 +39,7 @@ process_spectra = 'drp_1dpipe.process_spectra.process_spectra:main'
 merge_results = 'drp_1dpipe.merge_results.merge_results:main'
 drp_1dpipe = 'drp_1dpipe.scheduler.scheduler:main'
 drp_info = 'drp_1dpipe.io.infos:main'
+write_report = 'drp_1dpipe.merge_results.merge_results:write_report_cli'
 
 [tool.setuptools_scm]
 version_file="drp_1dpipe/_version.py"
