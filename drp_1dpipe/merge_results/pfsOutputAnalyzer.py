@@ -60,8 +60,9 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
         ret["correct"] = dict()
         for o in ["qso", "galaxy"]:
             ret["count"][o] = len(lines[o])
+            lines[o]["snr"] = lines[o].lineFlux / lines[o].lineFluxError
             ret["posFlux"][o] = len(lines[o][lines[o].lineFlux > 0])
-            ret["correct"][o] = len(lines[o][lines[o].lineSigma > 2])
+            ret["correct"][o] = len(lines[o][lines[o].snr > 2])
         return ret
 
     def _get_redshifts_from_path(self, path):
