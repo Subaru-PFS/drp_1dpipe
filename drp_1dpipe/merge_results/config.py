@@ -10,6 +10,7 @@ config_defaults = {
     'loglevel': 'INFO',
     'log_level': 30,
     # Specific programm options
-    'bunch_listfile': 'reduce.json',
-    'output_dir':'output'
+    'output_dir':'output',
+    'report_line_snr_threshold':3,
+    'ref_output_dir':"validation"
     }

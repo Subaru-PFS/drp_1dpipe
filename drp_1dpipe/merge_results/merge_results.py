@@ -19,7 +19,7 @@ import pandas as pd
 logger = logging.getLogger("merge_results")
 
 
-def define_specific_program_options():
+def define_write_analysis_options():
     """Define specific program options.
     
     Return
@@ -33,7 +33,9 @@ def define_specific_program_options():
         )
     parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
                         help='Output directory.')
-
+    parser.add_argument('--report_line_snr_threshold',type=float,
+                        help='snr threshold use to define correctness of a line measurement in report.json')
+   
     return parser
 
 def write_report_cli():
@@ -47,7 +49,56 @@ def write_report_cli():
         )
     write_analysis(config)
 
+def define_make_diff_options():
+    """Define specific program options.
+    
+    Return
+    ------
+    :obj:`ArgumentParser`
+        An ArgumentParser object
+    """
+    parser = argparse.ArgumentParser(
+        prog='write_analysis',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
+                        help='Output directory.')
+    parser.add_argument('--ref_output_dir', '-r', metavar='DIR', action=AbspathAction,
+                        help='Reference Output directory.')
 
+    parser.add_argument('--report_line_snr_threshold',type=float,
+                        help='snr threshold use to define correctness of a line measurement in report.json')
+   
+    return parser
+
+def make_diff_cli():
+    parser = define_make_diff_options()
+    define_global_program_options(parser)
+    args = parser.parse_args()
+    config = config_update(
+        config_defaults,
+        args=vars(args),
+        install_conf_path=get_conf_path("merge_results.json")
+        )
+    make_diff(config)
+    
+def make_diff(config):
+    with open(os.path.join(config.output_dir,"parameters.json")) as f:
+        params = Parameters(json.load(f))
+
+    print(config.report_line_snr_threshold)
+    po = PfsOutputAnalyzer(config.output_dir, None, params)
+    opo = PfsOutputAnalyzer(config.ref_output_dir, None, params)
+    zdiff = po.diff_redshifts(opo)
+    for o in ["galaxy","qso"]:
+        if len(zdiff[o]):
+            print(f'diff in {o} redshifts')
+            print(zdiff[o])
+        else:
+            print(f'{o} redshifts identical')
+    po.diff_lines(opo, config.report_line_snr_threshold)
+    
+    
 def write_analysis(config):
     with open(os.path.join(config.output_dir,"parameters.json")) as f:
         params = Parameters(json.load(f))
@@ -78,7 +129,7 @@ def write_analysis(config):
             report["LError"][o] = int((rs[f'error.{o}.lineMeasSolver.code'] != "SUCCESS" ).values.sum()) 
             report["LErrorFraction"][o] = report["LError"][o]*100/len(rs)
     report["ReliableFraction"] = len(rs[rs.RedshiftProba > reliable_threshold])*100/len(rs)
-    report["LinesGlobal"] = po.get_global_lines_infos() 
+    report["LinesGlobal"] = po.get_global_lines_infos(config.report_line_snr_threshold) 
     with open(os.path.join(config.output_dir, "report.json"),'w') as f:
         json.dump(report,f,indent=4)
 

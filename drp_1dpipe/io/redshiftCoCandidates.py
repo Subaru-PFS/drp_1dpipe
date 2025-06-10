@@ -171,7 +171,13 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
                                               name="STAR_VELOCITY_GRID" ))
     empty_pdf = np.empty((0,len(zgrid)),dtype=np.float32)
     hdul.append(fits.ImageHDU(name="STAR_LN_PDF",data=empty_pdf))
-
+    quality_columns = fits.ColDefs([
+        fits.Column(name="targetId", format="I", array=np.array([], dtype=np.int16)), 
+        fits.Column(name="galaxyContinuumReducedChiSquare",
+                    format="E",
+                    array=np.array([],dtype=np.float32))
+    ])
+#    hdul.append(fits.BinTableHDU.from_columns(quality_columns, name="QUALITY"))
     fits.HDUList(hdul).writeto(path) 
 
 class RedshiftCoCandidates:
@@ -251,9 +257,10 @@ class RedshiftCoCandidates:
                 self.add_star_candidates(targetId)
                 self.add_model("star")
             self.add_object_pdf("star")
-            
         except Exception as e:
             raise Exception(f'failed to write star : {e}')
+
+        #self.add_quality(self)
         self.hdulist.flush()
         self.hdulist.close()
         
@@ -361,24 +368,24 @@ class RedshiftCoCandidates:
                                                     "InitWarningFlags")
                     )
         for ot in ["galaxy","qso","star"]:
-            meth = params.get_redshift_solver_method(ot)
-            try:
+            meth = params.get_redshift_solver_method(ot).value
+            if self.drp1d_output.has_error(ot,"redshiftSolver"):
+                line.append(0)
+            else:
                 line.append(self.drp1d_output.get_attribute(ot,
                                                             "warningFlag",
                                                             meth+"WarningFlags")
                             )
-            except Exception as e:
-                line.append(0)
                 
         for ot in ["galaxy","qso"]:
-            meth = params.get_linemeas_method(ot)
-            try:
+            meth = params.get_linemeas_method(ot).value
+            if self.drp1d_output.has_error(ot,"lineMeasSolver"):
+                line.append(0)
+            else:
                 line.append(self.drp1d_output.get_attribute(ot,
                                                             "warningFlag",
                                                             meth+"WarningFlags")
                             )
-            except Exception as e:
-                line.append(0)
 
         line.append(0)
                                 # self.drp1d_output.get_attribute(None,
@@ -554,7 +561,16 @@ class RedshiftCoCandidates:
         self.add_array_to_image_hdu(f'{object_type.upper()}_LN_PDF',
                                     pdf)
 
-
+    def add_quality(self, target_id):
+        if not self.drp1d_output.has_error("galaxy","redshiftSolver"):
+            try:
+                continuumReducedChi2 = self.drp1d_output.get_attribute("galaxy","continuum_quality","MinContinuumReducedChi2")
+            except:
+                continuumReducedChi2 = -1
+        else:
+            continuumReducedChi2 = -1
+        self.add_line_to_hdu("QUALITY",[continuumReducedChi2])
+        
     def _get_model_on_lambda_range(self, object_type, rank):
         model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)

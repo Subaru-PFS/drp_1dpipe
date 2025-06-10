@@ -17,10 +17,10 @@ class PFSExternalStorage(AbstractExternalStorage):
         self.config.coadd_file = os.path.join(self.config.spectrum_dir,spectrum_id.Path)
 
     def _get_pfsObject_from_coadd(self):
-        if os.path.basename(self.config.coadd_file).startswith("pfsCo"):
+        try:
             coadd = PfsCoadd.readFits(self.config.coadd_file)
             return coadd.get(self.spectrum_id)
-        else:
+        except:
             calibrated = PfsCalibrated.readFits(self.config.coadd_file)
             return calibrated.get(self.spectrum_id)
         

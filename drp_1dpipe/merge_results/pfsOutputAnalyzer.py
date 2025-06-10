@@ -47,7 +47,7 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
             if len(f[hdu].data) != nb_targets:
                 raise Exception(f'hdu {hdu} of size {len(f[hdu].data)} , should be {nb_targets}')
         
-    def get_global_lines_infos(self):
+    def get_global_lines_infos(self,snr_threshold):
         path = glob.glob(os.path.join(self.output_directory, "data", "pfsCoZcandid*.fits"))[0]
         lines = dict()
         lines["qso"] = Table.read(path, hdu=14, format="fits").to_pandas()
@@ -62,8 +62,72 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
             ret["count"][o] = len(lines[o])
             lines[o]["snr"] = lines[o].lineFlux / lines[o].lineFluxError
             ret["posFlux"][o] = len(lines[o][lines[o].lineFlux > 0])
-            ret["correct"][o] = len(lines[o][lines[o].snr > 2])
+            ret["correct"][o] = len(lines[o][lines[o].snr > snr_threshold])
         return ret
+
+    def get_correct_lines(self, snr_threshold, object_type):
+        path = glob.glob(os.path.join(self.output_directory, "data", "pfsCoZcandid*.fits"))[0]
+        lines = Table.read(path, hdu=f'{object_type.upper()}_LINES', format="fits").to_pandas()
+        target = Table.read(path,hdu=1, format="fits").to_pandas()
+        lines = lines[lines.lineFluxError.notnull()]
+        lines = pd.merge(lines,target[["targetId","objId"]],left_on="targetId",right_on="targetId")
+        lines["snr"]=lines.lineFlux/lines.lineFluxError
+        lines = lines[lines.snr > snr_threshold]
+        lines = lines[lines.lineWave > self.parameters.get_lambda_range_min()*0.1]
+        lines = lines[lines.lineWave < self.parameters.get_lambda_range_max()*0.1]
+        lines["lineName"]=lines["lineName"].str.decode('UTF-8')
+        return lines
+
+    # def get_redshifts(self):
+    #     path = glob.glob(os.path.join(self.output_directory, "data", "pfsCoZcandid*.fits"))[0]
+    #     target = Table.read(path,hdu=1, format="fits").to_pandas()
+    #     rs = []
+    #     for object_type in ["galaxy","qso"]:
+    #         gr = Table.read(path, hdu=f'{object_type.upper()}_CANDIDATES', format="fits").to_pandas()
+    #         gr = gr[gr.cRank==0]
+    #         gr = pd.merge(gr,target[["targetId","objId"]],left_on="targetId",right_on="targetId")
+    #         gr = gr.rename(columns={"redshift":f"{object_type}.Redshift"})
+    #         rs.append(gr[["objId",f"{object_type}.Redshift"]])
+    #     return pd.merge(rs[0],rs[1])
+    
+    def diff_redshifts(self,ref, threshold =1e-4):
+        self.load_results_summary()
+        ref.load_results_summary()
+        rs = self.get_redshifts()
+        ors = ref.get_redshifts()
+        for object_type in ["galaxy","qso"]:
+            ors = ors.rename(columns={f'{object_type}.Redshift':
+                                      f'ref.{object_type}.Redshift'})
+        rs = pd.merge(rs,ors,left_on="objId",right_on="objId")
+        res = dict()
+        for object_type in ["galaxy","qso"]:
+            col = f'{object_type}.Redshift'
+            refcol = f'ref.{object_type}.Redshift'
+            ercol = f'{object_type}.zerr'
+            rs[ercol] = abs(rs[col] - rs[refcol])
+            rs[ercol] = rs[ercol]/rs[refcol]
+            res[object_type]=rs[rs[ercol]>threshold]
+        return res
+
+    def diff_lines(self,ref, snr_threshold):
+        for object_type in ["galaxy","qso"]:
+            print(f'diff on {object_type} lines')
+            cl = self.get_correct_lines(snr_threshold,object_type).set_index(["objId","lineName"])
+            ocl = ref.get_correct_lines(snr_threshold,object_type).set_index(["objId","lineName"])
+            if len(cl.index.difference(ocl.index)):
+                for i in cl.index.difference(ocl.index):
+                    print(f"0x{i[0]:16x} line {i[1]} is correct in {self.output_directory} ({cl.at[i,'snr']} and not in {ref.output_directory} ")
+            if len(ocl.index.difference(cl.index)):
+                for i in ocl.index.difference(cl.index):
+                    print(f"0x{i[0]:16x} line {i[1]} is correct in {ref.output_directory} ({ocl.at[i,'snr']} and not in {self.output_directory} ")
+
+
+            for i in ocl.index.intersection(cl.index):
+                f = cl.at[i,"lineFlux"]
+                of = ocl.at[i,"lineFlux"]
+                rdiff = abs(f-of)/f
+                if abs(f-of)/f > 1e-3:
+                    print(f'0x{i[0]:16x} {i[1]} : {f} {of} : {rdiff}')
 
     def _get_redshifts_from_path(self, path):
         # get processingID first

@@ -23,6 +23,7 @@ config_defaults = {
     'parameters_file': '',
     'get_default_parameters': None,
     'debug':False,
-    'object_id':0
+    'object_id':0,
+    'report_line_snr_threshold':3
     }
 

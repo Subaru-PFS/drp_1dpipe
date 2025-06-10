@@ -71,7 +71,8 @@ def define_specific_program_options():
                         help="Debug mode, no worker")
     parser.add_argument('--object_id', '-oid', type=int,
                         help='Run pipeline on a single object id belonging to coadd_file')
-
+    parser.add_argument('--report_line_snr_threshold',type=float,
+                        help='snr threshold use to define correctness of a line measurement in report.json')
     return parser
 
 
