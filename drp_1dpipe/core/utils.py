@@ -214,8 +214,6 @@ def config_update(origin_config, args=None, install_conf_path=None, environ_var=
             raise KeyError("Unknown loglevel. Should be in [ERROR|WARNING|INFO|DEBUG], found : {}".format(config.loglevel))
     if hasattr(config, 'calibration_dir') and not os.path.isabs(config.calibration_dir):
         config.calibration_dir = os.path.join(config.workdir, config.calibration_dir)
-    if hasattr(config, 'spectra_dir') and not os.path.isabs(config.spectra_dir):
-        config.spectra_dir = os.path.join(config.workdir, config.spectra_dir)
     return config
 
 

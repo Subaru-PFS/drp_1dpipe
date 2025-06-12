@@ -11,7 +11,6 @@ config_defaults = {
     'log_level': 30,
     # Specific programm options
     'bunch_size': 8,
-    'spectra_dir': 'spectra',
     'bunch_list': 'spectralist.json',
     'output_dir':'output',
     'object_id':0,

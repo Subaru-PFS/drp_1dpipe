@@ -47,9 +47,6 @@ def define_specific_program_options():
         )
     parser.add_argument('--bunch_size', metavar='SIZE',
                         help='Maximum number of spectra per bunch.')
-    parser.add_argument('--spectra_dir', metavar='DIR', action=AbspathAction,
-                        help='Base path where to find spectra. '
-                        'Relative to workdir.')
     parser.add_argument('--bunch_list', metavar='FILE',
                         help='List of files of bunch of astronomical objects.')
     parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
@@ -61,7 +58,7 @@ def define_specific_program_options():
 def bunch_pfscoadd_file(bunch_size, coadd_file, nb_bunches):
     """Split the list of files in bunches of `bunch_size` files 
 
-    Get the list of spectra files located into `spectra_dir` directory.
+    Get the list of spectra located into `coadd_file` fits.
     Split the liste of files in bunches. The size of bunch is given by
     the "bunch_size" argument.
 
@@ -72,9 +69,10 @@ def bunch_pfscoadd_file(bunch_size, coadd_file, nb_bunches):
     ----------
     bunch_size : int
         The number of spectra per bunch
-    spectra_dir : str
-        Path to spectra directoryt
-
+    coadd_file : str
+        Path to pfsCoadd file
+    nb_bunches : int
+        Number of bunches
     Yields
     -------
     :obj:`generator`
@@ -148,7 +146,6 @@ def pre_process(config):
     workdir = normpath(config.workdir)
     logdir = normpath(config.logdir)
     log_level = config.log_level
-    spectra_dir = normpath(config.spectra_dir)
     output_dir = normpath(config.output_dir)
     bunch_size = int(config.bunch_size)
     logger = init_logger("pre_process", logdir, log_level)
@@ -161,9 +158,7 @@ def pre_process(config):
             spectra = PfsCoadd.readFits(coadd_file)
         else:
             spectra = PfsCalibrated.readFits(coadd_file)
-        bunch_size = math.ceil(len(spectra)/config.concurrency)
-        logger.info(f"bunch size = {len(spectra)}/{config.concurrency}={bunch_size}")
-    spectra_dir = normpath(workdir, spectra_dir)
+    
     nb_bunches = 0
     try:
         init_output(coadd_file, config.output_dir, config.parameters_file, logger)

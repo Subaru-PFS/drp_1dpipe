@@ -35,15 +35,11 @@ def test_main_method():
     config = Config(config_defaults)
     config.workdir = wd.name
     config.logdir = wd.name
-    config.spectra_dir = sd.name
     config.output_dir = wd.name
     config.bunch_list = os.path.join(wd.name, config.bunch_list)
     config.coadd_file = ""
 
     list_file = []
-    for i in range(9):
-        with open(normpath(config.spectra_dir, '{}.file'.format(i)), 'w') as ff:
-            list_file.append(os.path.basename(ff.name))
 #    result_run = main_method(config)
     # assert result_run == 0
 

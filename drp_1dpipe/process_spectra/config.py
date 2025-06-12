@@ -10,7 +10,6 @@ config_defaults = {
     'loglevel': 'INFO',
     'log_level': 30,
     # Specific programm options
-    'spectra_dir': 'spectra',
     'calibration_dir': 'calibration',
     'spectra_listfile': '',
     'process_method': 'AMAZED',

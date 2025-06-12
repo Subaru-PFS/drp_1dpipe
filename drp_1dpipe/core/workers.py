@@ -52,7 +52,6 @@ class Worker:
         ps_args = dict()
         ps_args["workdir"]=self.config.workdir
         ps_args["output_dir"]=self.output_dir
-        ps_args["spectra_dir"]=self.config.spectra_dir
         if self.config.parameters_file:
             ps_args["parameters_file"]=self.config.parameters_file
         ps_args["spectra_listfile"]=spectra_listfile

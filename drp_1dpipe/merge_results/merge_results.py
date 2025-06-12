@@ -39,7 +39,7 @@ def define_write_analysis_options():
     return parser
 
 def write_report_cli():
-    parser = define_specific_program_options()
+    parser = define_write_analysis_options()
     define_global_program_options(parser)
     args = parser.parse_args()
     config = config_update(
@@ -86,7 +86,6 @@ def make_diff(config):
     with open(os.path.join(config.output_dir,"parameters.json")) as f:
         params = Parameters(json.load(f))
 
-    print(config.report_line_snr_threshold)
     po = PfsOutputAnalyzer(config.output_dir, None, params)
     opo = PfsOutputAnalyzer(config.ref_output_dir, None, params)
     zdiff = po.diff_redshifts(opo)

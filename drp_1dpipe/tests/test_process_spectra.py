@@ -28,7 +28,6 @@ def test_main_method():
     config = Config(config_defaults)
     config.workdir = wd.name
     config.logdir = wd.name
-    config.spectra_dir = wd.name
     config.output_dir = wd.name
     config.process_method = "dummy"
 

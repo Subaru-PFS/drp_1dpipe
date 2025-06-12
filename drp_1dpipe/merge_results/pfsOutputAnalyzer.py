@@ -100,13 +100,14 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
                                       f'ref.{object_type}.Redshift'})
         rs = pd.merge(rs,ors,left_on="objId",right_on="objId")
         res = dict()
+        cols = []
         for object_type in ["galaxy","qso"]:
             col = f'{object_type}.Redshift'
             refcol = f'ref.{object_type}.Redshift'
             ercol = f'{object_type}.zerr'
             rs[ercol] = abs(rs[col] - rs[refcol])
             rs[ercol] = rs[ercol]/rs[refcol]
-            res[object_type]=rs[rs[ercol]>threshold]
+            res[object_type]=rs[rs[ercol]>threshold][[col,refcol,ercol]]
         return res
 
     def diff_lines(self,ref, snr_threshold):

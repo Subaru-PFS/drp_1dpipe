@@ -49,9 +49,6 @@ def define_specific_program_options():
                         help='Virtual environment path to load before running batch job')
     parser.add_argument('--concurrency', '-j', type=int,
                         help='Concurrency level for local parallel run. -1 means maximum.')
-    parser.add_argument('--spectra_dir', metavar='DIR', action=AbspathAction,
-                        help='Base path where to find pfsObjects. '
-                        'Relative to workdir.')
     parser.add_argument('--coadd_file', metavar='FILE', action=AbspathAction,
                         help='Base path where to find pfsCoadd file '
                         'Relative to workdir.')
@@ -77,7 +74,7 @@ def define_specific_program_options():
 
 
 def auto_dir(config):
-    """Generate output and logdir directory from workdir, spectra_dir and timestamp
+    """Generate output and logdir directory from workdir and timestamp
 
     Parameters
     ----------
@@ -85,7 +82,7 @@ def auto_dir(config):
         Configuration object
     """
     if config.output_dir.strip() == '@AUTO@':
-        dirname = "_".join(['drp1d', os.path.basename(config.spectra_dir), datetime.now().strftime("%Y%m%dT%H%M%SZ")])
+        dirname = "_".join(['drp1d', datetime.now().strftime("%Y%m%dT%H%M%SZ")])
         config.output_dir = os.path.join(config.workdir, dirname)
     if config.logdir.strip() == '@AUTO@':
         config.logdir = os.path.join(config.output_dir, 'log')
@@ -147,8 +144,7 @@ def main_method(config):
             main_no_parse(
                           args={
                                  'workdir': normpath(config.workdir),
-                                 'spectra_dir': normpath(config.spectra_dir),
-                                 'parameters_file': config.parameters_file,
+                              'parameters_file': config.parameters_file,
                               'spectra_listfile': os.path.join(config.output_dir,'spectralist_B0.json'),
                               'output_dir': os.path.join(config.output_dir,'B0'),
                               'logdir': os.path.join(config.output_dir,'log','B0'),

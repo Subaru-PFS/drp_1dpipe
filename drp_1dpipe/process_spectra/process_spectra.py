@@ -70,9 +70,6 @@ def define_specific_program_options():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
 
-    parser.add_argument('--spectra_dir', metavar='DIR', action=AbspathAction,
-                        help='Path to spectra directory. '
-                        'Relative to workdir.')
     parser.add_argument('--spectra_listfile', metavar='FILE',
                         help='JSON file holding a list of files of '
                         'astronomical objects.')

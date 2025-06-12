@@ -14,7 +14,6 @@ config_defaults = {
     'scheduler': 'local',
     'venv': '',
     'concurrency': 1,
-    'spectra_dir': 'spectra',
     'coadd_file': '',
     'bunch_size': 8,
     'notification_url': '',

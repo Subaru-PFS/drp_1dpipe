@@ -4,7 +4,6 @@
 "scheduler" : "local",
 "concurrency": 1,
 "venv": "",
-"spectra_dir" : "spectra",
 "bunch_size": 8
 }
 
