@@ -32,7 +32,8 @@
 	    "redshift":"galaxy.Redshift",
 	    "redshiftProba":"galaxy.RedshiftProba",
 	    "subClass":"galaxy.SubType",
-	    "continuumFile":"galaxy.ContinuumName"
+	    "continuumFile":"galaxy.ContinuumName",
+	    "reducedLeastSquare":"galaxy.ReducedLeastSquare"
 	}
     },
         "qso_redshifts":
@@ -43,7 +44,8 @@
 	    "redshift":"qso.Redshift",
 	    "redshiftProba":"qso.RedshiftProba",
 	    "subClass":"qso.SubType",
-	    "continuumFile":"qso.ContinuumName"
+	    "continuumFile":"qso.ContinuumName",
+	    "reducedLeastSquare":"qso.ReducedLeastSquare"
 	}
     },
     "star_redshifts":
@@ -53,7 +55,8 @@
 	"map" : {
 	    "velocity":"star.Redshift",
 	    "templateProba":"star.RedshiftProba",
-	    "templateFile":"star.ContinuumName"
+	    "templateFile":"star.ContinuumName",
+	    "reducedLeastSquare":"star.ReducedLeastSquare"
 	}
     },
     "galaxy_lines":

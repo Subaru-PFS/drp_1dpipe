@@ -98,6 +98,7 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
         fits.Column(name="subClass", format="20A", array=np.array([], dtype="S20")),  
         fits.Column(name="continuumFile", format="50A", array=np.array([], dtype="S50")),  
         fits.Column(name="lineCatalogRatioFile", format="50A", array=np.array([], dtype="S50")),
+        fits.Column(name="reducedLeastSquare", format="E", array=np.array([], dtype=np.float32)),
         fits.Column(name="modelId", format="I", array=np.array([], dtype=np.int16))
     ])
     hdul.append(fits.BinTableHDU.from_columns(galaxy_candidates_cols, name="GALAXY_CANDIDATES"))
@@ -156,7 +157,8 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
         fits.Column(name="velocityError", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="templateProba", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="subClass", format="20A", array=np.array([], dtype="S20")),  
-        fits.Column(name="templateFile", format="50A", array=np.array([], dtype="S50")),  
+        fits.Column(name="templateFile", format="50A", array=np.array([], dtype="S50")),
+        fits.Column(name="reducedLeastSquare", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="modelId", format="I", array=np.array([], dtype=np.int16))
     ])
     hdul.append(fits.BinTableHDU.from_columns(star_candidates_cols, name="STAR_CANDIDATES"))
@@ -173,11 +175,11 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
     hdul.append(fits.ImageHDU(name="STAR_LN_PDF",data=empty_pdf))
     quality_columns = fits.ColDefs([
         fits.Column(name="targetId", format="I", array=np.array([], dtype=np.int16)), 
-        fits.Column(name="galaxyContinuumReducedChiSquare",
-                    format="E",
-                    array=np.array([],dtype=np.float32))
+        fits.Column(name="nbPixels",
+                    format="I",
+                    array=np.array([],dtype=np.int16))
     ])
-#    hdul.append(fits.BinTableHDU.from_columns(quality_columns, name="QUALITY"))
+    hdul.append(fits.BinTableHDU.from_columns(quality_columns, name="QUALITY"))
     fits.HDUList(hdul).writeto(path) 
 
 class RedshiftCoCandidates:
@@ -260,7 +262,10 @@ class RedshiftCoCandidates:
         except Exception as e:
             raise Exception(f'failed to write star : {e}')
 
-        #self.add_quality(self)
+        try:
+            self.add_quality()
+        except Exception as e:
+            raise Exception(f'failed to write quality : {e}')
         self.hdulist.flush()
         self.hdulist.close()
         
@@ -273,7 +278,7 @@ class RedshiftCoCandidates:
                                       dtype=hdu_data.dtype)
                              )
         self.hdulist[hdu_name].data = new_data
-#        self.hdulist.flush()
+
         return targetId
 
     def add_lines_to_hdu(self, hdu_name, lines):
@@ -283,7 +288,6 @@ class RedshiftCoCandidates:
                              lines,
                              )
         self.hdulist[hdu_name].data = new_data
-#        self.hdulist.flush()    
 
     def add_array_to_image_hdu(self, hdu_name, array):
         #self.logger.log(logging.INFO,f"add {array} to {hdu_name}")
@@ -293,7 +297,6 @@ class RedshiftCoCandidates:
                              np.array([array],dtype=np.float32)
                                       ])
         self.hdulist[hdu_name].data = new_data
-#        self.hdulist.flush()
         
     def add_target(self):
         pfsObjectId = self.spectrum_storage.pfs_object_id
@@ -432,8 +435,9 @@ class RedshiftCoCandidates:
                                         ('redshiftError', 'f4'),
                                         ('redshiftProba', 'f4'),
                                         ('subClass', 'S15'),
-                                        ('continuumFile','S50'),
-                                        ('lineCatalogRatioFile','S50'),
+                                        ('continuumFile', 'S50'),
+                                        ('lineCatalogRatioFile', 'S50'),
+                                        ('reducedLeastSquare', 'f4'),
                                         ('modelId', 'i4')
                                         ])
         model_index = self.get_binary_table_size(f"{object_type.upper()}_CANDIDATES")
@@ -446,9 +450,11 @@ class RedshiftCoCandidates:
             if params.get_redshift_solver_method(object_type).value == "lineModelSolve":
                 zcandidates[rank]['subClass'] = self.drp1d_output.get_candidate_data(object_type, rank, "SubType")
                 zcandidates[rank]['lineCatalogRatioFile'] = self.drp1d_output.get_candidate_data(object_type, rank, "LinesRatioName")
+                zcandidates[rank]['reducedLeastSquare'] = self.drp1d_output.get_candidate_data(object_type, rank, "LeastSquare")/self._get_nb_valid_points()
             else:
                 zcandidates[rank]['subClass'] = ""
                 zcandidates[rank]['lineCatalogRatioFile'] = ""
+                zcandidates[rank]['reducedLeastSquare'] = self.drp1d_output.get_candidate_data(object_type, rank, "ContinuumLeastSquare")/self._get_nb_valid_points()
             zcandidates[rank]['continuumFile'] = self.drp1d_output.get_candidate_data(object_type, rank, "ContinuumName")
                             
             zcandidates[rank]['modelId'] = model_index
@@ -472,6 +478,7 @@ class RedshiftCoCandidates:
                                         ('templateProba', 'f4'),
                                         ('subClass', 'S15'),
                                         ('templateFile','S50'),
+                                        ('reducedLeastSquare', 'f4'),
                                         ('modelId','i4')
                                         ])
         model_index = self.get_binary_table_size(f"STAR_CANDIDATES")
@@ -479,11 +486,12 @@ class RedshiftCoCandidates:
         for rank in range(nb_candidates):
             zcandidates[rank]['targetId'] = targetId
             zcandidates[rank]['velocity'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light
-            zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light
+            zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light/1000.
             zcandidates[rank]['cRank'] = rank
             zcandidates[rank]['templateProba'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['subClass'] = "" # self.drp1d_output.get_candidate_data("star", rank, "ContinuumName").split("_")[0]
             zcandidates[rank]['templateFile'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumName")
+            zcandidates[rank]['reducedLeastSquare'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumLeastSquare")/self._get_nb_valid_points()
             zcandidates[rank]['modelId'] = model_index
             model_index = model_index + 1
             
@@ -561,15 +569,16 @@ class RedshiftCoCandidates:
         self.add_array_to_image_hdu(f'{object_type.upper()}_LN_PDF',
                                     pdf)
 
-    def add_quality(self, target_id):
-        if not self.drp1d_output.has_error("galaxy","redshiftSolver"):
-            try:
-                continuumReducedChi2 = self.drp1d_output.get_attribute("galaxy","continuum_quality","MinContinuumReducedChi2")
-            except:
-                continuumReducedChi2 = -1
-        else:
-            continuumReducedChi2 = -1
-        self.add_line_to_hdu("QUALITY",[continuumReducedChi2])
+    def add_quality(self):
+        # if not self.drp1d_output.has_error("galaxy","redshiftSolver"):
+        #     try:
+        #         continuumReducedChi2 = self.drp1d_output.get_attribute("galaxy","continuum_quality","MinContinuumReducedChi2")
+        #     except:
+        #         continuumReducedChi2 = -1
+        # else:
+        #     continuumReducedChi2 = -1
+        
+        self.add_line_to_hdu("QUALITY",[self._get_nb_valid_points()])
         
     def _get_model_on_lambda_range(self, object_type, rank):
         model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
@@ -584,4 +593,7 @@ class RedshiftCoCandidates:
         pdf_grid = np.float32(pdfHandler.redshifts)
 
 
-                  
+    def _get_nb_valid_points(self):
+        valid = np.where(self.spectrum_storage.mask == 0, True, False)
+        return np.sum(valid)
+        

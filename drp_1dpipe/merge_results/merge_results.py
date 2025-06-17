@@ -128,6 +128,25 @@ def write_analysis(config):
             report["LError"][o] = int((rs[f'error.{o}.lineMeasSolver.code'] != "SUCCESS" ).values.sum()) 
             report["LErrorFraction"][o] = report["LError"][o]*100/len(rs)
     report["ReliableFraction"] = len(rs[rs.RedshiftProba > reliable_threshold])*100/len(rs)
+    report["ReducedLeastSquare"] = dict()
+    for o in ["galaxy","qso","star"]:
+        report["ReducedLeastSquare"][o] = dict()
+        ls = rs[f'{o}.ReducedLeastSquare'] 
+        report["ReducedLeastSquare"][o]["mean"] = float(ls.mean())
+        report["ReducedLeastSquare"][o]["min"] = float(ls.min())
+        report["ReducedLeastSquare"][o]["max"] = float(ls.max())
+        report["ReducedLeastSquare"][o]["std"] = float(ls.std())
+        report["ReducedLeastSquare"][o]["median"] = float(ls.median())
+
+    report["ReducedLeastSquare"]["classified"] = dict()
+    ls = rs['ReducedLeastSquare'] 
+    report["ReducedLeastSquare"]["classified"]["mean"] = float(ls.mean())
+    report["ReducedLeastSquare"]["classified"]["min"] = float(ls.min())
+    report["ReducedLeastSquare"]["classified"]["max"] = float(ls.max())
+    report["ReducedLeastSquare"]["classified"]["std"] = float(ls.std())
+    report["ReducedLeastSquare"]["classified"]["median"] = float(ls.median())
+
+        
     report["LinesGlobal"] = po.get_global_lines_infos(config.report_line_snr_threshold) 
     with open(os.path.join(config.output_dir, "report.json"),'w') as f:
         json.dump(report,f,indent=4)

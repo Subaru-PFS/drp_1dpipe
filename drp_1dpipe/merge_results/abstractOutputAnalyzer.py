@@ -183,6 +183,7 @@ class AbstractOutputAnalyzer:
             rs["MaxFitAmplitudeSigma"] = -1.0
             rs["SwitchedToFromSpectrum"] = False
             rs["RedshiftProba"] = -1.0
+            rs["ReducedLeastSquare"] = -1.0
             for o in self.parameters.get_spectrum_models():
                 if not self.parameters.get_redshift_solver_method(o) or f"{o}.Redshift" not in rs.columns:
                     continue
@@ -193,6 +194,7 @@ class AbstractOutputAnalyzer:
                     "MaxFitAmplitudeSigma",
                     "SwitchedToFromSpectrum",
                     "RedshiftProba",
+                    "ReducedLeastSquare"
                 ]:
                     if f"{o}.{c}" in rs.columns:
                         rs.loc[mask, c] = rs[f"{o}.{c}"]
