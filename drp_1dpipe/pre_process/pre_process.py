@@ -158,7 +158,8 @@ def pre_process(config):
             spectra = PfsCoadd.readFits(coadd_file)
         else:
             spectra = PfsCalibrated.readFits(coadd_file)
-    
+        bunch_size = math.ceil(len(spectra)/config.concurrency)
+        logger.info(f"bunch size = {len(spectra)}/{config.concurrency}={bunch_size}")
     nb_bunches = 0
     try:
         init_output(coadd_file, config.output_dir, config.parameters_file, logger)
