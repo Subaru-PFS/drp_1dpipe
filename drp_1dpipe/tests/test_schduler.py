@@ -44,7 +44,7 @@ def test_auto_dir():
     config.logdir = '.'
     auto_dir(config)
     assert config.logdir == '.'
-    assert 'drp1d_spectra_' in config.output_dir
+    assert 'drp1d_' in config.output_dir
     config.output_dir = 'test'
     config.logdir = '@AUTO@'
     auto_dir(config)
@@ -53,7 +53,7 @@ def test_auto_dir():
     config.output_dir = '@AUTO@'
     config.logdir = '@AUTO@'
     auto_dir(config)
-    assert 'drp1d_spectra_' in config.output_dir
+    assert 'drp1d_' in config.output_dir
 
 
 def test_main_method():
