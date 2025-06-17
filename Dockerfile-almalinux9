@@ -1,0 +1,134 @@
+FROM almalinux:9
+
+
+RUN yum install -y \
+    gcc-c++ \
+    make \
+    pcre-devel \
+    pcre2-devel \
+    openssl-devel \
+    python3-pip \
+    python3-devel \
+    python3.11 \
+    python3.11-pip \
+    python3.11-devel \
+    perl \
+    automake \
+    git 
+
+# Install cmake 3.26.5
+RUN mkdir -p /opt \
+ && cd /opt \
+ && curl -L https://github.com/Kitware/CMake/releases/download/v3.26.5/cmake-3.26.5.tar.gz \
+    --output cmake-3.26.5.tar.gz \
+ && tar xzf cmake-3.26.5.tar.gz \
+ && cd /opt/cmake-3.26.5 \
+ && ./configure --prefix=/opt/usr \
+ && make -j4 all install > /dev/null
+
+ENV PATH /opt/usr/bin/:$PATH
+
+
+# Install SWIG 4.1.1
+RUN cd /opt \
+ && curl -L 'https://sourceforge.net/projects/swig/files/swig/swig-4.1.1/swig-4.1.1.tar.gz/download' \
+    --output swig-4.1.1.tar.gz \
+ && tar xzf swig-4.1.1.tar.gz \
+ && cd /opt/swig-4.1.1 \
+ && ./configure --prefix=/opt/usr \
+ && make -j4 > /dev/null \
+ && make install > /dev/null
+
+RUN echo "==================== Installing third-party libraries ===================="
+
+# Install Boost 1.74
+RUN cd /opt \
+ && curl -L http://downloads.sourceforge.net/project/boost/boost/1.74.0/boost_1_74_0.tar.gz \
+    --output boost_1_74_0.tar.gz \
+ && tar xzf boost_1_74_0.tar.gz \
+ && cd /opt/boost_1_74_0 \
+ && ./bootstrap.sh --with-libraries=system,filesystem,program_options,thread,timer,chrono,test --prefix=/usr/local \
+ && ./b2 -j4 link=shared install > /dev/null
+
+# Install OpenBLAS 0.3.19
+RUN cd /opt \
+ && curl -L https://github.com/xianyi/OpenBLAS/archive/v0.3.19.tar.gz \
+    --output openBLAS-0.3.19.tar.gz \
+ && tar xzf openBLAS-0.3.19.tar.gz \
+ && cd /opt/OpenBLAS-0.3.19 \
+ && make -j4 NO_LAPACK=1 TARGET=SANDYBRIDGE > /dev/null \
+ && make install NO_LAPACK=1 TARGET=SANDYBRIDGE PREFIX=/usr/local > /dev/null
+
+# Install GSL 2.5
+RUN cd /opt \
+ && curl -L https://ftp.gnu.org/gnu/gsl/gsl-2.5.tar.gz \
+    --output gsl-2.5.tar.gz \
+ && tar xzf gsl-2.5.tar.gz \
+ && cd /opt/gsl-2.5 \
+ && ./configure --prefix=/usr/local \
+ && make -j4 > /dev/null \
+ && make install > /dev/null
+
+# Install FFTW 3.3.8
+RUN cd /opt \
+ && curl -L https://www.fftw.org/fftw-3.3.8.tar.gz \
+    --output fftw-3.3.8.tar.gz \
+ && tar xzf fftw-3.3.8.tar.gz \
+ && cd /opt/fftw-3.3.8 \
+ && ./configure --enable-shared --prefix=/usr/local \
+ && make -j4 > /dev/null \
+ && make install > /dev/null
+
+
+# Install eigen
+RUN cd /opt \
+ && curl -L https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz \
+    --output eigen-3.4.0.tar.gz \
+ && tar xzf eigen-3.4.0.tar.gz \
+ && cd /opt/eigen-3.4.0 \
+ && mkdir -p build \
+ && cd build \
+ && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
+ && make install
+
+ # Install lbfgspp
+RUN cd /opt \
+ && curl -L https://github.com/yixuan/LBFGSpp/archive/refs/tags/v0.3.0.zip \
+    --output LBFGSpp-0.3.0.zip \
+ && unzip -qq LBFGSpp-0.3.0.zip \
+ && cd /opt/LBFGSpp-0.3.0 \
+ && mkdir -p build \
+ && cd build \
+ && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
+ && make install
+
+RUN curl -L https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/c/cfitsio-4.1.0-1.el9.x86_64.rpm --output cfitsio-4.1.0-1.el9.x86_64.rpm
+RUN curl -L https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/c/cfitsio-devel-4.1.0-1.el9.x86_64.rpm --output cfitsio-devel-4.1.0-1.el9.x86_64.rpm
+RUN yum localinstall cfitsio-4.1.0-1.el9.x86_64.rpm -y
+RUN yum localinstall cfitsio-devel-4.1.0-1.el9.x86_64.rpm -y
+# Create several virtual environments
+RUN  pip3.11 install pytest numpy astropy twine auditwheel GitPython pytest-mock jsonschema scipy
+
+RUN  pip3.11 install --upgrade pip
+
+RUN cd /opt \
+ && git clone https://github.com/Subaru-PFS/datamodel.git \ 
+ && cd datamodel \
+ && pip3.11 install .
+
+ARG D1D_VERSION=1.7.2
+
+RUN cd /opt \
+ && git clone https://github.com/Subaru-PFS/drp_1d.git \
+ && cd drp_1d \
+ && git checkout ${D1D_VERSION} \
+ && pip3.11 install . -C cmake.define.CMAKE_PREFIX_PATH=/usr/local
+
+ARG D1DP_VERSION=1.7.2.3
+
+RUN cd /opt \
+ && git clone https://github.com/Subaru-PFS/drp_1dpipe.git \
+ && cd drp_1dpipe \
+ && git checkout ${D1DP_VERSION} \
+ && pip3.11 install . 
+

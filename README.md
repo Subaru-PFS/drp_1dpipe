@@ -19,6 +19,14 @@ Install Amazed library for Subaru-PFS project. See https://github.com/Subaru-PFS
 To install Subaru PFS 1D data reduction pipeline, simply run :
    pip install .
 
+Installing with Docker / Apptainer
+e.g. for building drp1d 1.7.2 and drp1d_pipe 1.7.2.4 
+docker build . -t drp1d:1.7.2.2 --build-arg D1DP_VERSION=1.7.2.4 --build-arg D1D_VERSION=1.7.2 -f Dockerfile-almalinux9
+
+after building a Docker image, an apptainer image can be built:
+
+apptainer build drp1d_1.7.2.4_almalinux.sif  docker-daemon://drp1d:1.7.2.4
+
 ### Testing an installed 1D DRP pipeline
 
 > Note : To run the tests, install pytest : `pip install pytest`
