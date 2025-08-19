@@ -207,7 +207,13 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
         fits.Column(name="targetId", format="I", array=np.array([], dtype=np.int16)), 
         fits.Column(name="nbPixels",
                     format="I",
-                    array=np.array([],dtype=np.int16))
+                    array=np.array([],dtype=np.int16)),
+        fits.Column(name="galaxyOIIRatio", format="E", array=np.array([], dtype=np.float32)),
+        fits.Column(name="galaxyOII3726Snr", format="E", array=np.array([], dtype=np.float32)),
+        fits.Column(name="galaxyOII3729Snr", format="E", array=np.array([], dtype=np.float32)),
+        fits.Column(name="qsoOIIRatio", format="E", array=np.array([], dtype=np.float32)),
+        fits.Column(name="qsoOII3726Snr", format="E", array=np.array([], dtype=np.float32)),
+        fits.Column(name="qsoOII3729Snr", format="E", array=np.array([], dtype=np.float32))
     ])
     hdul.append(fits.BinTableHDU.from_columns(quality_columns, name="QUALITY"))
     fits.HDUList(hdul).writeto(path) 
@@ -292,6 +298,10 @@ class RedshiftCoCandidates:
         except Exception as e:
             raise Exception(f'failed to write star : {e}')
 
+        try:
+            self.add_quality()
+        except Exception as e:
+            raise Exception(f'failed to write quality : {e}')
         self.hdulist.flush()
         self.hdulist.close()
         
@@ -555,14 +565,16 @@ class RedshiftCoCandidates:
             
         self.add_lines_to_hdu('STAR_CANDIDATES', zcandidates)
 
-    def add_object_lines(self, object_type, targetId):
+    def _get_lines(self, object_type):
         fr = pd.DataFrame(self.drp1d_output.get_dataset(object_type, "linemeas"))
         fr = fr[fr["LinemeasLineLambda"] > 0]
         fr = fr.set_index("LinemeasLineID")
         line_catalog = self.calibration_library.line_catalogs_df[object_type]["lineMeasSolve"]
         fr = pd.merge(fr, line_catalog[["Name", "WaveLength"]], left_index=True, right_index=True)
-
-
+        return fr
+    
+    def add_object_lines(self, object_type, targetId):
+        fr = self._get_lines(object_type)
         zlines = np.ndarray((fr.index.size,),
                             dtype=[('targetId', 'i4'),
                                    ('lineName', 'S15'),
@@ -589,14 +601,14 @@ class RedshiftCoCandidates:
             zlines[zi]['lineZ'] = z + offset/speed_of_light + z*offset/speed_of_light
             zlines[zi]['lineZError'] = fr.at[i, "LinemeasLineOffsetUncertainty"]/speed_of_light
             zlines[zi]['lineSigma'] = fr.at[i,"LinemeasLineWidth"]/10.
-            zlines[zi]['lineSigmaError'] = -1
+            zlines[zi]['lineSigmaError'] = fr.at[i,"LinemeasLineWidthUncertainty"]/10.
             zlines[zi]['lineVelocity'] = fr.at[i,"LinemeasLineVelocity"]
             zlines[zi]['lineVelocityError'] = fr.at[i,"LinemeasLineVelocityUncertainty"]
             # erg/cm2/s -> 10^-35 W/m2 : erg/cm2/s=10^-7W/cm2=10^-3W/m2 -> *10^-3
             zlines[zi]['lineFlux'] = fr.at[i, "LinemeasLineFlux"]*10**-3
             zlines[zi]['lineFluxError'] = fr.at[i, "LinemeasLineFluxUncertainty"]*10**-3
-            zlines[zi]['lineEW'] = -1
-            zlines[zi]['lineEWError'] = -1
+            zlines[zi]['lineEW'] = fr.at[i, "LinemeasEquivalentWidth"]*10**-3
+            zlines[zi]['lineEWError'] = fr.at[i, "LinemeasEquivalentWidthUncertainty"]*10**-3
             zlines[zi]['lineContinuumLevel'] = fr.at[i,"LinemeasLineContinuumFlux"]
             zlines[zi]['lineContinuumLevelError'] = fr.at[i,"LinemeasLineContinuumFluxUncertainty"]
             zi = zi+1
@@ -627,6 +639,26 @@ class RedshiftCoCandidates:
         self.add_array_to_image_hdu(f'{object_type.upper()}_LN_PDF',
                                     pdf)
 
+    def add_quality(self):
+        attrs = [self._get_nb_valid_points()]
+        for o in ["galaxy","qso"]:
+            lines = self._get_lines(o).set_index("Name")
+            #if "[OII]3729" in lines.index and "[OII]3726" in lines.index:
+            try:
+                attrs.append(lines.loc["[OII]3726","LinemeasLineFlux"]/lines.loc["[OII]3729","LinemeasLineFlux"])
+            except:
+                attrs.append(-1.)
+            try:
+                attrs.append(lines.loc["[OII]3726","LinemeasLineFlux"]/lines.loc["[OII]3726","LinemeasLineFluxUncertainty"])
+            except:
+                attrs.append(-1.)
+            try:
+                attrs.append(lines.loc["[OII]3729","LinemeasLineFlux"]/lines.loc["[OII]3729","LinemeasLineFluxUncertainty"])
+            except:
+                attrs.append(-1.)
+                
+        self.add_line_to_hdu("QUALITY",attrs)
+        
     def _get_model_on_lambda_range(self, object_type, rank):
         model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
