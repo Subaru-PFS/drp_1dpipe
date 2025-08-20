@@ -605,12 +605,12 @@ class RedshiftCoCandidates:
             zlines[zi]['lineVelocity'] = fr.at[i,"LinemeasLineVelocity"]
             zlines[zi]['lineVelocityError'] = fr.at[i,"LinemeasLineVelocityUncertainty"]
             # erg/cm2/s -> 10^-35 W/m2 : erg/cm2/s=10^-7W/cm2=10^-3W/m2 -> *10^-3
-            zlines[zi]['lineFlux'] = fr.at[i, "LinemeasLineFlux"]*10**-3
-            zlines[zi]['lineFluxError'] = fr.at[i, "LinemeasLineFluxUncertainty"]*10**-3
-            zlines[zi]['lineEW'] = fr.at[i, "LinemeasEquivalentWidth"]*10**-3
-            zlines[zi]['lineEWError'] = fr.at[i, "LinemeasEquivalentWidthUncertainty"]*10**-3
-            zlines[zi]['lineContinuumLevel'] = fr.at[i,"LinemeasLineContinuumFlux"]
-            zlines[zi]['lineContinuumLevelError'] = fr.at[i,"LinemeasLineContinuumFluxUncertainty"]
+            zlines[zi]['lineFlux'] = fr.at[i, "LinemeasLineFlux"] * 10**-3
+            zlines[zi]['lineFluxError'] = fr.at[i, "LinemeasLineFluxUncertainty"] * 10**-3
+            zlines[zi]['lineEW'] = fr.at[i, "LinemeasEquivalentWidth"]/10.
+            zlines[zi]['lineEWError'] = fr.at[i, "LinemeasEquivalentWidthUncertainty"]/10.
+            zlines[zi]['lineContinuumLevel'] = (zlines[zi]['lineWave']**2) * fr.at[i,"LinemeasLineContinuumFlux"]* (1 / 2.99792458) * 10 ** 16
+            zlines[zi]['lineContinuumLevelError'] = (zlines[zi]['lineWave']**2) * fr.at[i,"LinemeasLineContinuumFluxUncertainty"]* (1 / 2.99792458) * 10 ** 16
             zi = zi+1
         self.add_lines_to_hdu(f'{object_type.upper()}_LINES',zlines)
 
