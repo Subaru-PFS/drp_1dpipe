@@ -2,7 +2,7 @@
     "multiObsMethod": "",
     "lambdaRange": [
         4000,
-        1200
+        12000
     ],
     "smoothWidth": 0.0,
     "nbSamplesMin": 1,
