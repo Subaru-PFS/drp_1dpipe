@@ -11,7 +11,7 @@ dependencies = [
 #    'pylibamazed>=1.6.0',
     'astropy>=3.1.1',
     'h5py>=2.9',
-    'numpy>=1.16.0,<2',
+    'numpy>=1.16.0',
     'pandas>=1.0.3',
     'tables',
     'flufl.lock'
@@ -44,4 +44,4 @@ drp_1ddiff = 'drp_1dpipe.merge_results.merge_results:make_diff_cli'
 
 [tool.setuptools_scm]
 version_file="drp_1dpipe/_version.py"
-fallback_version = "1.6.0"
+fallback_version = "1.14.0"
