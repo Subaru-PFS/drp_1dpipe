@@ -363,7 +363,7 @@ class RedshiftCoCandidates:
         error_codes = []
         error_messages = []
         if self.drp1d_output.has_error(None,"init"):
-            message = self.drp1d_output.get_error(None,"init","message")
+            message = self.drp1d_output.get_error(None,"init")["message"]
             code = self.get_error_code(None,"init")
         else:
             code = 0
