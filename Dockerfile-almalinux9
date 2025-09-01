@@ -93,19 +93,15 @@ RUN cd /opt \
 
  # Install lbfgspp
 RUN cd /opt \
- && curl -L https://github.com/yixuan/LBFGSpp/archive/refs/tags/v0.3.0.zip \
-    --output LBFGSpp-0.3.0.zip \
- && unzip -qq LBFGSpp-0.3.0.zip \
- && cd /opt/LBFGSpp-0.3.0 \
+ && curl -L https://github.com/yixuan/LBFGSpp/archive/refs/tags/v0.4.0.zip \
+    --output LBFGSpp-0.4.0.zip \
+ && unzip -qq LBFGSpp-0.4.0.zip \
+ && cd /opt/LBFGSpp-0.4.0 \
  && mkdir -p build \
  && cd build \
  && cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local \
  && make install
 
-RUN curl -L https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/c/cfitsio-4.1.0-1.el9.x86_64.rpm --output cfitsio-4.1.0-1.el9.x86_64.rpm
-RUN curl -L https://dl.fedoraproject.org/pub/epel/9/Everything/x86_64/Packages/c/cfitsio-devel-4.1.0-1.el9.x86_64.rpm --output cfitsio-devel-4.1.0-1.el9.x86_64.rpm
-RUN yum localinstall cfitsio-4.1.0-1.el9.x86_64.rpm -y
-RUN yum localinstall cfitsio-devel-4.1.0-1.el9.x86_64.rpm -y
 # Create several virtual environments
 RUN  pip3.11 install pytest numpy astropy twine auditwheel GitPython pytest-mock jsonschema scipy
 
@@ -116,7 +112,7 @@ RUN cd /opt \
  && cd datamodel \
  && pip3.11 install .
 
-ARG D1D_VERSION=1.7.2
+ARG D1D_VERSION=pfs-1.14.0
 
 RUN cd /opt \
  && git clone https://github.com/Subaru-PFS/drp_1d.git \
@@ -124,7 +120,7 @@ RUN cd /opt \
  && git checkout ${D1D_VERSION} \
  && pip3.11 install . -C cmake.define.CMAKE_PREFIX_PATH=/usr/local
 
-ARG D1DP_VERSION=1.7.2.3
+ARG D1DP_VERSION=1.14.0
 
 RUN cd /opt \
  && git clone https://github.com/Subaru-PFS/drp_1dpipe.git \

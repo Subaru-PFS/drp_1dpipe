@@ -2,10 +2,11 @@
     "multiObsMethod": "",
     "lambdaRange": [
         4000,
-        9600
+        12000
     ],
     "smoothWidth": 0.0,
     "nbSamplesMin": 1,
+    "secondPassAfterClassification": false,
     "templateCatalog": {
         "continuumRemoval": {
             "method": "zero",
@@ -54,7 +55,7 @@
             "lineMeasSolve": {
                 "lineModel": {
                     "continuumComponent": "noContinuum",
-                    "lineCatalog": "linecatalogs/linecatalogamazedvacuum_H3.tsv",
+                    "lineCatalog": "linecatalogs/linecatalogamazedvacuum_H4.tsv",
                     "lineTypeFilter": "E",
                     "lineForceFilter": "no",
                     "nSigmaSupport": 14,
@@ -96,7 +97,7 @@
             "method": "lineModelSolve",
             "lineModelSolve": {
                 "lineModel": {
-                    "lineCatalog": "linecatalogs/linecatalogamazedvacuum_H3.tsv",
+                    "lineCatalog": "linecatalogs/linecatalogamazedvacuum_H4.tsv",
                     "lineTypeFilter": "no",
                     "lineForceFilter": "no",
                     "fittingMethod": "individual",
@@ -114,34 +115,21 @@
                     "ampOffsetFit": false,
                     "lbdaOffsetFit": false,
                     "lya": {
-                        "profile": "igm",
-                        "asymProfile": {
-                            "switchFixedToFit": false,
-                            "switchFitToFixed": false,
-                            "asymFitMin": 0,
-                            "asymFitMax": 4,
-                            "asymFitStep": 1,
-                            "widthFitMin": 1,
-                            "widthFitMax": 4,
-                            "widthFitStep": 1,
-                            "deltaFitMin": 0,
-                            "deltaFitMax": 0,
-                            "deltaStepMax": 1
-                        }
+                        "profile": "igm"
                     },
                     "hAlphaPrior": -1,
                     "lineRatioType": "tplRatio",
                     "rules": "all",
                     "improveBalmerFit": true,
-                    "tplRatioCatalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v19_emission",
+                    "tplRatioCatalog": "linecatalogs_tplshapes/linecatalogs_tplshape_ExtendedTemplatesJan2017v3_20170602_B14C_v20_emission",
                     "tplRatioIsmFit": true,
                     "continuumComponent": "tplFitAuto",
                     "continuumReestimation": "no",
                     "continuumFit": {
                         "negativeThreshold": -5.0,
                         "nullThreshold": 3,
-                        "badChi2Threshold": 1000,
-                        "fftProcessing": false,
+                        "badChi2Threshold": 35.0,
+                        "fftProcessing": true,
                         "ismFit": true,
                         "igmFit": true,
                         "count": 1,
