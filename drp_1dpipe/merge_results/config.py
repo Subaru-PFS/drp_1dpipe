@@ -12,5 +12,6 @@ config_defaults = {
     # Specific programm options
     'output_dir':'output',
     'report_line_snr_threshold':3,
+    'report_line_rdiff_threshold':1.e-3,
     'ref_output_dir':"validation"
     }

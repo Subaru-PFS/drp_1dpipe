@@ -68,6 +68,8 @@ def define_make_diff_options():
 
     parser.add_argument('--report_line_snr_threshold',type=float,
                         help='snr threshold use to define correctness of a line measurement in report.json')
+    parser.add_argument('--report_line_rdiff_threshold',type=float,
+                        help='Relative difference threshold use to define correct line measurement in report.json')
    
     return parser
 
@@ -95,7 +97,7 @@ def make_diff(config):
             print(zdiff[o])
         else:
             print(f'{o} redshifts identical')
-    po.diff_lines(opo, config.report_line_snr_threshold)
+    po.diff_lines(opo, config.report_line_snr_threshold, config.report_line_rdiff_threshold)
     
     
 def write_analysis(config):

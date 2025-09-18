@@ -71,8 +71,8 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
         target = Table.read(path,hdu=1, format="fits").to_pandas()
         lines = lines[lines.lineFluxError.notnull()]
         lines = pd.merge(lines,target[["targetId","objId"]],left_on="targetId",right_on="targetId")
-        lines["snr"]=lines.lineFlux/lines.lineFluxError
-        lines = lines[lines.snr > snr_threshold]
+        lines["snr"]=abs(lines.lineFlux/lines.lineFluxError)
+        # lines = lines[lines.snr >= snr_threshold]
         lines = lines[lines.lineWave > self.parameters.get_lambda_range_min()*0.1]
         lines = lines[lines.lineWave < self.parameters.get_lambda_range_max()*0.1]
         lines["lineName"]=lines["lineName"].str.decode('UTF-8')
@@ -110,25 +110,40 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
             res[object_type]=rs[rs[ercol]>threshold][[col,refcol,ercol]]
         return res
 
-    def diff_lines(self,ref, snr_threshold):
+    def diff_lines(self,ref, snr_threshold, rdiff_threshold):
         for object_type in ["galaxy","qso"]:
             print(f'diff on {object_type} lines')
             cl = self.get_correct_lines(snr_threshold,object_type).set_index(["objId","lineName"])
             ocl = ref.get_correct_lines(snr_threshold,object_type).set_index(["objId","lineName"])
-            if len(cl.index.difference(ocl.index)):
-                for i in cl.index.difference(ocl.index):
-                    print(f"0x{i[0]:16x} line {i[1]} is correct in {self.output_directory} ({cl.at[i,'snr']} and not in {ref.output_directory} ")
-            if len(ocl.index.difference(cl.index)):
-                for i in ocl.index.difference(cl.index):
-                    print(f"0x{i[0]:16x} line {i[1]} is correct in {ref.output_directory} ({ocl.at[i,'snr']} and not in {self.output_directory} ")
+            df = pd.merge(cl, ocl, left_index=True, right_index=True, how="outer")
+            df['objId0x'] = [f"{i[0]:016x}" for i in df.index]
+            df['dsnr']=(df['snr_x']-df['snr_y'])/df['snr_x']
+            df['dflux']=(df['lineFlux_x']-df['lineFlux_y'])/df['lineFlux_x']
+            df['derr']=(df['lineFluxError_x']-df['lineFluxError_y'])/df['lineFluxError_x']
+            # df_filter = (df['dflux']>rdiff_threshold) & ((df['snr_x']>snr_threshold) | (df['snr_y']>snr_threshold))
+            # sel = df[df_filter][['snr_x','snr_y','dsnr','lineFlux_x','lineFlux_y','dflux','derr']].sort_values(by="snr_x")
+            sel = df[['objId0x','lineWave_y','lineSigma_y','snr_x','snr_y','dsnr','lineFlux_x','lineFlux_y','dflux','lineFluxError_x','lineFluxError_y','derr']].sort_values(by="snr_x")
+            if len(sel) :
+                print(sel.to_string())
 
+            # if len(cl.index.difference(ocl.index)):
+            #     for i in cl.index.difference(ocl.index):
+            #         print(f"{i[0]} line {i[1]} selected in {self.output_directory} and not in {ref.output_directory} : {cl.at[i,'snr']}")
+            # if len(ocl.index.difference(cl.index)):
+            #     for i in ocl.index.difference(cl.index):
+            #         print(f"{i[0]} line {i[1]} selected in {ref.output_directory}  and not in {self.output_directory} : {ocl.at[i,'snr']} ")
 
-            for i in ocl.index.intersection(cl.index):
-                f = cl.at[i,"lineFlux"]
-                of = ocl.at[i,"lineFlux"]
-                rdiff = abs(f-of)/f
-                if abs(f-of)/f > 1e-3:
-                    print(f'0x{i[0]:16x} {i[1]} : {f} {of} : {rdiff}')
+            # for i in ocl.index.intersection(cl.index):
+            #     f = cl.at[i,"lineFlux"]
+            #     of = ocl.at[i,"lineFlux"]
+            #     e = cl.at[i,"lineFluxError"]
+            #     oe = ocl.at[i,"lineFluxError"]
+            #     rdiff = abs(f-of)/f
+            #     erdiff = abs(e-oe)/e
+            #     # if rdiff > rdiff_threshold or erdiff > rdiff_threshold:
+            #         # print(f'{i[0]} {i[1]} : {f} {of} : {rdiff:.2E} : {e} {oe} : {erdiff:.2E}')
+            #     if rdiff > rdiff_threshold :
+            #         print(f'{i[0]} {i[1]} : {f} {of} : {rdiff:.2E}')
 
     def _get_redshifts_from_path(self, path):
         # get processingID first
