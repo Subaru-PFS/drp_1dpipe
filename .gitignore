@@ -54,5 +54,6 @@ eggs/
 __pycache__/
 *.pyc
 .pytest_cache/
+build
 *~
 drp_1dpipe/_version.py
