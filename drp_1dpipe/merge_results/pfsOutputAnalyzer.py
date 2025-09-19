@@ -112,38 +112,42 @@ class PfsOutputAnalyzer(AbstractOutputAnalyzer):
 
     def diff_lines(self,ref, snr_threshold, rdiff_threshold):
         for object_type in ["galaxy","qso"]:
-            print(f'diff on {object_type} lines')
+            # Get lines in lambda range
             cl = self.get_correct_lines(snr_threshold,object_type).set_index(["objId","lineName"])
             ocl = ref.get_correct_lines(snr_threshold,object_type).set_index(["objId","lineName"])
+            # Create merged table with output columns :
+            #   objId : Object ID
+            #   lineName : Line name
+            #   objId0x : Object ID in hexa
+            #   lineWave_y : Central wavelength of the line in reference file
+            #   lineSigma_y : Width of the line in reference file
+            #   snr_x : SNR of the line in output file
+            #   snr_y : SNR of the line in reference file
+            #   dsnr : Relative difference of th SNR of the line
+            #   lineFlux_x : Flux of the line in output file
+            #   lineFlux_y : Flux of the line in reference file
+            #   dflux : Relative difference of the flux of the line
+            #   lineFluxError_x : Flux error of the line in output file
+            #   lineFluxError_y : Flux error of the line in reference file
+            #   derr : Relative difference of the flux error of the line
             df = pd.merge(cl, ocl, left_index=True, right_index=True, how="outer")
             df['objId0x'] = [f"{i[0]:016x}" for i in df.index]
             df['dsnr']=(df['snr_x']-df['snr_y'])/df['snr_x']
             df['dflux']=(df['lineFlux_x']-df['lineFlux_y'])/df['lineFlux_x']
             df['derr']=(df['lineFluxError_x']-df['lineFluxError_y'])/df['lineFluxError_x']
-            # df_filter = (df['dflux']>rdiff_threshold) & ((df['snr_x']>snr_threshold) | (df['snr_y']>snr_threshold))
-            # sel = df[df_filter][['snr_x','snr_y','dsnr','lineFlux_x','lineFlux_y','dflux','derr']].sort_values(by="snr_x")
             sel = df[['objId0x','lineWave_y','lineSigma_y','snr_x','snr_y','dsnr','lineFlux_x','lineFlux_y','dflux','lineFluxError_x','lineFluxError_y','derr']].sort_values(by="snr_x")
-            if len(sel) :
-                print(sel.to_string())
-
-            # if len(cl.index.difference(ocl.index)):
-            #     for i in cl.index.difference(ocl.index):
-            #         print(f"{i[0]} line {i[1]} selected in {self.output_directory} and not in {ref.output_directory} : {cl.at[i,'snr']}")
-            # if len(ocl.index.difference(cl.index)):
-            #     for i in ocl.index.difference(cl.index):
-            #         print(f"{i[0]} line {i[1]} selected in {ref.output_directory}  and not in {self.output_directory} : {ocl.at[i,'snr']} ")
-
-            # for i in ocl.index.intersection(cl.index):
-            #     f = cl.at[i,"lineFlux"]
-            #     of = ocl.at[i,"lineFlux"]
-            #     e = cl.at[i,"lineFluxError"]
-            #     oe = ocl.at[i,"lineFluxError"]
-            #     rdiff = abs(f-of)/f
-            #     erdiff = abs(e-oe)/e
-            #     # if rdiff > rdiff_threshold or erdiff > rdiff_threshold:
-            #         # print(f'{i[0]} {i[1]} : {f} {of} : {rdiff:.2E} : {e} {oe} : {erdiff:.2E}')
-            #     if rdiff > rdiff_threshold :
-            #         print(f'{i[0]} {i[1]} : {f} {of} : {rdiff:.2E}')
+            # Error raised for relative difference with unexpected NaN value
+            dfnn = sel[sel["dflux"].isnull() & sel["lineFlux_x"]!=0.]
+            # Error raised for relative difference greater than defined threshold
+            dfnnf = sel[sel["dflux"]>rdiff_threshold]
+            if len(dfnn):
+                print(f'\033[91m✖\033[00m Differences on {object_type} lines:')
+                print(dfnn.to_string())
+            elif len(dfnnf):
+                print(f'\033[91m✖\033[00m Differences on {object_type} lines:')
+                print(dfnnf.to_string())
+            else:
+                print(f"\033[92m✔\033[00m No difference on {object_type} lines.")
 
     def _get_redshifts_from_path(self, path):
         # get processingID first

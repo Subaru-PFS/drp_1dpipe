@@ -93,10 +93,10 @@ def make_diff(config):
     zdiff = po.diff_redshifts(opo)
     for o in ["galaxy","qso"]:
         if len(zdiff[o]):
-            print(f'diff in {o} redshifts')
-            print(zdiff[o])
+            print(f'\033[91m✖\033[00m Differences on {o} redshifts:')
+            print(zdiff[o].to_string())
         else:
-            print(f'{o} redshifts identical')
+            print(f'\033[92m✔\033[00m No difference on {o} redshifts.')
     po.diff_lines(opo, config.report_line_snr_threshold, config.report_line_rdiff_threshold)
     
     
