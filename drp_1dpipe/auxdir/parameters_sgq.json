@@ -6,6 +6,7 @@
     ],
     "smoothWidth": 0.0,
     "nbSamplesMin": 1,
+    "nbSamplesMinForContinuumFit": 10,
     "secondPassAfterClassification": false,
     "templateCatalog": {
         "continuumRemoval": {
@@ -59,6 +60,8 @@
                     "lineTypeFilter": "E",
                     "lineForceFilter": "no",
                     "nSigmaSupport": 14,
+                    "maxDistanceToLine": 1,
+                    "nbSamplesMinForLineFit": 2,
                     "lineWidthType": "combined",
                     "fittingMethod": "lbfgsb",
                     "polynomialDegree": 2,
@@ -67,6 +70,7 @@
                     "velocityAbsorption": 100,
                     "ampOffsetFit": true,
                     "lbdaOffsetFit": true,
+                    "lbdaOffsetMax": 400,
                     "lineRatioType": "rules",
                     "rules": "no",
                     "improveBalmerFit": true,
@@ -115,7 +119,20 @@
                     "ampOffsetFit": false,
                     "lbdaOffsetFit": false,
                     "lya": {
-                        "profile": "igm"
+                        "profile": "igm",
+                        "asymProfile": {
+                            "switchFixedToFit": false,
+                            "switchFitToFixed": false,
+                            "asymFitMin": 0,
+                            "asymFitMax": 4,
+                            "asymFitStep": 1,
+                            "widthFitMin": 1,
+                            "widthFitMax": 4,
+                            "widthFitStep": 1,
+                            "deltaFitMin": 0,
+                            "deltaFitMax": 0,
+                            "deltaStepMax": 1
+                        }
                     },
                     "hAlphaPrior": -1,
                     "lineRatioType": "tplRatio",
@@ -172,6 +189,8 @@
                         }
                     },
                     "nSigmaSupport": 8,
+                    "maxDistanceToLine": 1,
+                    "nbSamplesMinForLineFit": 2,
                     "enablePhotometry": false
                 }
             }
@@ -244,6 +263,8 @@
                     "lineTypeFilter": "E",
                     "lineForceFilter": "no",
                     "nSigmaSupport": 14,
+                    "maxDistanceToLine": 1,
+                    "nbSamplesMinForLineFit": 2,
                     "lineWidthType": "combined",
                     "fittingMethod": "lbfgsb",
                     "polynomialDegree": 2,
@@ -256,6 +277,7 @@
                     "absVelocityFitMax": 500,
                     "ampOffsetFit": true,
                     "lbdaOffsetFit": true,
+                    "lbdaOffsetMax": 400,
                     "lineRatioType": "rules",
                     "rules": "no",
                     "improveBalmerFit": true,
