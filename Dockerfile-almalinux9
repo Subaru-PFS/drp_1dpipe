@@ -112,7 +112,7 @@ RUN cd /opt \
  && cd datamodel \
  && pip3.11 install .
 
-ARG D1D_VERSION=pfs-1.14.0
+ARG D1D_VERSION
 
 RUN cd /opt \
  && git clone https://github.com/Subaru-PFS/drp_1d.git \
@@ -120,7 +120,7 @@ RUN cd /opt \
  && git checkout ${D1D_VERSION} \
  && pip3.11 install . -C cmake.define.CMAKE_PREFIX_PATH=/usr/local
 
-ARG D1DP_VERSION=1.14.0.1
+ARG D1DP_VERSION
 
 RUN cd /opt \
  && git clone https://github.com/Subaru-PFS/drp_1dpipe.git \
