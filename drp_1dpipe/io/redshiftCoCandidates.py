@@ -218,6 +218,31 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
     hdul.append(fits.BinTableHDU.from_columns(quality_columns, name="QUALITY"))
     fits.HDUList(hdul).writeto(path) 
 
+
+def filter_warning(warning, bitlist):
+    """Disable warning according bitlist
+
+    Parameters
+    ----------
+    warning : int
+        User warning
+    bitlist : list
+        List of bit number to keep
+
+    Return
+    ------
+    int
+        Filtered warning
+    """
+    mask = 0
+
+    # Pour chaque position, on décale un 1 et on fait un OU binaire
+    for pos in bitlist:
+        mask |= 1 << pos
+    
+    return warning & mask
+
+
 class RedshiftCoCandidates:
 
     def __init__(self, drp1d_output, spectrum_storage, logger, calibration_library):
@@ -399,32 +424,47 @@ class RedshiftCoCandidates:
         return self.add_line_to_hdu("ERRORS",error_codes + error_messages)
         
     def add_warnings(self):
+        bitlist = [0, 2, 5, 6, 9, 10, 11, 12, 13, 16, 17, 18, 20, 21]
+
         params = self.calibration_library.parameters
 
         line = []
-        line.append(self.drp1d_output.get_attribute(None,
-                                                    "init_warningFlag",
-                                                    "InitWarningFlags")
-                    )
+        line.append(
+            filter_warning(
+                self.drp1d_output.get_attribute(None,
+                                                "init_warningFlag",
+                                                "InitWarningFlags"
+                                                ),
+                bitlist
+                )
+        )
         for ot in ["galaxy","qso","star"]:
             meth = params.get_redshift_solver_method(ot).value
             if self.drp1d_output.has_error(ot,"redshiftSolver"):
                 line.append(0)
             else:
-                line.append(self.drp1d_output.get_attribute(ot,
-                                                            "warningFlag",
-                                                            meth+"WarningFlags")
-                            )
+                line.append(
+                    filter_warning(
+                        self.drp1d_output.get_attribute(ot,
+                                                        "warningFlag",
+                                                        meth+"WarningFlags"),
+                        bitlist
+                        )
+                )
                 
         for ot in ["galaxy","qso"]:
             meth = params.get_linemeas_method(ot).value
             if self.drp1d_output.has_error(ot,"lineMeasSolver"):
                 line.append(0)
             else:
-                line.append(self.drp1d_output.get_attribute(ot,
-                                                            "warningFlag",
-                                                            meth+"WarningFlags")
-                            )
+                line.append(
+                    filter_warning(
+                        self.drp1d_output.get_attribute(ot,
+                                                        "warningFlag",
+                                                        meth+"WarningFlags"),
+                        bitlist
+                        )
+                )
 
         line.append(0)
                                 # self.drp1d_output.get_attribute(None,
