@@ -21,12 +21,11 @@ authors = [
     {name = "LAM - Laboratoire d'Astrophysique de Marseille", email = "amazed-support@lam.fr"}]
 description = "drp1d python client."
 readme = "README.md"
-license = {text = "GPLv3+"}
+license = "GPL-3.0-or-later"
 classifiers = [
         "Development Status :: 4 - Production/Stable",
         "Topic :: Scientific/Engineering",
         "Programming Language :: Python :: 3.9",
-        "License :: OSI Approved :: GNU General Public License v3 or later(GPLv3+)",
     ]
 
 
