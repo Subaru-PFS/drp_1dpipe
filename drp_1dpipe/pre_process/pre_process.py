@@ -45,6 +45,10 @@ def define_specific_program_options():
         prog='pre_process',
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
+    parser.add_argument('--coadd_file', metavar='FILE',
+                        help='Base path where to find pfsCoadd file relative to workdir.')
+    parser.add_argument('--object_id', '-oid', type=int,
+                        help='Run pipeline on a single object id belonging to coadd_file')
     parser.add_argument('--bunch_size', metavar='SIZE',
                         help='Maximum number of spectra per bunch.')
     parser.add_argument('--bunch_list', metavar='FILE',
@@ -144,9 +148,9 @@ def pre_process(config):
     # initialize logger
     
     workdir = normpath(config.workdir)
+    output_dir = normpath(config.output_dir)
     logdir = normpath(config.logdir)
     log_level = config.log_level
-    output_dir = normpath(config.output_dir)
     bunch_size = int(config.bunch_size)
     logger = init_logger("pre_process", logdir, log_level)
     start_message = "Running pre_process"

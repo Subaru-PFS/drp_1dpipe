@@ -151,7 +151,22 @@ def write_analysis(config):
     with open(os.path.join(config.output_dir, "report.json"),'w') as f:
         json.dump(report,f,indent=4)
 
+def define_specific_program_options():
+    """Define specific program options.
+    
+    Return
+    ------
+    :obj:`ArgumentParser`
+        An ArgumentParser object
+    """
+    parser = argparse.ArgumentParser(
+        prog='pre_process',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+        )
+    parser.add_argument('--output_dir', '-o', metavar='DIR', action=AbspathAction,
+                        help='Output directory.')
 
+    return parser
     
 def merge_results(config):
     """main_method
