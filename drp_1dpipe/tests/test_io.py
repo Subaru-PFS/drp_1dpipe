@@ -1,6 +1,5 @@
 from drp_1dpipe.io.redshiftCoCandidates import filter_warning
 
-
 def test_filter_warning():
     """
     Check the behavior of filter_warning function

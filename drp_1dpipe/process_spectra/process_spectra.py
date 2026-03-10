@@ -19,8 +19,7 @@ from drp_1dpipe.process_spectra.config import config_defaults
 from drp_1dpipe.core.utils import normpath, TemporaryFilesSet
 from drp_1dpipe.core.get_default_summary import get_default_summary_columns
 
-from drp_1dpipe.io.PFSReader import PFSReader
-from drp_1dpipe.io.PFSExternalStorage import PFSExternalStorage
+from drp_1dpipe.io.PFSDataProvider import PFSDataProvider
 
 from drp_1dpipe.io.redshiftCoCandidates import RedshiftCoCandidates
 from drp_1dpipe.process_spectra.parameters import default_parameters
@@ -101,7 +100,7 @@ def _process_spectrum(output_dir, spectrum, process_flow, user_param, storage) :
         logger.log(logging.ERROR,"Could not process spectrum: {}".format(e))
         return 0
     try:
-        rc = RedshiftCoCandidates(output, storage, logger, process_flow.calibration_library)
+        rc = RedshiftCoCandidates(output, spectrum, logger, process_flow.calibration_library)
 
         l = Lock(os.path.join(output_dir,"coZcand.lock"))
         l.lifetime = timedelta(hours=2)
@@ -193,24 +192,20 @@ def amazed(config):
     data_dir = os.path.join(outdir, 'data')
     os.makedirs(data_dir, exist_ok=True)
 
-    products = []
+    data_provider = PFSDataProvider(
+        config,
+        process_flow.calibration_library.parameters,
+        process_flow.calibration_library
+        )
 
     for i, object_id in enumerate(spectra_list):
         try:
-            spectrum_id = object_id
-            storage = PFSExternalStorage(config, spectrum_id)
-            reader = PFSReader(process_flow.calibration_library.parameters,
-                               process_flow.calibration_library,
-                               spectrum_id)
-            resource = storage.read()
-            reader.load_all(resource)
-            spectrum = reader.get_spectrum()
-            storage.close(resource)
+            spectrum = data_provider.get_spectrum(object_id)
         except Exception as e:
-            logger.log(logging.ERROR, f"Could not read spectrum with id {spectrum_id} : {e}")
+            logger.log(logging.ERROR, f"Could not read spectrum with id {object_id} : {e}")
             continue
         
-        output = _process_spectrum(data_dir, spectrum,process_flow, user_parameters, storage)
+        output = _process_spectrum(data_dir, spectrum, process_flow, user_parameters, None)
         
     logger.log(logging.INFO, "Bunch terminated")
 
