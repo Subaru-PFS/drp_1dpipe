@@ -10,6 +10,8 @@ config_defaults = {
     'loglevel': 'INFO',
     'log_level': 30,
     # Specific programm options
+    'coadd_file' : '',
+    'object_id' : '',
     'bunch_size': 8,
     'bunch_list': 'spectralist.json',
     'output_dir':'output',

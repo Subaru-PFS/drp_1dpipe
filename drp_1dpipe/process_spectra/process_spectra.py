@@ -207,7 +207,7 @@ def amazed(config):
             spectrum = reader.get_spectrum()
             storage.close(resource)
         except Exception as e:
-            logger.log(logging.ERROR, f"Could not read spectrum at {spectrum_path} with id {spectrum_id} : {e}")
+            logger.log(logging.ERROR, f"Could not read spectrum with id {spectrum_id} : {e}")
             continue
         
         output = _process_spectrum(data_dir, spectrum,process_flow, user_parameters, storage)

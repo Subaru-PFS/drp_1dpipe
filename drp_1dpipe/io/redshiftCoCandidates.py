@@ -682,24 +682,27 @@ class RedshiftCoCandidates:
     def add_quality(self):
         attrs = [self._get_nb_valid_points()]
         for o in ["galaxy","qso"]:
-            lines = self._get_lines(o).set_index("Name")
-            if "[OII]3729" in lines.index and "[OII]3726" in lines.index:
-                oii_3729_flux = lines.loc["[OII]3729","LinemeasLineFlux"]
-                oii_3726_flux = lines.loc["[OII]3726","LinemeasLineFlux"]
-                oii_3729_err = lines.loc["[OII]3729","LinemeasLineFluxUncertainty"]
-                oii_3726_err = lines.loc["[OII]3726","LinemeasLineFluxUncertainty"]
-                if oii_3729_flux > 0 :
-                    attrs.append(oii_3726_flux/oii_3729_flux)
+            if not self.drp1d_output.has_error(o,"lineMeasSolver"):
+                lines = self._get_lines(o).set_index("Name")
+                if "[OII]3729" in lines.index and "[OII]3726" in lines.index:
+                    oii_3729_flux = lines.loc["[OII]3729","LinemeasLineFlux"]
+                    oii_3726_flux = lines.loc["[OII]3726","LinemeasLineFlux"]
+                    oii_3729_err = lines.loc["[OII]3729","LinemeasLineFluxUncertainty"]
+                    oii_3726_err = lines.loc["[OII]3726","LinemeasLineFluxUncertainty"]
+                    if oii_3729_flux > 0 :
+                        attrs.append(oii_3726_flux/oii_3729_flux)
+                    else:
+                        attrs.append(-1.)
+                    if oii_3726_err > 0:
+                        attrs.append(oii_3726_flux/oii_3726_err)
+                    else:
+                        attrs.append(-1.)
+                    if oii_3729_err > 0:
+                        attrs.append(oii_3729_flux/oii_3729_err)
+                    else:
+                        attrs.append(-1.)
                 else:
-                    attrs.append(-1.)
-                if oii_3726_err > 0:
-                    attrs.append(oii_3726_flux/oii_3726_err)
-                else:
-                    attrs.append(-1.)
-                if oii_3729_err > 0:
-                    attrs.append(oii_3729_flux/oii_3729_err)
-                else:
-                    attrs.append(-1.)
+                    attrs = attrs + [-1]*3
             else:
                 attrs = attrs + [-1]*3
                 
