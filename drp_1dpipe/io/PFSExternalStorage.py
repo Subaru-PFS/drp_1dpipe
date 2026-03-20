@@ -1,3 +1,4 @@
+import os
 from pfs.datamodel.drp import PfsObject, PfsCoadd
 from pylibamazed.AbstractExternalStorage import AbstractExternalStorage, register_storage
 
@@ -35,16 +36,19 @@ class PFSExternalStorage(AbstractExternalStorage):
         PfsObject
             PFS spectrum object
         """
+        if hasattr(self.config, 'spectrum_dir') :
+            filepath = os.path.join(self.config.spectrum_dir, path)
+        else:
+            filepath  = path
+
         if not self.read_flag:
-            self.coadd = PfsCoadd.readFits(path)
+            self.coadd = PfsCoadd.readFits(filepath)
             self.read_flag = True
         
-        pfs_object = self.coadd.get(spectrum_id)
+        pfs_object = self.coadd.get(int(spectrum_id))
         pfs_object_id = pfs_object.getIdentity()
         self.spectrum_infos["pfs_object_id"] = pfs_object_id
         self.spectrum_infos["astronomical_source_id"] = f'{pfs_object_id["catId"]:05}-{pfs_object_id["tract"]:05}-{pfs_object_id["patch"]}-{pfs_object_id["objId"]:016x}'
-        self.spectrum_infos["mask"] = pfs_object.mask
-        self.spectrum_infos["full_wavelength"]= pfs_object.wavelength
 
         self.global_infos["VERSION_drp_stella"] = pfs_object.metadata["VERSION_DRP_STELLA"]
         self.global_infos["damd_version"] = pfs_object.metadata["VERSION_DATAMODEL"]

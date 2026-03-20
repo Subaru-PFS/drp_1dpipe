@@ -61,7 +61,7 @@ def test_PFSExternalStorage(mocker):
     mocker.patch("pfs.datamodel.drp.PfsCoadd.readFits").return_value = MyClass()
 
     # Read method
-    storage.read("spectrum_id","my_file.fits","obs_id")
+    storage.read("0","my_file.fits","obs_id")
     assert storage.global_infos["damd_version"] == "2.0"
     assert storage.spectrum_infos["DEC"] == "dec"
     assert storage.spectrum_infos["astronomical_source_id"] == "00001-00002-PP-000000000000000c"
@@ -76,7 +76,7 @@ def test_PFSExternalStorage(mocker):
 
     # Define new storage
     new_storage = PFSExternalStorage(config_update(config_defaults))
-    new_storage.read("spectrum_id","my_file.fits","obs_id")
+    new_storage.read("0","my_file.fits","obs_id")
     mock_read_pfs_product.assert_called_once()
-    new_storage.read("spectrum_id","my_file.fits","obs_id")
+    new_storage.read("0","my_file.fits","obs_id")
     mock_read_pfs_product.assert_called_once()

@@ -247,6 +247,7 @@ class RedshiftCoCandidates:
 
     def __init__(self, drp1d_output, spectrum, logger, calibration_library):
         self.drp1d_output = drp1d_output
+        self.spectrum = spectrum
         self.spectrum_infos = spectrum.get_spectrum_infos()
         self.logger = logger
         self.calibration_library = calibration_library
@@ -709,10 +710,12 @@ class RedshiftCoCandidates:
         self.add_line_to_hdu("QUALITY",attrs)
         
     def _get_model_on_lambda_range(self, object_type, rank):
-        model = np.array(self.spectrum_infos["full_wavelength"], dtype=np.float64, copy=True)
+        wavelength = self.spectrum.get_wave(filtered_only=False)
+        mask = self.spectrum.get_others(filtered_only=False)["mask"]
+        model = np.array(wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
-        np.place(model, self.spectrum_infos["mask"] == 0, self.drp1d_output.get_dataset(object_type,"model",rank)["ModelFlux"])
-        model = np.multiply(np.array(self.spectrum_infos["full_wavelength"]) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
+        np.place(model, mask == 0, self.drp1d_output.get_dataset(object_type,"model",rank)["ModelFlux"])
+        model = np.multiply(np.array(wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
         return np.float32(model)
 
     def _get_pdf_grid(self, object_type):
