@@ -59,7 +59,8 @@
                     "lineCatalog": "linecatalogs/linecatalogamazedvacuum_H4.tsv",
                     "lineTypeFilter": "E",
                     "lineForceFilter": "no",
-                    "nSigmaSupport": 14,
+                    "nSigmaSupport": 8,
+                    "nSigmaAmpOffset": 6,
                     "maxDistanceToLine": 1,
                     "nbSamplesMinForLineFit": 2,
                     "lineWidthType": "combined",
@@ -116,8 +117,6 @@
                     "absVelocityFitMin": 100,
                     "absVelocityFitMax": 500,
                     "absVelocityFitStep": 50,
-                    "ampOffsetFit": false,
-                    "lbdaOffsetFit": false,
                     "lya": {
                         "profile": "igm",
                         "asymProfile": {
@@ -262,7 +261,8 @@
                     "lineCatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v10.tsv",
                     "lineTypeFilter": "E",
                     "lineForceFilter": "no",
-                    "nSigmaSupport": 14,
+                    "nSigmaSupport": 8,
+                    "nSigmaAmpOffset": 6,
                     "maxDistanceToLine": 1,
                     "nbSamplesMinForLineFit": 2,
                     "lineWidthType": "combined",

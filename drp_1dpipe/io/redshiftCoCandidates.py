@@ -245,9 +245,10 @@ def filter_warning(warning, bitlist):
 
 class RedshiftCoCandidates:
 
-    def __init__(self, drp1d_output, spectrum_storage, logger, calibration_library):
+    def __init__(self, drp1d_output, spectrum, logger, calibration_library):
         self.drp1d_output = drp1d_output
-        self.spectrum_storage = spectrum_storage
+        self.spectrum = spectrum
+        self.spectrum_infos = spectrum.get_spectrum_infos()
         self.logger = logger
         self.calibration_library = calibration_library
         self.hdulist = None
@@ -257,8 +258,8 @@ class RedshiftCoCandidates:
         params = self.calibration_library.parameters
         object_types = params.get_spectrum_models()
         self.path = os.path.join(output_dir, "pfsCoZcandidates-%05d.fits" % (
-            self.spectrum_storage.pfs_object_id["catId"]))
-        objId = self.spectrum_storage.pfs_object_id["objId"]
+            self.spectrum_infos["pfs_object_id"]["catId"]))
+        objId = self.spectrum_infos["pfs_object_id"]["objId"]
         self.logger.log(logging.INFO,f"add data to {self.path} from {objId}")
         
         self.hdulist = fits.open(self.path, "update")
@@ -360,16 +361,16 @@ class RedshiftCoCandidates:
         self.hdulist[hdu_name].data = new_data
         
     def add_target(self):
-        pfsObjectId = self.spectrum_storage.pfs_object_id
+        pfsObjectId = self.spectrum_infos["pfs_object_id"]
         new_target = [ pfsObjectId["catId"],
                        pfsObjectId["tract"],
                        pfsObjectId["patch"],
                        pfsObjectId["objId"],
                        pfsObjectId["nVisit"],
                        pfsObjectId["pfsVisitHash"],
-                       self.spectrum_storage.spectrum_infos["RA"],
-                       self.spectrum_storage.spectrum_infos["DEC"],
-                       self.spectrum_storage.spectrum_infos["targetType"]]
+                       self.spectrum_infos["RA"],
+                       self.spectrum_infos["DEC"],
+                       self.spectrum_infos["targetType"]]
         return self.add_line_to_hdu("TARGET",new_target)
 
     def get_binary_table_size(self, hdu_name):
@@ -709,10 +710,12 @@ class RedshiftCoCandidates:
         self.add_line_to_hdu("QUALITY",attrs)
         
     def _get_model_on_lambda_range(self, object_type, rank):
-        model = np.array(self.spectrum_storage.full_wavelength, dtype=np.float64, copy=True)
+        wavelength = self.spectrum.get_wave(filtered_only=False)
+        mask = self.spectrum.get_others(filtered_only=False)["mask"]
+        model = np.array(wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
-        np.place(model, self.spectrum_storage.mask == 0, self.drp1d_output.get_dataset(object_type,"model",rank)["ModelFlux"])
-        model = np.multiply(np.array(self.spectrum_storage.full_wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
+        np.place(model, mask == 0, self.drp1d_output.get_dataset(object_type,"model",rank)["ModelFlux"])
+        model = np.multiply(np.array(wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
         return np.float32(model)
 
     def _get_pdf_grid(self, object_type):
@@ -722,6 +725,6 @@ class RedshiftCoCandidates:
 
 
     def _get_nb_valid_points(self):
-        valid = np.where(self.spectrum_storage.mask == 0, True, False)
+        valid = np.where(self.spectrum_infos["mask"] == 0, True, False)
         return np.sum(valid)
         

@@ -1,56 +1,57 @@
-from astropy.io import fits
-from pfs.datamodel.drp import PfsObject,PfsCoadd
-from pylibamazed.AbstractExternalStorage import AbstractExternalStorage, register_storage
 import os
-import glob
-
-import sys
+from pfs.datamodel.drp import PfsObject, PfsCoadd
+from pylibamazed.AbstractExternalStorage import AbstractExternalStorage, register_storage
 
 
 class PFSExternalStorage(AbstractExternalStorage):
     """Opener for FITS files that should be treated with an PFSSpectrumReader."""
 
-
-    # for LAM client compatibility    
-    def set_spectrum_id(self, spectrum_id): 
-        self.spectrum_id = int((spectrum_id.ProcessingID).split('-')[-1],16)
-        self.config.coadd_file = os.path.join(self.config.spectrum_dir,spectrum_id.Path)
-
-    def _get_pfsObject_from_coadd(self):
-        try:
-            coadd = PfsCoadd.readFits(self.config.coadd_file)
-            return coadd.get(self.spectrum_id)
-        except:
-            calibrated = PfsCalibrated.readFits(self.config.coadd_file)
-            return calibrated.get(self.spectrum_id)
-        
+    def __init__(self, config):
+        super().__init__(config)
+        if not config.reader == "pfs":
+            raise Exception(f"Cannot initialize PFSExternalStorage for a {config.reader} reader.")
+        self.read_flag = False
+       
     def read(
         self,
+        spectrum_id: str,
+        path: str,
         obs_id: str = "",
     ) -> PfsObject:
         """
-        Read a spectrum file and return its data.
+        Read a PFS spectrum file and return its data.
 
-        :param obs_id: id of the observation
-        :type obs_id: str
+        Parameters
+        ----------
 
-        :return: HDUList
-        """
-
-        pfs_object = self._get_pfsObject_from_coadd()           
+        spectrun_id: str
+            id of the source
+        path: str
+            path or anything else neded to acquire the resource
+        obs_id: str
+            id of the observation
         
-        self.pfs_object_id = pfs_object.getIdentity()
-        self.astronomical_source_id = f'{self.pfs_object_id["catId"]:05}-{self.pfs_object_id["tract"]:05}-{self.pfs_object_id["patch"]}-{self.pfs_object_id["objId"]:016x}'
-        self.mask = pfs_object.mask
-        self.full_wavelength= pfs_object.wavelength
+        Return
+        ------
+        PfsObject
+            PFS spectrum object
+        """
+        if hasattr(self.config, 'spectrum_dir') :
+            filepath = os.path.join(self.config.spectrum_dir, path)
+        else:
+            filepath  = path
 
-        self.global_infos["VERSION_drp_stella"] = ""
-        self.global_infos["damd_version"] = ""
-        try:
-            self.global_infos["VERSION_drp_stella"] = pfs_object.metadata["VERSION_DRP_STELLA"]
-            self.global_infos["damd_version"] = pfs_object.metadata["VERSION_DATAMODEL"]
-        except:
-            print("could not retrieve 2D and or damd version",file =sys.stderr)
+        if not self.read_flag:
+            self.coadd = PfsCoadd.readFits(filepath)
+            self.read_flag = True
+        
+        pfs_object = self.coadd.get(int(spectrum_id))
+        pfs_object_id = pfs_object.getIdentity()
+        self.spectrum_infos["pfs_object_id"] = pfs_object_id
+        self.spectrum_infos["astronomical_source_id"] = f'{pfs_object_id["catId"]:05}-{pfs_object_id["tract"]:05}-{pfs_object_id["patch"]}-{pfs_object_id["objId"]:016x}'
+
+        self.global_infos["VERSION_drp_stella"] = pfs_object.metadata["VERSION_DRP_STELLA"]
+        self.global_infos["damd_version"] = pfs_object.metadata["VERSION_DATAMODEL"]
         
         arms = list(set(pfs_object.observations.arm))
         self.spectrum_infos["arms"] = "".join(sorted(arms)) 
@@ -66,7 +67,16 @@ class PFSExternalStorage(AbstractExternalStorage):
         return pfs_object
 
     def close(self, resource: PfsObject):
+        """
+        Close resource.
+
+        Parameters
+        ----------
+
+        resource: PfsObject
+            External resource.
+        """
         pass
         
 
-register_storage("pfs",PFSExternalStorage)
+register_storage("pfs", PFSExternalStorage)
