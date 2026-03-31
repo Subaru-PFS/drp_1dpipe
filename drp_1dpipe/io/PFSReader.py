@@ -40,6 +40,10 @@ class PFSReader(AbstractSpectrumReader):
         try:
             error = np.array(np.sqrt(pfs_object.covar[0][0:]), dtype=np.float32)
             error = np.multiply(1 / self.waves.get(obs_id) ** 2, error) * 2.99792458 / 10 ** 14
+            # tanaka's edit
+            wave = self.waves.get(obs_id)
+            selection = ((wave > 9305.) & (wave < 9325.))
+            error[selection] = 1e30
             self.errors.append(error, obs_id)
         except Exception as e:
             raise Exception("Could not load error : {e}")
