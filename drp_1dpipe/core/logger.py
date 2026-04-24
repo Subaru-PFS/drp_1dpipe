@@ -1,5 +1,6 @@
 import os
 import logging
+import traceback
 
 
 def init_logger(process_name, logdir, loglevel, console=False):
@@ -34,3 +35,9 @@ def init_logger(process_name, logdir, loglevel, console=False):
         logger.addHandler(stream_handler)
 
     return logger
+
+
+def log_exception(logger, e):
+    tb = traceback.extract_tb(e.__traceback__)
+    filename, lineno, _, _ = tb[-1]
+    logger.error(f"{filename}:{lineno} - {type(e).__name__} : {e}")
