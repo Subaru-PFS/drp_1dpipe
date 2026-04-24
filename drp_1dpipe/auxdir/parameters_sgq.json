@@ -26,8 +26,8 @@
         "medianEvenReflection": true
     },
     "lsf": {
-        "lsfType": "gaussianConstantWidth",
-        "width": 0.7
+        "lsfType": "gaussianVariableWidth",
+        "gaussianVariableWidthFileName": "LSF/lsf_lowres_fixed.fits"
     },
     "extremaRedshiftSeparation": 0.01,
     "spectrumModels": [
@@ -258,7 +258,7 @@
             "lineMeasSolve": {
                 "lineModel": {
                     "continuumComponent": "noContinuum",
-                    "lineCatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v10.tsv",
+                    "lineCatalog": "linecatalogs/linecatalogamazedvacuum_QSO_v10-linemeas.tsv",
                     "lineTypeFilter": "E",
                     "lineForceFilter": "no",
                     "nSigmaSupport": 8,
