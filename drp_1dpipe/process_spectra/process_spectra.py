@@ -4,7 +4,6 @@ import logging
 import time
 import argparse
 import shutil
-import traceback
 
 from pylibamazed.CalibrationLibrary import CalibrationLibrary
 from pylibamazed.ResultStoreOutput import ResultStoreOutput
@@ -27,7 +26,6 @@ from drp_1dpipe.process_spectra.parameters import default_parameters
 from pylibamazed.redshift import (CLog,
                                   CLogFileHandler,
                                   get_version)
-import pandas as pd
 import collections.abc
 from flufl.lock import Lock
 from datetime import timedelta,datetime

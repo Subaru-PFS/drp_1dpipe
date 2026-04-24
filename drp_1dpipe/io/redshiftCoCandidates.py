@@ -3,6 +3,7 @@ import numpy as np
 from pylibamazed.redshift import get_version, ErrorCode
 from pylibamazed.PdfHandler import BuilderPdfHandler,get_final_regular_z_grid
 from drp_1dpipe import version as drp_1dpipe_version
+from drp_1dpipe.core.logger import log_exception
 
 from astropy.io import fits
 import json
@@ -327,6 +328,7 @@ class RedshiftCoCandidates:
         try:
             self.add_quality()
         except Exception as e:
+            log_exception(self.logger, e)
             raise Exception(f'failed to write quality : {e}')
         self.hdulist.flush()
         self.hdulist.close()
@@ -725,6 +727,7 @@ class RedshiftCoCandidates:
 
 
     def _get_nb_valid_points(self):
-        valid = np.where(self.spectrum_infos["mask"] == 0, True, False)
+        mask = self.spectrum.get_others(filtered_only=False)["mask"]
+        valid = np.where(mask == 0, True, False)
         return np.sum(valid)
         
