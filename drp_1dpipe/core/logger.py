@@ -1,4 +1,5 @@
 import os
+import warnings
 import logging
 import traceback
 
@@ -33,6 +34,11 @@ def init_logger(process_name, logdir, loglevel, console=False):
         stream_handler.setLevel(loglevel)
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
+    
+    def log_warning(message, category, filename, lineno, file=None, line=None):
+        logger.warning(f"{filename}:{lineno} - {category.__name__}: {message}")
+    
+    warnings.showwarning = log_warning
 
     return logger
 
