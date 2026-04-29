@@ -178,7 +178,7 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
         fits.Column(name="cRank", format="J", array=np.array([], dtype=np.int32)), 
         fits.Column(name="velocity", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="velocityError", format="E", array=np.array([], dtype=np.float32)),  
-        fits.Column(name="templateProba", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="velocityProba", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="subClass", format="20A", array=np.array([], dtype="S20")),  
         fits.Column(name="templateFile", format="50A", array=np.array([], dtype="S50")),
         fits.Column(name="reducedLeastSquare", format="E", array=np.array([], dtype=np.float32)),  
@@ -579,7 +579,7 @@ class RedshiftCoCandidates:
                  ('cRank', 'i4'),
                  ('velocity', 'f4'),
                  ('velocityError', 'f4'),
-                 ('templateProba', 'f4'),
+                 ('velocityProba', 'f4'),
                  ('subClass', 'S15'),
                  ('templateFile','S50'),
                  ('reducedLeastSquare', 'f4'),
@@ -596,7 +596,7 @@ class RedshiftCoCandidates:
             zcandidates[rank]['velocity'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light_kms
             zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light_kms
             zcandidates[rank]['cRank'] = rank
-            zcandidates[rank]['templateProba'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
+            zcandidates[rank]['velocityProba'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['subClass'] = "" # self.drp1d_output.get_candidate_data("star", rank, "ContinuumName").split("_")[0]
             zcandidates[rank]['templateFile'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumName")
             zcandidates[rank]['pValue'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumPValue")
