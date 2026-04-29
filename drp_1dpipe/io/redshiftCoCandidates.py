@@ -11,6 +11,7 @@ import pandas as pd
 from scipy.constants import speed_of_light
 import logging
 
+speed_of_light_kms = speed_of_light / 1.e3
 
 def init_output_file(output_dir, catId, user_param, damd_version,stella_version, obs_pfs_version, parameters, wl_size):
     path = os.path.join(output_dir,
@@ -196,7 +197,7 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
     
     hdul.append(fits.ImageHDU(name="STAR_MODELS",data=empty_models))
 
-    zgrid = np.array(get_final_regular_z_grid("star", parameters)) * speed_of_light
+    zgrid = np.array(get_final_regular_z_grid("star", parameters)) * speed_of_light_kms
     hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="velocity",
                                                           format="E",
                                                            array=zgrid)
@@ -592,8 +593,8 @@ class RedshiftCoCandidates:
 
         for rank in range(nb_candidates):
             zcandidates[rank]['targetId'] = targetId
-            zcandidates[rank]['velocity'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light
-            zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light/1000.
+            zcandidates[rank]['velocity'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light_kms
+            zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light_kms
             zcandidates[rank]['cRank'] = rank
             zcandidates[rank]['templateProba'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['subClass'] = "" # self.drp1d_output.get_candidate_data("star", rank, "ContinuumName").split("_")[0]
@@ -641,8 +642,8 @@ class RedshiftCoCandidates:
             zlines[zi]['lineName'] = fr.at[i, "Name"]
             zlines[zi]['lineWave'] = fr.at[i, "LinemeasLineLambda"]*0.1
             offset = fr.at[i, "LinemeasLineOffset"]
-            zlines[zi]['lineZ'] = z + offset/speed_of_light + z*offset/speed_of_light
-            zlines[zi]['lineZError'] = fr.at[i, "LinemeasLineOffsetUncertainty"]/speed_of_light
+            zlines[zi]['lineZ'] = z + offset/speed_of_light_kms + z*offset/speed_of_light_kms
+            zlines[zi]['lineZError'] = fr.at[i, "LinemeasLineOffsetUncertainty"]/speed_of_light_kms*(1+z)
             zlines[zi]['lineSigma'] = fr.at[i,"LinemeasLineWidth"]/10.
             zlines[zi]['lineSigmaError'] = fr.at[i,"LinemeasLineWidthUncertainty"]/10.
             zlines[zi]['lineVelocity'] = fr.at[i,"LinemeasLineVelocity"]
