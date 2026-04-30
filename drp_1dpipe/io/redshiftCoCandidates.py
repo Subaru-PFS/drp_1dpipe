@@ -718,7 +718,7 @@ class RedshiftCoCandidates:
         model = np.array(wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
         np.place(model, mask == 0, self.drp1d_output.get_dataset(object_type,"model",rank)["ModelFlux"])
-        model = np.multiply(np.array(wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
+        model = np.multiply(np.array(wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
         return np.float32(model)
 
     def _get_pdf_grid(self, object_type):
