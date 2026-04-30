@@ -11,6 +11,7 @@ import pandas as pd
 from scipy.constants import speed_of_light
 import logging
 
+speed_of_light_kms = speed_of_light / 1.e3
 
 def init_output_file(output_dir, catId, user_param, damd_version,stella_version, obs_pfs_version, parameters, wl_size):
     path = os.path.join(output_dir,
@@ -177,7 +178,7 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
         fits.Column(name="cRank", format="J", array=np.array([], dtype=np.int32)), 
         fits.Column(name="velocity", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="velocityError", format="E", array=np.array([], dtype=np.float32)),  
-        fits.Column(name="templateProba", format="E", array=np.array([], dtype=np.float32)),  
+        fits.Column(name="velocityProba", format="E", array=np.array([], dtype=np.float32)),  
         fits.Column(name="subClass", format="20A", array=np.array([], dtype="S20")),  
         fits.Column(name="templateFile", format="50A", array=np.array([], dtype="S50")),
         fits.Column(name="reducedLeastSquare", format="E", array=np.array([], dtype=np.float32)),  
@@ -196,7 +197,7 @@ def init_output_file(output_dir, catId, user_param, damd_version,stella_version,
     
     hdul.append(fits.ImageHDU(name="STAR_MODELS",data=empty_models))
 
-    zgrid = np.array(get_final_regular_z_grid("star", parameters)) * speed_of_light
+    zgrid = np.array(get_final_regular_z_grid("star", parameters)) * speed_of_light_kms
     hdul.append(fits.BinTableHDU.from_columns([fits.Column(name="velocity",
                                                           format="E",
                                                            array=zgrid)
@@ -578,7 +579,7 @@ class RedshiftCoCandidates:
                  ('cRank', 'i4'),
                  ('velocity', 'f4'),
                  ('velocityError', 'f4'),
-                 ('templateProba', 'f4'),
+                 ('velocityProba', 'f4'),
                  ('subClass', 'S15'),
                  ('templateFile','S50'),
                  ('reducedLeastSquare', 'f4'),
@@ -592,10 +593,10 @@ class RedshiftCoCandidates:
 
         for rank in range(nb_candidates):
             zcandidates[rank]['targetId'] = targetId
-            zcandidates[rank]['velocity'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light
-            zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light/1000.
+            zcandidates[rank]['velocity'] = self.drp1d_output.get_candidate_data("star", rank, "Redshift") * speed_of_light_kms
+            zcandidates[rank]['velocityError'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftUncertainty") * speed_of_light_kms
             zcandidates[rank]['cRank'] = rank
-            zcandidates[rank]['templateProba'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
+            zcandidates[rank]['velocityProba'] = self.drp1d_output.get_candidate_data("star", rank, "RedshiftProba")
             zcandidates[rank]['subClass'] = "" # self.drp1d_output.get_candidate_data("star", rank, "ContinuumName").split("_")[0]
             zcandidates[rank]['templateFile'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumName")
             zcandidates[rank]['pValue'] = self.drp1d_output.get_candidate_data("star", rank, "ContinuumPValue")
@@ -641,8 +642,8 @@ class RedshiftCoCandidates:
             zlines[zi]['lineName'] = fr.at[i, "Name"]
             zlines[zi]['lineWave'] = fr.at[i, "LinemeasLineLambda"]*0.1
             offset = fr.at[i, "LinemeasLineOffset"]
-            zlines[zi]['lineZ'] = z + offset/speed_of_light + z*offset/speed_of_light
-            zlines[zi]['lineZError'] = fr.at[i, "LinemeasLineOffsetUncertainty"]/speed_of_light
+            zlines[zi]['lineZ'] = z + offset/speed_of_light_kms + z*offset/speed_of_light_kms
+            zlines[zi]['lineZError'] = fr.at[i, "LinemeasLineOffsetUncertainty"]/speed_of_light_kms*(1+z)
             zlines[zi]['lineSigma'] = fr.at[i,"LinemeasLineWidth"]/10.
             zlines[zi]['lineSigmaError'] = fr.at[i,"LinemeasLineWidthUncertainty"]/10.
             zlines[zi]['lineVelocity'] = fr.at[i,"LinemeasLineVelocity"]
@@ -717,7 +718,7 @@ class RedshiftCoCandidates:
         model = np.array(wavelength, dtype=np.float64, copy=True)
         model.fill(np.nan)
         np.place(model, mask == 0, self.drp1d_output.get_dataset(object_type,"model",rank)["ModelFlux"])
-        model = np.multiply(np.array(wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 16
+        model = np.multiply(np.array(wavelength) ** 2, np.array(model)) * (1 / 2.99792458) * 10 ** 14
         return np.float32(model)
 
     def _get_pdf_grid(self, object_type):

@@ -54,7 +54,7 @@
 	"rankCol":"cRank",
 	"map" : {
 	    "velocity":"star.Redshift",
-	    "templateProba":"star.RedshiftProba",
+	    "velocityProba":"star.RedshiftProba",
 	    "templateFile":"star.ContinuumName",
 	    "reducedLeastSquare":"star.ReducedLeastSquare"
 	}
